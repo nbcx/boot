@@ -44,7 +44,7 @@ func AppendActiveHelp(compArray []string, activeHelpStr string) []string {
 // case, with all non-ASCII-alphanumeric characters replaced by `_`.
 // It will always return "0" if the global environment variable COBRA_ACTIVE_HELP
 // is set to "0".
-func GetActiveHelpConfig(cmd *Command) string {
+func GetActiveHelpConfig(cmd Commander) string {
 	activeHelpCfg := os.Getenv(activeHelpGlobalEnvVar)
 	if activeHelpCfg != activeHelpGlobalDisable {
 		activeHelpCfg = os.Getenv(activeHelpEnvVar(cmd.Root().Name()))

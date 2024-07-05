@@ -44,6 +44,11 @@ type Group struct {
 	Title string
 }
 
+type CommandCalledAs struct {
+	name   string
+	called bool
+}
+
 // Command is just that, a command for your application.
 // E.g.  'go run ...' - 'run' is the command. Cobra requires
 // you to define the usage and description as part of your command
@@ -84,7 +89,7 @@ type Command struct {
 	// ValidArgsFunction is an optional function that provides valid non-flag arguments for shell completion.
 	// It is a dynamic version of using ValidArgs.
 	// Only one of ValidArgs and ValidArgsFunction can be used for a command.
-	ValidArgsFunction func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective)
+	ValidArgsFunction func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)
 
 	// Expected arguments
 	Args PositionalArgs
@@ -122,25 +127,25 @@ type Command struct {
 	// command has been declared.
 	//
 	// PersistentPreRun: children of this command will inherit and execute.
-	PersistentPreRun func(cmd *Command, args []string)
+	PersistentPreRun func(cmd Commander, args []string)
 	// PersistentPreRunE: PersistentPreRun but returns an error.
-	PersistentPreRunE func(cmd *Command, args []string) error
+	PersistentPreRunE func(cmd Commander, args []string) error
 	// PreRun: children of this command will not inherit.
-	PreRun func(cmd *Command, args []string)
+	PreRun func(cmd Commander, args []string)
 	// PreRunE: PreRun but returns an error.
-	PreRunE func(cmd *Command, args []string) error
+	PreRunE func(cmd Commander, args []string) error
 	// Run: Typically the actual work function. Most commands will only implement this.
-	Run func(cmd *Command, args []string)
+	Run func(cmd Commander, args []string)
 	// RunE: Run but returns an error.
-	RunE func(cmd *Command, args []string) error
+	RunE func(cmd Commander, args []string) error
 	// PostRun: run after the Run command.
-	PostRun func(cmd *Command, args []string)
+	PostRun func(cmd Commander, args []string)
 	// PostRunE: PostRun but returns an error.
-	PostRunE func(cmd *Command, args []string) error
+	PostRunE func(cmd Commander, args []string) error
 	// PersistentPostRun: children of this command will inherit and execute after PostRun.
-	PersistentPostRun func(cmd *Command, args []string)
+	PersistentPostRun func(cmd Commander, args []string)
 	// PersistentPostRunE: PersistentPostRun but returns an error.
-	PersistentPostRunE func(cmd *Command, args []string) error
+	PersistentPostRunE func(cmd Commander, args []string) error
 
 	// groups for subcommands
 	commandgroups []*Group
@@ -166,19 +171,19 @@ type Command struct {
 	globNormFunc func(f *flag.FlagSet, name string) flag.NormalizedName
 
 	// usageFunc is usage func defined by user.
-	usageFunc func(*Command) error
+	usageFunc func(Commander) error
 	// usageTemplate is usage template defined by user.
 	usageTemplate string
 	// flagErrorFunc is func defined by user and it's called when the parsing of
 	// flags returns an error.
-	flagErrorFunc func(*Command, error) error
+	flagErrorFunc func(Commander, error) error
 	// helpTemplate is help template defined by user.
 	helpTemplate string
 	// helpFunc is help func defined by user.
-	helpFunc func(*Command, []string)
+	helpFunc func(Commander, []string)
 	// helpCommand is command with usage 'help'. If it's not defined by user,
 	// cobra uses default help command.
-	helpCommand *Command
+	helpCommand Commander
 	// helpCommandGroupID is the group id for the helpCommand
 	helpCommandGroupID string
 
@@ -207,17 +212,14 @@ type Command struct {
 	// commandsAreSorted defines, if command slice are sorted or not.
 	commandsAreSorted bool
 	// commandCalledAs is the name or alias value used to call this command.
-	commandCalledAs struct {
-		name   string
-		called bool
-	}
+	commandCalledAs CommandCalledAs
 
 	ctx context.Context
 
 	// commands is the list of commands supported by this program.
-	commands []*Command
+	commands []Commander
 	// parent is a parent command for this command.
-	parent *Command
+	parent Commander
 	// Max lengths of commands' string lengths for use in padding.
 	commandsMaxUseLen         int
 	commandsMaxCommandPathLen int
@@ -306,7 +308,7 @@ func (c *Command) SetIn(newIn io.Reader) {
 }
 
 // SetUsageFunc sets usage function. Usage can be defined by application.
-func (c *Command) SetUsageFunc(f func(*Command) error) {
+func (c *Command) SetUsageFunc(f func(Commander) error) {
 	c.usageFunc = f
 }
 
@@ -317,24 +319,24 @@ func (c *Command) SetUsageTemplate(s string) {
 
 // SetFlagErrorFunc sets a function to generate an error when flag parsing
 // fails.
-func (c *Command) SetFlagErrorFunc(f func(*Command, error) error) {
+func (c *Command) SetFlagErrorFunc(f func(Commander, error) error) {
 	c.flagErrorFunc = f
 }
 
 // SetHelpFunc sets help function. Can be defined by Application.
-func (c *Command) SetHelpFunc(f func(*Command, []string)) {
+func (c *Command) SetHelpFunc(f func(Commander, []string)) {
 	c.helpFunc = f
 }
 
 // SetHelpCommand sets help command.
-func (c *Command) SetHelpCommand(cmd *Command) {
+func (c *Command) SetHelpCommand(cmd Commander) {
 	c.helpCommand = cmd
 }
 
 // SetHelpCommandGroupID sets the group id of the help command.
 func (c *Command) SetHelpCommandGroupID(groupID string) {
 	if c.helpCommand != nil {
-		c.helpCommand.GroupID = groupID
+		c.helpCommand.SetGroupID(groupID)
 	}
 	// helpCommandGroupID is used if no helpCommand is defined by the user
 	c.helpCommandGroupID = groupID
@@ -343,7 +345,7 @@ func (c *Command) SetHelpCommandGroupID(groupID string) {
 // SetCompletionCommandGroupID sets the group id of the completion command.
 func (c *Command) SetCompletionCommandGroupID(groupID string) {
 	// completionCommandGroupID is used if no completion command is defined by the user
-	c.Root().completionCommandGroupID = groupID
+	c.Root().SetCompletionCommandGroupID(groupID)
 }
 
 // SetHelpTemplate sets help template to be used. Application can use it to set custom template.
@@ -425,14 +427,14 @@ func (c *Command) getIn(def io.Reader) io.Reader {
 
 // UsageFunc returns either the function set by SetUsageFunc for this command
 // or a parent, or it returns a default usage function.
-func (c *Command) UsageFunc() (f func(*Command) error) {
+func (c *Command) UsageFunc() (f func(Commander) error) {
 	if c.usageFunc != nil {
 		return c.usageFunc
 	}
 	if c.HasParent() {
 		return c.Parent().UsageFunc()
 	}
-	return func(c *Command) error {
+	return func(c Commander) error {
 		c.mergePersistentFlags()
 		err := tmpl(c.OutOrStderr(), c.UsageTemplate(), c)
 		if err != nil {
@@ -451,14 +453,14 @@ func (c *Command) Usage() error {
 
 // HelpFunc returns either the function set by SetHelpFunc for this command
 // or a parent, or it returns a function with default help behavior.
-func (c *Command) HelpFunc() func(*Command, []string) {
+func (c *Command) HelpFunc() func(Commander, []string) {
 	if c.helpFunc != nil {
 		return c.helpFunc
 	}
 	if c.HasParent() {
 		return c.Parent().HelpFunc()
 	}
-	return func(c *Command, a []string) {
+	return func(c Commander, a []string) {
 		c.mergePersistentFlags()
 		// The help should be sent to stdout
 		// See https://github.com/spf13/cobra/issues/1002
@@ -499,7 +501,7 @@ func (c *Command) UsageString() string {
 // FlagErrorFunc returns either the function set by SetFlagErrorFunc for this
 // command or a parent, or it returns a function which returns the original
 // error.
-func (c *Command) FlagErrorFunc() (f func(*Command, error) error) {
+func (c *Command) FlagErrorFunc() (f func(Commander, error) error) {
 	if c.flagErrorFunc != nil {
 		return c.flagErrorFunc
 	}
@@ -507,7 +509,7 @@ func (c *Command) FlagErrorFunc() (f func(*Command, error) error) {
 	if c.HasParent() {
 		return c.parent.FlagErrorFunc()
 	}
-	return func(c *Command, err error) error {
+	return func(c Commander, err error) error {
 		return err
 	}
 }
@@ -516,30 +518,30 @@ var minUsagePadding = 25
 
 // UsagePadding return padding for the usage.
 func (c *Command) UsagePadding() int {
-	if c.parent == nil || minUsagePadding > c.parent.commandsMaxUseLen {
+	if c.parent == nil || minUsagePadding > c.parent.GetCommandsMaxUseLen() {
 		return minUsagePadding
 	}
-	return c.parent.commandsMaxUseLen
+	return c.parent.GetCommandsMaxUseLen()
 }
 
 var minCommandPathPadding = 11
 
 // CommandPathPadding return padding for the command path.
 func (c *Command) CommandPathPadding() int {
-	if c.parent == nil || minCommandPathPadding > c.parent.commandsMaxCommandPathLen {
+	if c.parent == nil || minCommandPathPadding > c.parent.GetCommandsMaxCommandPathLen() {
 		return minCommandPathPadding
 	}
-	return c.parent.commandsMaxCommandPathLen
+	return c.parent.GetCommandsMaxCommandPathLen()
 }
 
 var minNamePadding = 11
 
 // NamePadding returns padding for the name.
 func (c *Command) NamePadding() int {
-	if c.parent == nil || minNamePadding > c.parent.commandsMaxNameLen {
+	if c.parent == nil || minNamePadding > c.parent.GetCommandsMaxNameLen() {
 		return minNamePadding
 	}
-	return c.parent.commandsMaxNameLen
+	return c.parent.GetCommandsMaxNameLen()
 }
 
 // UsageTemplate returns usage template for the command.
@@ -642,14 +644,14 @@ func shortHasNoOptDefVal(name string, fs *flag.FlagSet) bool {
 	return flag.NoOptDefVal != ""
 }
 
-func stripFlags(args []string, c *Command) []string {
+func stripFlags(args []string, c Commander) []string {
 	if len(args) == 0 {
 		return args
 	}
 	c.mergePersistentFlags()
 
 	commands := []string{}
-	flags := c.Flags()
+	flags := c.GetFlags()
 
 Loop:
 	for len(args) > 0 {
@@ -725,10 +727,10 @@ func isFlagArg(arg string) bool {
 
 // Find the target command given the args and command tree
 // Meant to be run on the highest node. Only searches down.
-func (c *Command) Find(args []string) (*Command, []string, error) {
-	var innerfind func(*Command, []string) (*Command, []string)
+func (c *Command) Find(args []string) (Commander, []string, error) {
+	var innerFind func(Commander, []string) (Commander, []string)
 
-	innerfind = func(c *Command, innerArgs []string) (*Command, []string) {
+	innerFind = func(c Commander, innerArgs []string) (Commander, []string) {
 		argsWOflags := stripFlags(innerArgs, c)
 		if len(argsWOflags) == 0 {
 			return c, innerArgs
@@ -737,13 +739,13 @@ func (c *Command) Find(args []string) (*Command, []string, error) {
 
 		cmd := c.findNext(nextSubCmd)
 		if cmd != nil {
-			return innerfind(cmd, c.argsMinusFirstX(innerArgs, nextSubCmd))
+			return innerFind(cmd, c.argsMinusFirstX(innerArgs, nextSubCmd))
 		}
 		return c, innerArgs
 	}
 
-	commandFound, a := innerfind(c, args)
-	if commandFound.Args == nil {
+	commandFound, a := innerFind(c, args)
+	if commandFound.GetArgs() == nil {
 		return commandFound, a, legacyArgs(commandFound, stripFlags(a, commandFound))
 	}
 	return commandFound, a, nil
@@ -766,11 +768,11 @@ func (c *Command) findSuggestions(arg string) string {
 	return sb.String()
 }
 
-func (c *Command) findNext(next string) *Command {
-	matches := make([]*Command, 0)
+func (c *Command) findNext(next string) Commander {
+	matches := make([]Commander, 0)
 	for _, cmd := range c.commands {
 		if commandNameMatches(cmd.Name(), next) || cmd.HasAlias(next) {
-			cmd.commandCalledAs.name = next
+			cmd.GetCommandCalledAs().name = next
 			return cmd
 		}
 		if EnablePrefixMatching && cmd.hasNameOrAliasPrefix(next) {
@@ -789,7 +791,7 @@ func (c *Command) findNext(next string) *Command {
 
 // Traverse the command tree to find the command, and parse args for
 // each parent.
-func (c *Command) Traverse(args []string) (*Command, []string, error) {
+func (c *Command) Traverse(args []string) (Commander, []string, error) {
 	flags := []string{}
 	inFlag := false
 
@@ -841,7 +843,7 @@ func (c *Command) SuggestionsFor(typedName string) []string {
 			if suggestByLevenshtein || suggestByPrefix {
 				suggestions = append(suggestions, cmd.Name())
 			}
-			for _, explicitSuggestion := range cmd.SuggestFor {
+			for _, explicitSuggestion := range cmd.GetSuggestFor() {
 				if strings.EqualFold(typedName, explicitSuggestion) {
 					suggestions = append(suggestions, cmd.Name())
 				}
@@ -852,7 +854,7 @@ func (c *Command) SuggestionsFor(typedName string) []string {
 }
 
 // VisitParents visits all parents of the command and invokes fn on each parent.
-func (c *Command) VisitParents(fn func(*Command)) {
+func (c *Command) VisitParents(fn func(Commander)) {
 	if c.HasParent() {
 		fn(c.Parent())
 		c.Parent().VisitParents(fn)
@@ -860,7 +862,7 @@ func (c *Command) VisitParents(fn func(*Command)) {
 }
 
 // Root finds root command.
-func (c *Command) Root() *Command {
+func (c *Command) Root() Commander {
 	if c.HasParent() {
 		return c.Parent().Root()
 	}
@@ -873,7 +875,7 @@ func (c *Command) ArgsLenAtDash() int {
 	return c.Flags().ArgsLenAtDash()
 }
 
-func (c *Command) execute(a []string) (err error) {
+func (c *Command) Execute(a []string) (err error) {
 	if c == nil {
 		return fmt.Errorf("called Execute() on a nil Command")
 	}
@@ -939,28 +941,29 @@ func (c *Command) execute(a []string) (err error) {
 		return err
 	}
 
-	parents := make([]*Command, 0, 5)
-	for p := c; p != nil; p = p.Parent() {
+	parents := make([]Commander, 0, 5)
+	var pc Commander
+	for pc = c; pc != nil; pc = pc.Parent() {
 		if EnableTraverseRunHooks {
 			// When EnableTraverseRunHooks is set:
 			// - Execute all persistent pre-runs from the root parent till this command.
 			// - Execute all persistent post-runs from this command till the root parent.
-			parents = append([]*Command{p}, parents...)
+			parents = append([]Commander{pc}, parents...)
 		} else {
 			// Otherwise, execute only the first found persistent hook.
-			parents = append(parents, p)
+			parents = append(parents, pc)
 		}
 	}
 	for _, p := range parents {
-		if p.PersistentPreRunE != nil {
-			if err := p.PersistentPreRunE(c, argWoFlags); err != nil {
+		if p.GetPersistentPreRunE() != nil {
+			if err := p.GetPersistentPreRunE()(c, argWoFlags); err != nil {
 				return err
 			}
 			if !EnableTraverseRunHooks {
 				break
 			}
-		} else if p.PersistentPreRun != nil {
-			p.PersistentPreRun(c, argWoFlags)
+		} else if p.GetPersistentPreRun() != nil {
+			p.GetPersistentPreRun()(c, argWoFlags)
 			if !EnableTraverseRunHooks {
 				break
 			}
@@ -995,16 +998,17 @@ func (c *Command) execute(a []string) (err error) {
 	} else if c.PostRun != nil {
 		c.PostRun(c, argWoFlags)
 	}
-	for p := c; p != nil; p = p.Parent() {
-		if p.PersistentPostRunE != nil {
-			if err := p.PersistentPostRunE(c, argWoFlags); err != nil {
+	var p Commander
+	for p = c; p != nil; p = p.Parent() {
+		if p.GetPersistentPostRunE() != nil {
+			if err := p.GetPersistentPostRunE()(c, argWoFlags); err != nil {
 				return err
 			}
 			if !EnableTraverseRunHooks {
 				break
 			}
-		} else if p.PersistentPostRun != nil {
-			p.PersistentPostRun(c, argWoFlags)
+		} else if p.GetPersistentPostRun() != nil {
+			p.GetPersistentPostRun()(c, argWoFlags)
 			if !EnableTraverseRunHooks {
 				break
 			}
@@ -1031,13 +1035,13 @@ func (c *Command) postRun() {
 // functions.
 func (c *Command) ExecuteContext(ctx context.Context) error {
 	c.ctx = ctx
-	return c.Execute()
+	return c.ExecuteX()
 }
 
 // Execute uses the args (os.Args[1:] by default)
 // and run through the command tree finding appropriate matches
 // for commands and then corresponding flags.
-func (c *Command) Execute() error {
+func (c *Command) ExecuteX() error { // todo: 原Execute
 	_, err := c.ExecuteC()
 	return err
 }
@@ -1045,13 +1049,13 @@ func (c *Command) Execute() error {
 // ExecuteContextC is the same as ExecuteC(), but sets the ctx on the command.
 // Retrieve ctx by calling cmd.Context() inside your *Run lifecycle or ValidArgs
 // functions.
-func (c *Command) ExecuteContextC(ctx context.Context) (*Command, error) {
+func (c *Command) ExecuteContextC(ctx context.Context) (Commander, error) {
 	c.ctx = ctx
 	return c.ExecuteC()
 }
 
 // ExecuteC executes the command.
-func (c *Command) ExecuteC() (cmd *Command, err error) {
+func (c *Command) ExecuteC() (cmd Commander, err error) {
 	if c.ctx == nil {
 		c.ctx = context.Background()
 	}
@@ -1073,7 +1077,7 @@ func (c *Command) ExecuteC() (cmd *Command, err error) {
 
 	// Now that all commands have been created, let's make sure all groups
 	// are properly created also
-	c.checkCommandGroups()
+	c.CheckCommandGroups()
 
 	args := c.args
 
@@ -1092,29 +1096,32 @@ func (c *Command) ExecuteC() (cmd *Command, err error) {
 		cmd, flags, err = c.Find(args)
 	}
 	if err != nil {
+		var dc Commander
 		// If found parse to a subcommand and then failed, talk about the subcommand
 		if cmd != nil {
-			c = cmd
+			dc = cmd
+		} else {
+			dc = c
 		}
-		if !c.SilenceErrors {
-			c.PrintErrln(c.ErrPrefix(), err.Error())
-			c.PrintErrf("Run '%v --help' for usage.\n", c.CommandPath())
+		if !dc.GetSilenceErrors() {
+			dc.PrintErrln(c.ErrPrefix(), err.Error())
+			dc.PrintErrf("Run '%v --help' for usage.\n", c.CommandPath())
 		}
-		return c, err
+		return dc, err
 	}
-
-	cmd.commandCalledAs.called = true
-	if cmd.commandCalledAs.name == "" {
-		cmd.commandCalledAs.name = cmd.Name()
+	as := cmd.GetCommandCalledAs()
+	as.called = true
+	if as.name == "" {
+		as.name = cmd.Name()
 	}
 
 	// We have to pass global context to children command
 	// if context is present on the parent command.
-	if cmd.ctx == nil {
-		cmd.ctx = c.ctx
+	if cmd.Ctx() == nil {
+		cmd.SetCtx(c.ctx)
 	}
 
-	err = cmd.execute(flags)
+	err = cmd.Execute(flags)
 	if err != nil {
 		// Always show help if requested, even if SilenceErrors is in
 		// effect
@@ -1125,13 +1132,13 @@ func (c *Command) ExecuteC() (cmd *Command, err error) {
 
 		// If root command has SilenceErrors flagged,
 		// all subcommands should respect it
-		if !cmd.SilenceErrors && !c.SilenceErrors {
+		if !cmd.GetSilenceErrors() && !c.GetSilenceErrors() {
 			c.PrintErrln(cmd.ErrPrefix(), err.Error())
 		}
 
 		// If root command has SilenceUsage flagged,
 		// all subcommands should respect it
-		if !cmd.SilenceUsage && !c.SilenceUsage {
+		if !cmd.GetSilenceUsage() && !c.GetSilenceUsage() {
 			c.Println(cmd.UsageString())
 		}
 	}
@@ -1142,7 +1149,7 @@ func (c *Command) ValidateArgs(args []string) error {
 	if c.Args == nil {
 		return ArbitraryArgs(c, args)
 	}
-	return c.Args(c, args)
+	return c.GetArgs()(c, args)
 }
 
 // ValidateRequiredFlags validates all required flags are present and returns an error otherwise
@@ -1171,14 +1178,14 @@ func (c *Command) ValidateRequiredFlags() error {
 
 // checkCommandGroups checks if a command has been added to a group that does not exists.
 // If so, we panic because it indicates a coding error that should be corrected.
-func (c *Command) checkCommandGroups() {
+func (c *Command) CheckCommandGroups() {
 	for _, sub := range c.commands {
 		// if Group is not defined let the developer know right away
-		if sub.GroupID != "" && !c.ContainsGroup(sub.GroupID) {
-			panic(fmt.Sprintf("group id '%s' is not defined for subcommand '%s'", sub.GroupID, sub.CommandPath()))
+		if sub.GetGroupID() != "" && !c.ContainsGroup(sub.GetGroupID()) {
+			panic(fmt.Sprintf("group id '%s' is not defined for subcommand '%s'", sub.GetGroupID(), sub.CommandPath()))
 		}
 
-		sub.checkCommandGroups()
+		sub.CheckCommandGroups()
 	}
 }
 
@@ -1240,7 +1247,7 @@ func (c *Command) InitDefaultHelpCmd() {
 			Short: "Help about any command",
 			Long: `Help provides help for any command in the application.
 Simply type ` + c.displayName() + ` help [path to command] for full details.`,
-			ValidArgsFunction: func(c *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+			ValidArgsFunction: func(c Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				var completions []string
 				cmd, _, e := c.Root().Find(args)
 				if e != nil {
@@ -1251,15 +1258,15 @@ Simply type ` + c.displayName() + ` help [path to command] for full details.`,
 					cmd = c.Root()
 				}
 				for _, subCmd := range cmd.Commands() {
-					if subCmd.IsAvailableCommand() || subCmd == cmd.helpCommand {
+					if subCmd.IsAvailableCommand() || subCmd == cmd.GetHelpCommand() {
 						if strings.HasPrefix(subCmd.Name(), toComplete) {
-							completions = append(completions, fmt.Sprintf("%s\t%s", subCmd.Name(), subCmd.Short))
+							completions = append(completions, fmt.Sprintf("%s\t%s", subCmd.Name(), subCmd.GetShort()))
 						}
 					}
 				}
 				return completions, ShellCompDirectiveNoFileComp
 			},
-			Run: func(c *Command, args []string) {
+			Run: func(c Commander, args []string) {
 				cmd, _, e := c.Root().Find(args)
 				if cmd == nil || e != nil {
 					c.Printf("Unknown help topic %#q\n", args)
@@ -1286,14 +1293,14 @@ func (c *Command) ResetCommands() {
 }
 
 // Sorts commands by their names.
-type commandSorterByName []*Command
+type commandSorterByName []Commander
 
 func (c commandSorterByName) Len() int           { return len(c) }
 func (c commandSorterByName) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 func (c commandSorterByName) Less(i, j int) bool { return c[i].Name() < c[j].Name() }
 
 // Commands returns a sorted slice of child commands.
-func (c *Command) Commands() []*Command {
+func (c *Command) Commands() []Commander {
 	// do not sort commands if it already sorted or sorting was disabled
 	if EnableCommandSorting && !c.commandsAreSorted {
 		sort.Sort(commandSorterByName(c.commands))
@@ -1303,14 +1310,15 @@ func (c *Command) Commands() []*Command {
 }
 
 // AddCommand adds one or more commands to this parent command.
-func (c *Command) AddCommand(cmds ...*Command) {
+func (c *Command) AddCommand(cmds ...Commander) {
 	for i, x := range cmds {
 		if cmds[i] == c {
 			panic("Command can't be a child of itself")
 		}
-		cmds[i].parent = c
+		cmds[i].SetParent(c)
+		// cmds[i].parent = c
 		// update max lengths
-		usageLen := len(x.Use)
+		usageLen := len(x.GetUse())
 		if usageLen > c.commandsMaxUseLen {
 			c.commandsMaxUseLen = usageLen
 		}
@@ -1339,7 +1347,7 @@ func (c *Command) Groups() []*Group {
 // AllChildCommandsHaveGroup returns if all subcommands are assigned to a group
 func (c *Command) AllChildCommandsHaveGroup() bool {
 	for _, sub := range c.commands {
-		if (sub.IsAvailableCommand() || sub == c.helpCommand) && sub.GroupID == "" {
+		if (sub.IsAvailableCommand() || sub == c.helpCommand) && sub.GetGroupID() == "" {
 			return false
 		}
 	}
@@ -1362,13 +1370,14 @@ func (c *Command) AddGroup(groups ...*Group) {
 }
 
 // RemoveCommand removes one or more commands from a parent command.
-func (c *Command) RemoveCommand(cmds ...*Command) {
-	commands := []*Command{}
+func (c *Command) RemoveCommand(cmds ...Commander) {
+	commands := []Commander{}
 main:
 	for _, command := range c.commands {
 		for _, cmd := range cmds {
 			if command == cmd {
-				command.parent = nil
+				// command.parent = nil
+				command.SetParent(nil)
 				continue main
 			}
 		}
@@ -1380,7 +1389,7 @@ main:
 	c.commandsMaxCommandPathLen = 0
 	c.commandsMaxNameLen = 0
 	for _, command := range c.commands {
-		usageLen := len(command.Use)
+		usageLen := len(command.GetUse())
 		if usageLen > c.commandsMaxUseLen {
 			c.commandsMaxUseLen = usageLen
 		}
@@ -1461,42 +1470,43 @@ func (c *Command) UseLine() string {
 // DebugFlags used to determine which flags have been assigned to which commands
 // and which persist.
 func (c *Command) DebugFlags() {
-	c.Println("DebugFlags called on", c.Name())
-	var debugflags func(*Command)
+	// todo: wait do
+	// c.Println("DebugFlags called on", c.Name())
+	// var debugflags func(Commander)
 
-	debugflags = func(x *Command) {
-		if x.HasFlags() || x.HasPersistentFlags() {
-			c.Println(x.Name())
-		}
-		if x.HasFlags() {
-			x.flags.VisitAll(func(f *flag.Flag) {
-				if x.HasPersistentFlags() && x.persistentFlag(f.Name) != nil {
-					c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [LP]")
-				} else {
-					c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [L]")
-				}
-			})
-		}
-		if x.HasPersistentFlags() {
-			x.pflags.VisitAll(func(f *flag.Flag) {
-				if x.HasFlags() {
-					if x.flags.Lookup(f.Name) == nil {
-						c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [P]")
-					}
-				} else {
-					c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [P]")
-				}
-			})
-		}
-		c.Println(x.flagErrorBuf)
-		if x.HasSubCommands() {
-			for _, y := range x.commands {
-				debugflags(y)
-			}
-		}
-	}
+	// debugflags = func(x Commander) {
+	// 	if x.HasFlags() || x.HasPersistentFlags() {
+	// 		c.Println(x.Name())
+	// 	}
+	// 	if x.HasFlags() {
+	// 		x.GetFlags().VisitAll(func(f *flag.Flag) {
+	// 			if x.HasPersistentFlags() && x.persistentFlag(f.Name) != nil {
+	// 				c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [LP]")
+	// 			} else {
+	// 				c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [L]")
+	// 			}
+	// 		})
+	// 	}
+	// 	if x.HasPersistentFlags() {
+	// 		x.GetFlags().VisitAll(func(f *flag.Flag) {
+	// 			if x.HasFlags() {
+	// 				if x.GetFlags().Lookup(f.Name) == nil {
+	// 					c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [P]")
+	// 				}
+	// 			} else {
+	// 				c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [P]")
+	// 			}
+	// 		})
+	// 	}
+	// 	c.Println(x.flagErrorBuf)
+	// 	if x.HasSubCommands() {
+	// 		for _, y := range x.commands {
+	// 			debugflags(y)
+	// 		}
+	// 	}
+	// }
 
-	debugflags(c)
+	// debugflags(c)
 }
 
 // Name returns the command's name: the first word in the use line.
@@ -1571,7 +1581,7 @@ func (c *Command) IsAvailableCommand() bool {
 		return false
 	}
 
-	if c.HasParent() && c.Parent().helpCommand == c {
+	if c.HasParent() && c.Parent().GetHelpCommand() == c {
 		return false
 	}
 
@@ -1851,7 +1861,7 @@ func (c *Command) ParseFlags(args []string) error {
 }
 
 // Parent returns a commands parent command.
-func (c *Command) Parent() *Command {
+func (c *Command) Parent() Commander {
 	return c.parent
 }
 
@@ -1879,7 +1889,7 @@ func (c *Command) updateParentsPflags() {
 
 	c.Root().PersistentFlags().AddFlagSet(flag.CommandLine)
 
-	c.VisitParents(func(parent *Command) {
+	c.VisitParents(func(parent Commander) {
 		c.parentsPflags.AddFlagSet(parent.PersistentFlags())
 	})
 }

@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func emptyRun(*cobra.Command, []string) {}
+func emptyRun(cobra.Commander, []string) {}
 
 func init() {
 	rootCmd.PersistentFlags().StringP("rootflag", "r", "two", "")

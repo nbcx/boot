@@ -24,7 +24,7 @@ import (
 	"testing"
 )
 
-func validArgsFunc(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+func validArgsFunc(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 	if len(args) != 0 {
 		return nil, ShellCompDirectiveNoFileComp
 	}
@@ -38,7 +38,7 @@ func validArgsFunc(cmd *Command, args []string, toComplete string) ([]string, Sh
 	return completions, ShellCompDirectiveDefault
 }
 
-func validArgsFunc2(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+func validArgsFunc2(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 	if len(args) != 0 {
 		return nil, ShellCompDirectiveNoFileComp
 	}
@@ -816,7 +816,7 @@ func TestRequiredFlagNameCompletionInGo(t *testing.T) {
 	}
 	childCmd := &Command{
 		Use: "childCmd",
-		ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+		ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 			return []string{"subArg"}, ShellCompDirectiveNoFileComp
 		},
 		Run: emptyRun,
@@ -1241,7 +1241,7 @@ func TestFlagDirFilterCompletionInGo(t *testing.T) {
 }
 
 func TestValidArgsFuncCmdContext(t *testing.T) {
-	validArgsFunc := func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	validArgsFunc := func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		ctx := cmd.Context()
 
 		if ctx == nil {
@@ -1594,7 +1594,7 @@ func TestFlagCompletionInGo(t *testing.T) {
 		Run: emptyRun,
 	}
 	rootCmd.Flags().IntP("introot", "i", -1, "help message for flag introot")
-	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("introot", func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("introot", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		completions := []string{}
 		for _, comp := range []string{"1\tThe first", "2\tThe second", "10\tThe tenth"} {
 			if strings.HasPrefix(comp, toComplete) {
@@ -1604,7 +1604,7 @@ func TestFlagCompletionInGo(t *testing.T) {
 		return completions, ShellCompDirectiveDefault
 	}))
 	rootCmd.Flags().String("filename", "", "Enter a filename")
-	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("filename", func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("filename", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		completions := []string{}
 		for _, comp := range []string{"file.yaml\tYAML format", "myfile.json\tJSON format", "file.xml\tXML format"} {
 			if strings.HasPrefix(comp, toComplete) {
@@ -1790,7 +1790,7 @@ func TestFlagCompletionWithNotInterspersedArgs(t *testing.T) {
 	childCmd := &Command{
 		Use: "child",
 		Run: emptyRun,
-		ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+		ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 			return []string{"--validarg", "test"}, ShellCompDirectiveDefault
 		},
 	}
@@ -1802,7 +1802,7 @@ func TestFlagCompletionWithNotInterspersedArgs(t *testing.T) {
 	rootCmd.AddCommand(childCmd, childCmd2)
 	childCmd.Flags().Bool("bool", false, "test bool flag")
 	childCmd.Flags().String("string", "", "test string flag")
-	_ = childCmd.RegisterFlagCompletionFunc("string", func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	_ = childCmd.RegisterFlagCompletionFunc("string", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"myval"}, ShellCompDirectiveDefault
 	})
 
@@ -1971,7 +1971,7 @@ func TestFlagCompletionWithNotInterspersedArgs(t *testing.T) {
 	}
 
 	// Check that --validarg is added to args for the ValidArgsFunction
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return args, ShellCompDirectiveDefault
 	}
 	output, err = executeCommand(rootCmd, ShellCompRequestCmd, "child", "--", "--validarg", "")
@@ -1989,7 +1989,7 @@ func TestFlagCompletionWithNotInterspersedArgs(t *testing.T) {
 	}
 
 	// Check that --validarg is added to args for the ValidArgsFunction and toComplete is also set correctly
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return append(args, toComplete), ShellCompDirectiveDefault
 	}
 	output, err = executeCommand(rootCmd, ShellCompRequestCmd, "child", "--", "--validarg", "--toComp=ab")
@@ -2013,13 +2013,13 @@ func TestFlagCompletionWorksRootCommandAddedAfterFlags(t *testing.T) {
 	childCmd := &Command{
 		Use: "child",
 		Run: emptyRun,
-		ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+		ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 			return []string{"--validarg", "test"}, ShellCompDirectiveDefault
 		},
 	}
 	childCmd.Flags().Bool("bool", false, "test bool flag")
 	childCmd.Flags().String("string", "", "test string flag")
-	_ = childCmd.RegisterFlagCompletionFunc("string", func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	_ = childCmd.RegisterFlagCompletionFunc("string", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"myval"}, ShellCompDirectiveDefault
 	})
 
@@ -2046,14 +2046,14 @@ func TestFlagCompletionWorksRootCommandAddedAfterFlags(t *testing.T) {
 func TestFlagCompletionForPersistentFlagsCalledFromSubCmd(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	rootCmd.PersistentFlags().String("string", "", "test string flag")
-	_ = rootCmd.RegisterFlagCompletionFunc("string", func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	_ = rootCmd.RegisterFlagCompletionFunc("string", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"myval"}, ShellCompDirectiveDefault
 	})
 
 	childCmd := &Command{
 		Use: "child",
 		Run: emptyRun,
-		ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+		ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 			return []string{"--validarg", "test"}, ShellCompDirectiveDefault
 		},
 	}
@@ -2116,7 +2116,7 @@ func TestFlagCompletionConcurrentRegistration(t *testing.T) {
 			if index%2 == 0 {
 				cmd = childCmd
 			}
-			_ = cmd.RegisterFlagCompletionFunc(flagName, func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+			_ = cmd.RegisterFlagCompletionFunc(flagName, func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				return []string{fmt.Sprintf("flag%d", index)}, ShellCompDirectiveDefault
 			})
 		}()
@@ -2157,7 +2157,7 @@ func TestFlagCompletionInGoWithDesc(t *testing.T) {
 		Run: emptyRun,
 	}
 	rootCmd.Flags().IntP("introot", "i", -1, "help message for flag introot")
-	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("introot", func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("introot", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		completions := []string{}
 		for _, comp := range []string{"1\tThe first", "2\tThe second", "10\tThe tenth"} {
 			if strings.HasPrefix(comp, toComplete) {
@@ -2167,7 +2167,7 @@ func TestFlagCompletionInGoWithDesc(t *testing.T) {
 		return completions, ShellCompDirectiveDefault
 	}))
 	rootCmd.Flags().String("filename", "", "Enter a filename")
-	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("filename", func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("filename", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		completions := []string{}
 		for _, comp := range []string{"file.yaml\tYAML format", "myfile.json\tJSON format", "file.xml\tXML format"} {
 			if strings.HasPrefix(comp, toComplete) {
@@ -2248,7 +2248,7 @@ func TestValidArgsNotValidArgsFunc(t *testing.T) {
 	rootCmd := &Command{
 		Use:       "root",
 		ValidArgs: []string{"one", "two"},
-		ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+		ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 			return []string{"three", "four"}, ShellCompDirectiveNoFileComp
 		},
 		Run: emptyRun,
@@ -2433,7 +2433,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 	}
 
 	// Test that no completion command is created if there are not other sub-commands
-	assertNoErr(t, rootCmd.Execute())
+	assertNoErr(t, rootCmd.ExecuteX())
 	for _, cmd := range rootCmd.commands {
 		if cmd.Name() == compCmdName {
 			t.Errorf("Should not have a 'completion' command when there are no other sub-commands of root")
@@ -2449,7 +2449,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	// Test that a completion command is created if there are other sub-commands
 	found := false
-	assertNoErr(t, rootCmd.Execute())
+	assertNoErr(t, rootCmd.ExecuteX())
 	for _, cmd := range rootCmd.commands {
 		if cmd.Name() == compCmdName {
 			found = true
@@ -2464,7 +2464,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	// Test that the default completion command can be disabled
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
-	assertNoErr(t, rootCmd.Execute())
+	assertNoErr(t, rootCmd.ExecuteX())
 	for _, cmd := range rootCmd.commands {
 		if cmd.Name() == compCmdName {
 			t.Errorf("Should not have a 'completion' command when the feature is disabled")
@@ -2498,14 +2498,14 @@ func TestDefaultCompletionCmd(t *testing.T) {
 	// Remove completion command for the next test
 	removeCompCmd(rootCmd)
 
-	var compCmd *Command
+	var compCmd Commander
 	// Test that the --no-descriptions flag is present on all shells
-	assertNoErr(t, rootCmd.Execute())
+	assertNoErr(t, rootCmd.ExecuteX())
 	for _, shell := range []string{"bash", "fish", "powershell", "zsh"} {
 		if compCmd, _, err = rootCmd.Find([]string{compCmdName, shell}); err != nil {
 			t.Errorf("Unexpected error: %v", err)
 		}
-		if flag := compCmd.Flags().Lookup(compCmdNoDescFlagName); flag == nil {
+		if flag := compCmd.GetFlags().Lookup(compCmdNoDescFlagName); flag == nil {
 			t.Errorf("Missing --%s flag for %s shell", compCmdNoDescFlagName, shell)
 		}
 	}
@@ -2514,12 +2514,12 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	// Test that the '--no-descriptions' flag can be disabled
 	rootCmd.CompletionOptions.DisableNoDescFlag = true
-	assertNoErr(t, rootCmd.Execute())
+	assertNoErr(t, rootCmd.ExecuteX())
 	for _, shell := range []string{"fish", "zsh", "bash", "powershell"} {
 		if compCmd, _, err = rootCmd.Find([]string{compCmdName, shell}); err != nil {
 			t.Errorf("Unexpected error: %v", err)
 		}
-		if flag := compCmd.Flags().Lookup(compCmdNoDescFlagName); flag != nil {
+		if flag := compCmd.GetFlags().Lookup(compCmdNoDescFlagName); flag != nil {
 			t.Errorf("Unexpected --%s flag for %s shell", compCmdNoDescFlagName, shell)
 		}
 	}
@@ -2530,12 +2530,12 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	// Test that the '--no-descriptions' flag is disabled when descriptions are disabled
 	rootCmd.CompletionOptions.DisableDescriptions = true
-	assertNoErr(t, rootCmd.Execute())
+	assertNoErr(t, rootCmd.ExecuteX())
 	for _, shell := range []string{"fish", "zsh", "bash", "powershell"} {
 		if compCmd, _, err = rootCmd.Find([]string{compCmdName, shell}); err != nil {
 			t.Errorf("Unexpected error: %v", err)
 		}
-		if flag := compCmd.Flags().Lookup(compCmdNoDescFlagName); flag != nil {
+		if flag := compCmd.GetFlags().Lookup(compCmdNoDescFlagName); flag != nil {
 			t.Errorf("Unexpected --%s flag for %s shell", compCmdNoDescFlagName, shell)
 		}
 	}
@@ -2546,12 +2546,12 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	// Test that the 'completion' command can be hidden
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
-	assertNoErr(t, rootCmd.Execute())
+	assertNoErr(t, rootCmd.ExecuteX())
 	compCmd, _, err = rootCmd.Find([]string{compCmdName})
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	if compCmd.Hidden == false {
+	if compCmd.GetHidden() == false {
 		t.Error("Default 'completion' command should be hidden but it is not")
 	}
 	// Re-enable for next test
@@ -2587,7 +2587,7 @@ func TestCompleteCompletion(t *testing.T) {
 	}
 
 	// Test there are no completions for the sub-commands of the completion command
-	var compCmd *Command
+	var compCmd Commander
 	for _, cmd := range rootCmd.Commands() {
 		if cmd.Name() == compCmdName {
 			compCmd = cmd
@@ -2621,7 +2621,7 @@ func TestMultipleShorthandFlagCompletion(t *testing.T) {
 	f.BoolP("short", "s", false, "short flag 1")
 	f.BoolP("short2", "d", false, "short flag 2")
 	f.StringP("short3", "f", "", "short flag 3")
-	_ = rootCmd.RegisterFlagCompletionFunc("short3", func(*Command, []string, string) ([]string, ShellCompDirective) {
+	_ = rootCmd.RegisterFlagCompletionFunc("short3", func(Commander, []string, string) ([]string, ShellCompDirective) {
 		return []string{"works"}, ShellCompDirectiveNoFileComp
 	})
 
@@ -2706,7 +2706,7 @@ func TestMultipleShorthandFlagCompletion(t *testing.T) {
 
 func TestCompleteWithDisableFlagParsing(t *testing.T) {
 
-	flagValidArgs := func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	flagValidArgs := func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"--flag", "-f"}, ShellCompDirectiveNoFileComp
 	}
 
@@ -2774,7 +2774,7 @@ func TestCompleteWithRootAndLegacyArgs(t *testing.T) {
 		Use:  "root",
 		Args: nil, // Args must be nil to trigger the legacyArgs() function
 		Run:  emptyRun,
-		ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+		ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 			return []string{"arg1", "arg2"}, ShellCompDirectiveNoFileComp
 		},
 	}
@@ -2847,7 +2847,7 @@ func TestCompletionForGroupedFlags(t *testing.T) {
 		}
 		childCmd := &Command{
 			Use: "child",
-			ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+			ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				return []string{"subArg"}, ShellCompDirectiveNoFileComp
 			},
 			Run: emptyRun,
@@ -2947,7 +2947,7 @@ func TestCompletionForOneRequiredGroupFlags(t *testing.T) {
 		}
 		childCmd := &Command{
 			Use: "child",
-			ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+			ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				return []string{"subArg"}, ShellCompDirectiveNoFileComp
 			},
 			Run: emptyRun,
@@ -3045,7 +3045,7 @@ func TestCompletionForMutuallyExclusiveFlags(t *testing.T) {
 		}
 		childCmd := &Command{
 			Use: "child",
-			ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+			ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				return []string{"subArg"}, ShellCompDirectiveNoFileComp
 			},
 			Run: emptyRun,
@@ -3142,7 +3142,7 @@ func TestCompletionCobraFlags(t *testing.T) {
 			Use:     "child",
 			Version: "1.1.1",
 			Run:     emptyRun,
-			ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+			ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				return []string{"extra"}, ShellCompDirectiveNoFileComp
 			},
 		}
@@ -3150,7 +3150,7 @@ func TestCompletionCobraFlags(t *testing.T) {
 			Use:     "child2",
 			Version: "1.1.1",
 			Run:     emptyRun,
-			ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+			ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				return []string{"extra2"}, ShellCompDirectiveNoFileComp
 			},
 		}
@@ -3158,7 +3158,7 @@ func TestCompletionCobraFlags(t *testing.T) {
 			Use:     "child3",
 			Version: "1.1.1",
 			Run:     emptyRun,
-			ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+			ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				return []string{"extra3"}, ShellCompDirectiveNoFileComp
 			},
 		}
@@ -3166,7 +3166,7 @@ func TestCompletionCobraFlags(t *testing.T) {
 			Use:     "child4",
 			Version: "1.1.1",
 			Run:     emptyRun,
-			ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+			ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				return []string{"extra4"}, ShellCompDirectiveNoFileComp
 			},
 			DisableFlagParsing: true,
@@ -3175,7 +3175,7 @@ func TestCompletionCobraFlags(t *testing.T) {
 			Use:     "child5",
 			Version: "1.1.1",
 			Run:     emptyRun,
-			ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+			ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				return []string{"extra5"}, ShellCompDirectiveNoFileComp
 			},
 			DisableFlagParsing: true,
@@ -3371,7 +3371,7 @@ func TestArgsNotDetectedAsFlagsCompletionInGo(t *testing.T) {
 
 	root := Command{
 		Use: "root",
-		ValidArgsFunction: func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+		ValidArgsFunction: func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 			return []string{"service", "1-123", "11-123"}, ShellCompDirectiveNoFileComp
 		},
 	}
@@ -3433,19 +3433,19 @@ func TestGetFlagCompletion(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 
 	rootCmd.Flags().String("rootflag", "", "root flag")
-	_ = rootCmd.RegisterFlagCompletionFunc("rootflag", func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	_ = rootCmd.RegisterFlagCompletionFunc("rootflag", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"rootvalue"}, ShellCompDirectiveKeepOrder
 	})
 
 	rootCmd.PersistentFlags().String("persistentflag", "", "persistent flag")
-	_ = rootCmd.RegisterFlagCompletionFunc("persistentflag", func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	_ = rootCmd.RegisterFlagCompletionFunc("persistentflag", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"persistentvalue"}, ShellCompDirectiveDefault
 	})
 
 	childCmd := &Command{Use: "child", Run: emptyRun}
 
 	childCmd.Flags().String("childflag", "", "child flag")
-	_ = childCmd.RegisterFlagCompletionFunc("childflag", func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	_ = childCmd.RegisterFlagCompletionFunc("childflag", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"childvalue"}, ShellCompDirectiveNoFileComp | ShellCompDirectiveNoSpace
 	})
 
@@ -3624,7 +3624,7 @@ func TestDisableDescriptions(t *testing.T) {
 		descLineWithDescription    = "first\tdescription"
 		descLineWithoutDescription = "first"
 	)
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		comps := []string{descLineWithDescription}
 		return comps, ShellCompDirectiveDefault
 	}

@@ -23,7 +23,7 @@ func TestValidateFlagGroups(t *testing.T) {
 	getCmd := func() *Command {
 		c := &Command{
 			Use: "testcmd",
-			Run: func(cmd *Command, args []string) {
+			Run: func(cmd Commander, args []string) {
 			}}
 		// Define lots of flags to utilize for testing.
 		for _, v := range []string{"a", "b", "c", "d"} {
@@ -34,7 +34,7 @@ func TestValidateFlagGroups(t *testing.T) {
 		}
 		subC := &Command{
 			Use: "subcmd",
-			Run: func(cmd *Command, args []string) {
+			Run: func(cmd Commander, args []string) {
 			}}
 		subC.Flags().String("subonly", "", "")
 		c.AddCommand(subC)
@@ -183,7 +183,7 @@ func TestValidateFlagGroups(t *testing.T) {
 				sub.MarkFlagsMutuallyExclusive(strings.Split(flagGroup, " ")...)
 			}
 			c.SetArgs(tc.args)
-			err := c.Execute()
+			err := c.ExecuteX()
 			switch {
 			case err == nil && len(tc.expectErr) > 0:
 				t.Errorf("Expected error %q but got nil", tc.expectErr)

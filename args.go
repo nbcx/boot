@@ -25,7 +25,7 @@ type PositionalArgs func(cmd *Command, args []string) error
 // - root commands with no subcommands can take arbitrary arguments
 // - root commands with subcommands will do subcommand validity checking
 // - subcommands will always accept arbitrary arguments
-func legacyArgs(cmd *Command, args []string) error {
+func legacyArgs(cmd Commander, args []string) error {
 	// no subcommand, always take args
 	if !cmd.HasSubCommands() {
 		return nil

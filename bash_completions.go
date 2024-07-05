@@ -444,10 +444,10 @@ fi
 	WriteStringAndCheck(buf, "# ex: ts=4 sw=4 et filetype=sh\n")
 }
 
-func writeCommands(buf io.StringWriter, cmd *Command) {
+func writeCommands(buf io.StringWriter, cmd Commander) {
 	WriteStringAndCheck(buf, "    commands=()\n")
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() && c != cmd.helpCommand {
+		if !c.IsAvailableCommand() && c != cmd.GetHelpCommand() {
 			continue
 		}
 		WriteStringAndCheck(buf, fmt.Sprintf("    commands+=(%q)\n", c.Name()))
@@ -456,7 +456,7 @@ func writeCommands(buf io.StringWriter, cmd *Command) {
 	WriteStringAndCheck(buf, "\n")
 }
 
-func writeFlagHandler(buf io.StringWriter, name string, annotations map[string][]string, cmd *Command) {
+func writeFlagHandler(buf io.StringWriter, name string, annotations map[string][]string, cmd Commander) {
 	for key, value := range annotations {
 		switch key {
 		case BashCompFilenameExt:
@@ -494,7 +494,7 @@ func writeFlagHandler(buf io.StringWriter, name string, annotations map[string][
 
 const cbn = "\")\n"
 
-func writeShortFlag(buf io.StringWriter, flag *pflag.Flag, cmd *Command) {
+func writeShortFlag(buf io.StringWriter, flag *pflag.Flag, cmd Commander) {
 	name := flag.Shorthand
 	format := "    "
 	if len(flag.NoOptDefVal) == 0 {
@@ -505,7 +505,7 @@ func writeShortFlag(buf io.StringWriter, flag *pflag.Flag, cmd *Command) {
 	writeFlagHandler(buf, "-"+name, flag.Annotations, cmd)
 }
 
-func writeFlag(buf io.StringWriter, flag *pflag.Flag, cmd *Command) {
+func writeFlag(buf io.StringWriter, flag *pflag.Flag, cmd Commander) {
 	name := flag.Name
 	format := "    flags+=(\"--%s"
 	if len(flag.NoOptDefVal) == 0 {
@@ -533,7 +533,7 @@ func writeLocalNonPersistentFlag(buf io.StringWriter, flag *pflag.Flag) {
 }
 
 // prepareCustomAnnotationsForFlags setup annotations for go completions for registered flags
-func prepareCustomAnnotationsForFlags(cmd *Command) {
+func prepareCustomAnnotationsForFlags(cmd Commander) {
 	flagCompletionMutex.RLock()
 	defer flagCompletionMutex.RUnlock()
 	for flag := range flagCompletionFunctions {
@@ -548,7 +548,7 @@ func prepareCustomAnnotationsForFlags(cmd *Command) {
 	}
 }
 
-func writeFlags(buf io.StringWriter, cmd *Command) {
+func writeFlags(buf io.StringWriter, cmd Commander) {
 	prepareCustomAnnotationsForFlags(cmd)
 	WriteStringAndCheck(buf, `    flags=()
     two_word_flags=()
@@ -558,7 +558,7 @@ func writeFlags(buf io.StringWriter, cmd *Command) {
 
 `)
 
-	if cmd.DisableFlagParsing {
+	if cmd.GetDisableFlagParsing() {
 		WriteStringAndCheck(buf, "    flag_parsing_disabled=1\n")
 	}
 
@@ -573,7 +573,7 @@ func writeFlags(buf io.StringWriter, cmd *Command) {
 		}
 		// localNonPersistentFlags are used to stop the completion of subcommands when one is set
 		// if TraverseChildren is true we should allow to complete subcommands
-		if localNonPersistentFlags.Lookup(flag.Name) != nil && !cmd.Root().TraverseChildren {
+		if localNonPersistentFlags.Lookup(flag.Name) != nil && !cmd.Root().GetTraverseChildren() {
 			writeLocalNonPersistentFlag(buf, flag)
 		}
 	})
@@ -590,7 +590,7 @@ func writeFlags(buf io.StringWriter, cmd *Command) {
 	WriteStringAndCheck(buf, "\n")
 }
 
-func writeRequiredFlag(buf io.StringWriter, cmd *Command) {
+func writeRequiredFlag(buf io.StringWriter, cmd Commander) {
 	WriteStringAndCheck(buf, "    must_have_one_flag=()\n")
 	flags := cmd.NonInheritedFlags()
 	flags.VisitAll(func(flag *pflag.Flag) {
@@ -612,46 +612,46 @@ func writeRequiredFlag(buf io.StringWriter, cmd *Command) {
 	})
 }
 
-func writeRequiredNouns(buf io.StringWriter, cmd *Command) {
+func writeRequiredNouns(buf io.StringWriter, cmd Commander) {
 	WriteStringAndCheck(buf, "    must_have_one_noun=()\n")
-	sort.Strings(cmd.ValidArgs)
-	for _, value := range cmd.ValidArgs {
+	sort.Strings(cmd.GetValidArgs())
+	for _, value := range cmd.GetValidArgs() {
 		// Remove any description that may be included following a tab character.
 		// Descriptions are not supported by bash completion.
 		value = strings.SplitN(value, "\t", 2)[0]
 		WriteStringAndCheck(buf, fmt.Sprintf("    must_have_one_noun+=(%q)\n", value))
 	}
-	if cmd.ValidArgsFunction != nil {
+	if cmd.GetValidArgsFunction() != nil {
 		WriteStringAndCheck(buf, "    has_completion_function=1\n")
 	}
 }
 
-func writeCmdAliases(buf io.StringWriter, cmd *Command) {
-	if len(cmd.Aliases) == 0 {
+func writeCmdAliases(buf io.StringWriter, cmd Commander) {
+	if len(cmd.GetAliases()) == 0 {
 		return
 	}
 
-	sort.Strings(cmd.Aliases)
+	sort.Strings(cmd.GetAliases())
 
 	WriteStringAndCheck(buf, fmt.Sprint(`    if [[ -z "${BASH_VERSION:-}" || "${BASH_VERSINFO[0]:-}" -gt 3 ]]; then`, "\n"))
-	for _, value := range cmd.Aliases {
+	for _, value := range cmd.GetAliases() {
 		WriteStringAndCheck(buf, fmt.Sprintf("        command_aliases+=(%q)\n", value))
 		WriteStringAndCheck(buf, fmt.Sprintf("        aliashash[%q]=%q\n", value, cmd.Name()))
 	}
 	WriteStringAndCheck(buf, `    fi`)
 	WriteStringAndCheck(buf, "\n")
 }
-func writeArgAliases(buf io.StringWriter, cmd *Command) {
+func writeArgAliases(buf io.StringWriter, cmd Commander) {
 	WriteStringAndCheck(buf, "    noun_aliases=()\n")
-	sort.Strings(cmd.ArgAliases)
-	for _, value := range cmd.ArgAliases {
+	sort.Strings(cmd.GetArgAliases())
+	for _, value := range cmd.GetArgAliases() {
 		WriteStringAndCheck(buf, fmt.Sprintf("    noun_aliases+=(%q)\n", value))
 	}
 }
 
-func gen(buf io.StringWriter, cmd *Command) {
+func gen(buf io.StringWriter, cmd Commander) {
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() && c != cmd.helpCommand {
+		if !c.IsAvailableCommand() && c != cmd.GetHelpCommand() {
 			continue
 		}
 		gen(buf, c)

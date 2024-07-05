@@ -57,7 +57,7 @@ func GenYamlTree(cmd *cobra.Command, dir string) error {
 }
 
 // GenYamlTreeCustom creates yaml structured ref files.
-func GenYamlTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHandler func(string) string) error {
+func GenYamlTreeCustom(cmd cobra.Commander, dir string, filePrepender, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
 		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
 			continue
@@ -90,22 +90,22 @@ func GenYaml(cmd *cobra.Command, w io.Writer) error {
 }
 
 // GenYamlCustom creates custom yaml output.
-func GenYamlCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string) error {
+func GenYamlCustom(cmd cobra.Commander, w io.Writer, linkHandler func(string) string) error {
 	cmd.InitDefaultHelpCmd()
 	cmd.InitDefaultHelpFlag()
 
 	yamlDoc := cmdDoc{}
 	yamlDoc.Name = cmd.CommandPath()
 
-	yamlDoc.Synopsis = forceMultiLine(cmd.Short)
-	yamlDoc.Description = forceMultiLine(cmd.Long)
+	yamlDoc.Synopsis = forceMultiLine(cmd.GetShort())
+	yamlDoc.Description = forceMultiLine(cmd.GetLong())
 
 	if cmd.Runnable() {
 		yamlDoc.Usage = cmd.UseLine()
 	}
 
-	if len(cmd.Example) > 0 {
-		yamlDoc.Example = cmd.Example
+	if len(cmd.GetExample()) > 0 {
+		yamlDoc.Example = cmd.GetExample()
 	}
 
 	flags := cmd.NonInheritedFlags()
@@ -121,7 +121,7 @@ func GenYamlCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) str
 		result := []string{}
 		if cmd.HasParent() {
 			parent := cmd.Parent()
-			result = append(result, parent.CommandPath()+" - "+parent.Short)
+			result = append(result, parent.CommandPath()+" - "+parent.GetShort())
 		}
 		children := cmd.Commands()
 		sort.Sort(byName(children))
@@ -129,7 +129,7 @@ func GenYamlCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) str
 			if !child.IsAvailableCommand() || child.IsAdditionalHelpTopicCommand() {
 				continue
 			}
-			result = append(result, child.CommandPath()+" - "+child.Short)
+			result = append(result, child.CommandPath()+" - "+child.GetShort())
 		}
 		yamlDoc.SeeAlso = result
 	}

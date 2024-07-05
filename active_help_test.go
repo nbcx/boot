@@ -32,7 +32,7 @@ func TestActiveHelpAlone(t *testing.T) {
 		Run: emptyRun,
 	}
 
-	activeHelpFunc := func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	activeHelpFunc := func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		comps := AppendActiveHelp(nil, activeHelpMessage)
 		return comps, ShellCompDirectiveDefault
 	}
@@ -95,7 +95,7 @@ func TestActiveHelpWithComps(t *testing.T) {
 	rootCmd.AddCommand(childCmd)
 
 	// Test that activeHelp can be added following other completions
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		comps := []string{"first", "second"}
 		comps = AppendActiveHelp(comps, activeHelpMessage)
 		return comps, ShellCompDirectiveDefault
@@ -118,7 +118,7 @@ func TestActiveHelpWithComps(t *testing.T) {
 	}
 
 	// Test that activeHelp can be added preceding other completions
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		var comps []string
 		comps = AppendActiveHelp(comps, activeHelpMessage)
 		comps = append(comps, []string{"first", "second"}...)
@@ -142,7 +142,7 @@ func TestActiveHelpWithComps(t *testing.T) {
 	}
 
 	// Test that activeHelp can be added interleaved with other completions
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		comps := []string{"first"}
 		comps = AppendActiveHelp(comps, activeHelpMessage)
 		comps = append(comps, "second")
@@ -180,7 +180,7 @@ func TestMultiActiveHelp(t *testing.T) {
 	rootCmd.AddCommand(childCmd)
 
 	// Test that multiple activeHelp message can be added
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		comps := AppendActiveHelp(nil, activeHelpMessage)
 		comps = AppendActiveHelp(comps, activeHelpMessage2)
 		return comps, ShellCompDirectiveNoFileComp
@@ -202,7 +202,7 @@ func TestMultiActiveHelp(t *testing.T) {
 	}
 
 	// Test that multiple activeHelp messages can be used along with completions
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		comps := []string{"first"}
 		comps = AppendActiveHelp(comps, activeHelpMessage)
 		comps = append(comps, "second")
@@ -237,7 +237,7 @@ func TestActiveHelpForFlag(t *testing.T) {
 	rootCmd.Flags().String(flagname, "", "A flag")
 
 	// Test that multiple activeHelp message can be added
-	_ = rootCmd.RegisterFlagCompletionFunc(flagname, func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	_ = rootCmd.RegisterFlagCompletionFunc(flagname, func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		comps := []string{"first"}
 		comps = AppendActiveHelp(comps, activeHelpMessage)
 		comps = append(comps, "second")
@@ -280,7 +280,7 @@ func TestConfigActiveHelp(t *testing.T) {
 	// Set the variable that the user would be setting
 	os.Setenv(activeHelpEnvVar(rootCmd.Name()), activeHelpCfg)
 
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		receivedActiveHelpCfg := GetActiveHelpConfig(cmd)
 		if receivedActiveHelpCfg != activeHelpCfg {
 			t.Errorf("expected activeHelpConfig: %q, but got: %q", activeHelpCfg, receivedActiveHelpCfg)
@@ -302,7 +302,7 @@ func TestConfigActiveHelp(t *testing.T) {
 	childCmd.Flags().String(flagname, "", "A flag")
 
 	// Test that multiple activeHelp message can be added
-	_ = childCmd.RegisterFlagCompletionFunc(flagname, func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	_ = childCmd.RegisterFlagCompletionFunc(flagname, func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		receivedActiveHelpCfg := GetActiveHelpConfig(cmd)
 		if receivedActiveHelpCfg != activeHelpCfg {
 			t.Errorf("expected activeHelpConfig: %q, but got: %q", activeHelpCfg, receivedActiveHelpCfg)
@@ -335,7 +335,7 @@ func TestDisableActiveHelp(t *testing.T) {
 	// this is for backwards-compatibility as programs will be using this value.
 	os.Setenv(activeHelpEnvVar(rootCmd.Name()), "0")
 
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		comps := []string{"first"}
 		comps = AppendActiveHelp(comps, activeHelpMessage)
 		return comps, ShellCompDirectiveDefault
@@ -385,7 +385,7 @@ func TestDisableActiveHelp(t *testing.T) {
 	activeHelpCfg := "1"
 	os.Setenv(activeHelpEnvVar(rootCmd.Name()), activeHelpCfg)
 
-	childCmd.ValidArgsFunction = func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective) {
+	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		receivedActiveHelpCfg := GetActiveHelpConfig(cmd)
 		if receivedActiveHelpCfg != activeHelpCfg {
 			t.Errorf("expected activeHelpConfig: %q, but got: %q", activeHelpCfg, receivedActiveHelpCfg)

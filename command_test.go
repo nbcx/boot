@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-func emptyRun(*Command, []string) {}
+func emptyRun(Commander, []string) {}
 
 func executeCommand(root *Command, args ...string) (output string, err error) {
 	_, output, err = executeCommandC(root, args...)
@@ -45,7 +45,7 @@ func executeCommandWithContext(ctx context.Context, root *Command, args ...strin
 	return buf.String(), err
 }
 
-func executeCommandC(root *Command, args ...string) (c *Command, output string, err error) {
+func executeCommandC(root Commander, args ...string) (c Commander, output string, err error) {
 	buf := new(bytes.Buffer)
 	root.SetOut(buf)
 	root.SetErr(buf)
@@ -56,7 +56,7 @@ func executeCommandC(root *Command, args ...string) (c *Command, output string, 
 	return c, buf.String(), err
 }
 
-func executeCommandWithContextC(ctx context.Context, root *Command, args ...string) (c *Command, output string, err error) {
+func executeCommandWithContextC(ctx context.Context, root Commander, args ...string) (c Commander, output string, err error) {
 	buf := new(bytes.Buffer)
 	root.SetOut(buf)
 	root.SetErr(buf)
@@ -90,7 +90,7 @@ func TestSingleCommand(t *testing.T) {
 	rootCmd := &Command{
 		Use:  "root",
 		Args: ExactArgs(2),
-		Run:  func(_ *Command, args []string) { rootCmdArgs = args },
+		Run:  func(_ Commander, args []string) { rootCmdArgs = args },
 	}
 	aCmd := &Command{Use: "a", Args: NoArgs, Run: emptyRun}
 	bCmd := &Command{Use: "b", Args: NoArgs, Run: emptyRun}
@@ -116,7 +116,7 @@ func TestChildCommand(t *testing.T) {
 	child1Cmd := &Command{
 		Use:  "child1",
 		Args: ExactArgs(2),
-		Run:  func(_ *Command, args []string) { child1CmdArgs = args },
+		Run:  func(_ Commander, args []string) { child1CmdArgs = args },
 	}
 	child2Cmd := &Command{Use: "child2", Args: NoArgs, Run: emptyRun}
 	rootCmd.AddCommand(child1Cmd, child2Cmd)
@@ -177,9 +177,9 @@ func TestSubcommandExecuteC(t *testing.T) {
 func TestExecuteContext(t *testing.T) {
 	ctx := context.TODO()
 
-	ctxRun := func(cmd *Command, args []string) {
+	ctxRun := func(cmd Commander, args []string) {
 		if cmd.Context() != ctx {
-			t.Errorf("Command %q must have context when called with ExecuteContext", cmd.Use)
+			t.Errorf("Command %q must have context when called with ExecuteContext", cmd.GetUse())
 		}
 	}
 
@@ -206,9 +206,9 @@ func TestExecuteContext(t *testing.T) {
 func TestExecuteContextC(t *testing.T) {
 	ctx := context.TODO()
 
-	ctxRun := func(cmd *Command, args []string) {
+	ctxRun := func(cmd Commander, args []string) {
 		if cmd.Context() != ctx {
-			t.Errorf("Command %q must have context when called with ExecuteContext", cmd.Use)
+			t.Errorf("Command %q must have context when called with ExecuteContext", cmd.GetUse())
 		}
 	}
 
@@ -233,9 +233,9 @@ func TestExecuteContextC(t *testing.T) {
 }
 
 func TestExecute_NoContext(t *testing.T) {
-	run := func(cmd *Command, args []string) {
+	run := func(cmd Commander, args []string) {
 		if cmd.Context() != context.Background() {
-			t.Errorf("Command %s must have background context", cmd.Use)
+			t.Errorf("Command %s must have background context", cmd.GetUse())
 		}
 	}
 
@@ -283,7 +283,7 @@ func TestCommandAlias(t *testing.T) {
 	timesCmd := &Command{
 		Use:  "times",
 		Args: ExactArgs(2),
-		Run:  func(_ *Command, args []string) { timesCmdArgs = args },
+		Run:  func(_ Commander, args []string) { timesCmdArgs = args },
 	}
 	echoCmd.AddCommand(timesCmd)
 	rootCmd.AddCommand(echoCmd)
@@ -310,7 +310,7 @@ func TestEnablePrefixMatching(t *testing.T) {
 	aCmd := &Command{
 		Use:  "aCmd",
 		Args: ExactArgs(2),
-		Run:  func(_ *Command, args []string) { aCmdArgs = args },
+		Run:  func(_ Commander, args []string) { aCmdArgs = args },
 	}
 	bCmd := &Command{Use: "bCmd", Args: NoArgs, Run: emptyRun}
 	rootCmd.AddCommand(aCmd, bCmd)
@@ -345,7 +345,7 @@ func TestAliasPrefixMatching(t *testing.T) {
 	timesCmd := &Command{
 		Use:  "times",
 		Args: ExactArgs(2),
-		Run:  func(_ *Command, args []string) { timesCmdArgs = args },
+		Run:  func(_ Commander, args []string) { timesCmdArgs = args },
 	}
 	echoCmd.AddCommand(timesCmd)
 	rootCmd.AddCommand(echoCmd)
@@ -436,7 +436,7 @@ func TestChildSameName(t *testing.T) {
 	fooCmd := &Command{
 		Use:  "foo",
 		Args: ExactArgs(2),
-		Run:  func(_ *Command, args []string) { fooCmdArgs = args },
+		Run:  func(_ Commander, args []string) { fooCmdArgs = args },
 	}
 	barCmd := &Command{Use: "bar", Args: NoArgs, Run: emptyRun}
 	rootCmd.AddCommand(fooCmd, barCmd)
@@ -465,7 +465,7 @@ func TestGrandChildSameName(t *testing.T) {
 	fooCmd := &Command{
 		Use:  "foo",
 		Args: ExactArgs(2),
-		Run:  func(_ *Command, args []string) { fooCmdArgs = args },
+		Run:  func(_ Commander, args []string) { fooCmdArgs = args },
 	}
 	barCmd.AddCommand(fooCmd)
 	rootCmd.AddCommand(barCmd)
@@ -489,7 +489,7 @@ func TestFlagLong(t *testing.T) {
 	c := &Command{
 		Use:  "c",
 		Args: ArbitraryArgs,
-		Run:  func(_ *Command, args []string) { cArgs = args },
+		Run:  func(_ Commander, args []string) { cArgs = args },
 	}
 
 	var intFlagValue int
@@ -526,7 +526,7 @@ func TestFlagShort(t *testing.T) {
 	c := &Command{
 		Use:  "c",
 		Args: ArbitraryArgs,
-		Run:  func(_ *Command, args []string) { cArgs = args },
+		Run:  func(_ Commander, args []string) { cArgs = args },
 	}
 
 	var intFlagValue int
@@ -714,7 +714,7 @@ func TestDisableFlagParsing(t *testing.T) {
 	c := &Command{
 		Use:                "c",
 		DisableFlagParsing: true,
-		Run: func(_ *Command, args []string) {
+		Run: func(_ Commander, args []string) {
 			cArgs = args
 		},
 	}
@@ -738,7 +738,7 @@ func TestPersistentFlagsOnSameCommand(t *testing.T) {
 	rootCmd := &Command{
 		Use:  "root",
 		Args: ArbitraryArgs,
-		Run:  func(_ *Command, args []string) { rootCmdArgs = args },
+		Run:  func(_ Commander, args []string) { rootCmdArgs = args },
 	}
 
 	var flagValue int
@@ -817,7 +817,7 @@ func TestPersistentFlagsOnChild(t *testing.T) {
 	childCmd := &Command{
 		Use:  "child",
 		Args: ArbitraryArgs,
-		Run:  func(_ *Command, args []string) { childCmdArgs = args },
+		Run:  func(_ Commander, args []string) { childCmdArgs = args },
 	}
 	rootCmd.AddCommand(childCmd)
 
@@ -1001,7 +1001,7 @@ func TestSetHelpCommand(t *testing.T) {
 		Short: "Help about any command",
 		Long: `Help provides help for any command in the application.
 	Simply type ` + c.Name() + ` help [path to command] for full details.`,
-		Run: func(c *Command, _ []string) { c.Print(expected) },
+		Run: func(c Commander, _ []string) { c.Print(expected) },
 	})
 
 	got, err := executeCommand(c, "help")
@@ -1043,9 +1043,9 @@ func TestHelpFlagExecutedOnChild(t *testing.T) {
 // that has no other flags.
 // Related to https://github.com/spf13/cobra/issues/302.
 func TestHelpFlagInHelp(t *testing.T) {
-	parentCmd := &Command{Use: "parent", Run: func(*Command, []string) {}}
+	parentCmd := &Command{Use: "parent", Run: func(Commander, []string) {}}
 
-	childCmd := &Command{Use: "child", Run: func(*Command, []string) {}}
+	childCmd := &Command{Use: "child", Run: func(Commander, []string) {}}
 	parentCmd.AddCommand(childCmd)
 
 	output, err := executeCommand(parentCmd, "help", "child")
@@ -1057,7 +1057,7 @@ func TestHelpFlagInHelp(t *testing.T) {
 }
 
 func TestFlagsInUsage(t *testing.T) {
-	rootCmd := &Command{Use: "root", Args: NoArgs, Run: func(*Command, []string) {}}
+	rootCmd := &Command{Use: "root", Args: NoArgs, Run: func(Commander, []string) {}}
 	output, err := executeCommand(rootCmd, "--help")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -1303,7 +1303,7 @@ func TestVisitParents(t *testing.T) {
 	c.AddCommand(sub)
 
 	total := 0
-	add := func(x *Command) {
+	add := func(x Commander) {
 		total++
 	}
 	sub.VisitParents(add)
@@ -1495,11 +1495,11 @@ func TestReplaceCommandWithRemove(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	child1Cmd := &Command{
 		Use: "child",
-		Run: func(*Command, []string) { childUsed = 1 },
+		Run: func(Commander, []string) { childUsed = 1 },
 	}
 	child2Cmd := &Command{
 		Use: "child",
-		Run: func(*Command, []string) { childUsed = 2 },
+		Run: func(Commander, []string) { childUsed = 2 },
 	}
 	rootCmd.AddCommand(child1Cmd)
 	rootCmd.RemoveCommand(child1Cmd)
@@ -1549,19 +1549,19 @@ func TestHooks(t *testing.T) {
 
 	c := &Command{
 		Use: "c",
-		PersistentPreRun: func(_ *Command, args []string) {
+		PersistentPreRun: func(_ Commander, args []string) {
 			persPreArgs = strings.Join(args, " ")
 		},
-		PreRun: func(_ *Command, args []string) {
+		PreRun: func(_ Commander, args []string) {
 			preArgs = strings.Join(args, " ")
 		},
-		Run: func(_ *Command, args []string) {
+		Run: func(_ Commander, args []string) {
 			runArgs = strings.Join(args, " ")
 		},
-		PostRun: func(_ *Command, args []string) {
+		PostRun: func(_ Commander, args []string) {
 			postArgs = strings.Join(args, " ")
 		},
-		PersistentPostRun: func(_ *Command, args []string) {
+		PersistentPostRun: func(_ Commander, args []string) {
 			persPostArgs = strings.Join(args, " ")
 		},
 	}
@@ -1625,38 +1625,38 @@ func testPersistentHooks(t *testing.T, expectedHookRunOrder []string) {
 
 	parentCmd := &Command{
 		Use: "parent",
-		PersistentPreRun: func(_ *Command, args []string) {
+		PersistentPreRun: func(_ Commander, args []string) {
 			validateHook(args, "parent PersistentPreRun")
 		},
-		PreRun: func(_ *Command, args []string) {
+		PreRun: func(_ Commander, args []string) {
 			validateHook(args, "parent PreRun")
 		},
-		Run: func(_ *Command, args []string) {
+		Run: func(_ Commander, args []string) {
 			validateHook(args, "parent Run")
 		},
-		PostRun: func(_ *Command, args []string) {
+		PostRun: func(_ Commander, args []string) {
 			validateHook(args, "parent PostRun")
 		},
-		PersistentPostRun: func(_ *Command, args []string) {
+		PersistentPostRun: func(_ Commander, args []string) {
 			validateHook(args, "parent PersistentPostRun")
 		},
 	}
 
 	childCmd := &Command{
 		Use: "child",
-		PersistentPreRun: func(_ *Command, args []string) {
+		PersistentPreRun: func(_ Commander, args []string) {
 			validateHook(args, "child PersistentPreRun")
 		},
-		PreRun: func(_ *Command, args []string) {
+		PreRun: func(_ Commander, args []string) {
 			validateHook(args, "child PreRun")
 		},
-		Run: func(_ *Command, args []string) {
+		Run: func(_ Commander, args []string) {
 			validateHook(args, "child Run")
 		},
-		PostRun: func(_ *Command, args []string) {
+		PostRun: func(_ Commander, args []string) {
 			validateHook(args, "child PostRun")
 		},
-		PersistentPostRun: func(_ *Command, args []string) {
+		PersistentPostRun: func(_ Commander, args []string) {
 			validateHook(args, "child PersistentPostRun")
 		},
 	}
@@ -1782,7 +1782,7 @@ func TestHiddenCommandExecutes(t *testing.T) {
 	c := &Command{
 		Use:    "c",
 		Hidden: true,
-		Run:    func(*Command, []string) { executed = true },
+		Run:    func(Commander, []string) { executed = true },
 	}
 
 	output, err := executeCommand(c)
@@ -2057,7 +2057,7 @@ func TestSetIn(t *testing.T) {
 func TestUsageStringRedirected(t *testing.T) {
 	c := &Command{}
 
-	c.usageFunc = func(cmd *Command) error {
+	c.usageFunc = func(cmd Commander) error {
 		cmd.Print("[stdout1]")
 		cmd.PrintErr("[stderr2]")
 		cmd.Print("[stdout3]")
@@ -2073,7 +2073,7 @@ func TestUsageStringRedirected(t *testing.T) {
 func TestCommandPrintRedirection(t *testing.T) {
 	errBuff, outBuff := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
 	root := &Command{
-		Run: func(cmd *Command, args []string) {
+		Run: func(cmd Commander, args []string) {
 
 			cmd.PrintErr("PrintErr")
 			cmd.PrintErrln("PrintErr", "line")
@@ -2088,7 +2088,7 @@ func TestCommandPrintRedirection(t *testing.T) {
 	root.SetErr(errBuff)
 	root.SetOut(outBuff)
 
-	if err := root.Execute(); err != nil {
+	if err := root.ExecuteX(); err != nil {
 		t.Error(err)
 	}
 
@@ -2115,7 +2115,7 @@ func TestFlagErrorFunc(t *testing.T) {
 	c := &Command{Use: "c", Run: emptyRun}
 
 	expectedFmt := "This is expected: %v"
-	c.SetFlagErrorFunc(func(_ *Command, err error) error {
+	c.SetFlagErrorFunc(func(_ Commander, err error) error {
 		return fmt.Errorf(expectedFmt, err)
 	})
 
@@ -2131,7 +2131,7 @@ func TestFlagErrorFunc(t *testing.T) {
 func TestFlagErrorFuncHelp(t *testing.T) {
 	c := &Command{Use: "c", Run: emptyRun}
 	c.PersistentFlags().Bool("help", false, "help for c")
-	c.SetFlagErrorFunc(func(_ *Command, err error) error {
+	c.SetFlagErrorFunc(func(_ Commander, err error) error {
 		return fmt.Errorf("wrap error: %w", err)
 	})
 
@@ -2339,8 +2339,8 @@ func (tc *calledAsTestcase) test(t *testing.T) {
 	defer func(ov bool) { EnablePrefixMatching = ov }(EnablePrefixMatching)
 	EnablePrefixMatching = tc.epm
 
-	var called *Command
-	run := func(c *Command, _ []string) { t.Logf("called: %q", c.Name()); called = c }
+	var called Commander
+	run := func(c Commander, _ []string) { t.Logf("called: %q", c.Name()); called = c }
 
 	parent := &Command{Use: "parent", Run: run}
 	child1 := &Command{Use: "child1", Run: run, Aliases: []string{"this"}}
@@ -2354,7 +2354,7 @@ func (tc *calledAsTestcase) test(t *testing.T) {
 	parent.SetOut(output)
 	parent.SetErr(output)
 
-	_ = parent.Execute()
+	_ = parent.ExecuteX()
 
 	if called == nil {
 		if tc.call != "" {
@@ -2501,7 +2501,7 @@ func TestSetContext(t *testing.T) {
 	val := "foobar"
 	root := &Command{
 		Use: "root",
-		Run: func(cmd *Command, args []string) {
+		Run: func(cmd Commander, args []string) {
 			key := cmd.Context().Value(key{})
 			got, ok := key.(string)
 			if !ok {
@@ -2515,7 +2515,7 @@ func TestSetContext(t *testing.T) {
 
 	ctx := context.WithValue(context.Background(), key{}, val)
 	root.SetContext(ctx)
-	err := root.Execute()
+	err := root.ExecuteX()
 	if err != nil {
 		t.Error(err)
 	}
@@ -2526,11 +2526,11 @@ func TestSetContextPreRun(t *testing.T) {
 	val := "barr"
 	root := &Command{
 		Use: "root",
-		PreRun: func(cmd *Command, args []string) {
+		PreRun: func(cmd Commander, args []string) {
 			ctx := context.WithValue(cmd.Context(), key{}, val)
 			cmd.SetContext(ctx)
 		},
-		Run: func(cmd *Command, args []string) {
+		Run: func(cmd Commander, args []string) {
 			val := cmd.Context().Value(key{})
 			got, ok := val.(string)
 			if !ok {
@@ -2541,7 +2541,7 @@ func TestSetContextPreRun(t *testing.T) {
 			}
 		},
 	}
-	err := root.Execute()
+	err := root.ExecuteX()
 	if err != nil {
 		t.Error(err)
 	}
@@ -2552,7 +2552,7 @@ func TestSetContextPreRunOverwrite(t *testing.T) {
 	val := "blah"
 	root := &Command{
 		Use: "root",
-		Run: func(cmd *Command, args []string) {
+		Run: func(cmd Commander, args []string) {
 			key := cmd.Context().Value(key{})
 			_, ok := key.(string)
 			if ok {
@@ -2573,14 +2573,14 @@ func TestSetContextPersistentPreRun(t *testing.T) {
 	val := "barbar"
 	root := &Command{
 		Use: "root",
-		PersistentPreRun: func(cmd *Command, args []string) {
+		PersistentPreRun: func(cmd Commander, args []string) {
 			ctx := context.WithValue(cmd.Context(), key{}, val)
 			cmd.SetContext(ctx)
 		},
 	}
 	child := &Command{
 		Use: "child",
-		Run: func(cmd *Command, args []string) {
+		Run: func(cmd Commander, args []string) {
 			key := cmd.Context().Value(key{})
 			got, ok := key.(string)
 			if !ok {
@@ -2593,7 +2593,7 @@ func TestSetContextPersistentPreRun(t *testing.T) {
 	}
 	root.AddCommand(child)
 	root.SetArgs([]string{"child"})
-	err := root.Execute()
+	err := root.ExecuteX()
 	if err != nil {
 		t.Error(err)
 	}
