@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cobra
+package boot
 
 import (
 	"bytes"
@@ -94,7 +94,7 @@ func TestSingleCommand(t *testing.T) {
 	}
 	aCmd := &Command{Use: "a", Args: NoArgs, Run: emptyRun}
 	bCmd := &Command{Use: "b", Args: NoArgs, Run: emptyRun}
-	rootCmd.AddCommand(aCmd, bCmd)
+	rootCmd.Add(aCmd, bCmd)
 
 	output, err := executeCommand(rootCmd, "one", "two")
 	if output != "" {
@@ -119,7 +119,7 @@ func TestChildCommand(t *testing.T) {
 		Run:  func(_ Commander, args []string) { child1CmdArgs = args },
 	}
 	child2Cmd := &Command{Use: "child2", Args: NoArgs, Run: emptyRun}
-	rootCmd.AddCommand(child1Cmd, child2Cmd)
+	rootCmd.Add(child1Cmd, child2Cmd)
 
 	output, err := executeCommand(rootCmd, "child1", "one", "two")
 	if output != "" {
@@ -145,7 +145,7 @@ func TestCallCommandWithoutSubcommands(t *testing.T) {
 
 func TestRootExecuteUnknownCommand(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
-	rootCmd.AddCommand(&Command{Use: "child", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "child", Run: emptyRun})
 
 	output, _ := executeCommand(rootCmd, "unknown")
 
@@ -159,7 +159,7 @@ func TestRootExecuteUnknownCommand(t *testing.T) {
 func TestSubcommandExecuteC(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	c, output, err := executeCommandC(rootCmd, "child")
 	if output != "" {
@@ -187,8 +187,8 @@ func TestExecuteContext(t *testing.T) {
 	childCmd := &Command{Use: "child", Run: ctxRun, PreRun: ctxRun}
 	granchildCmd := &Command{Use: "grandchild", Run: ctxRun, PreRun: ctxRun}
 
-	childCmd.AddCommand(granchildCmd)
-	rootCmd.AddCommand(childCmd)
+	childCmd.Add(granchildCmd)
+	rootCmd.Add(childCmd)
 
 	if _, err := executeCommandWithContext(ctx, rootCmd, ""); err != nil {
 		t.Errorf("Root command must not fail: %+v", err)
@@ -216,8 +216,8 @@ func TestExecuteContextC(t *testing.T) {
 	childCmd := &Command{Use: "child", Run: ctxRun, PreRun: ctxRun}
 	granchildCmd := &Command{Use: "grandchild", Run: ctxRun, PreRun: ctxRun}
 
-	childCmd.AddCommand(granchildCmd)
-	rootCmd.AddCommand(childCmd)
+	childCmd.Add(granchildCmd)
+	rootCmd.Add(childCmd)
 
 	if _, _, err := executeCommandWithContextC(ctx, rootCmd, ""); err != nil {
 		t.Errorf("Root command must not fail: %+v", err)
@@ -243,8 +243,8 @@ func TestExecute_NoContext(t *testing.T) {
 	childCmd := &Command{Use: "child", Run: run, PreRun: run}
 	granchildCmd := &Command{Use: "grandchild", Run: run, PreRun: run}
 
-	childCmd.AddCommand(granchildCmd)
-	rootCmd.AddCommand(childCmd)
+	childCmd.Add(granchildCmd)
+	rootCmd.Add(childCmd)
 
 	if _, err := executeCommand(rootCmd, ""); err != nil {
 		t.Errorf("Root command must not fail: %+v", err)
@@ -263,7 +263,7 @@ func TestRootUnknownCommandSilenced(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	rootCmd.SilenceErrors = true
 	rootCmd.SilenceUsage = true
-	rootCmd.AddCommand(&Command{Use: "child", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "child", Run: emptyRun})
 
 	output, _ := executeCommand(rootCmd, "unknown")
 	if output != "" {
@@ -285,8 +285,8 @@ func TestCommandAlias(t *testing.T) {
 		Args: ExactArgs(2),
 		Run:  func(_ Commander, args []string) { timesCmdArgs = args },
 	}
-	echoCmd.AddCommand(timesCmd)
-	rootCmd.AddCommand(echoCmd)
+	echoCmd.Add(timesCmd)
+	rootCmd.Add(echoCmd)
 
 	output, err := executeCommand(rootCmd, "tell", "times", "one", "two")
 	if output != "" {
@@ -313,7 +313,7 @@ func TestEnablePrefixMatching(t *testing.T) {
 		Run:  func(_ Commander, args []string) { aCmdArgs = args },
 	}
 	bCmd := &Command{Use: "bCmd", Args: NoArgs, Run: emptyRun}
-	rootCmd.AddCommand(aCmd, bCmd)
+	rootCmd.Add(aCmd, bCmd)
 
 	output, err := executeCommand(rootCmd, "a", "one", "two")
 	if output != "" {
@@ -347,8 +347,8 @@ func TestAliasPrefixMatching(t *testing.T) {
 		Args: ExactArgs(2),
 		Run:  func(_ Commander, args []string) { timesCmdArgs = args },
 	}
-	echoCmd.AddCommand(timesCmd)
-	rootCmd.AddCommand(echoCmd)
+	echoCmd.Add(timesCmd)
+	rootCmd.Add(echoCmd)
 
 	output, err := executeCommand(rootCmd, "sa", "times", "one", "two")
 	if output != "" {
@@ -399,7 +399,7 @@ func TestPluginWithSubCommands(t *testing.T) {
 	}
 
 	subCmd := &Command{Use: "sub [flags]", Args: NoArgs, Run: emptyRun}
-	rootCmd.AddCommand(subCmd)
+	rootCmd.Add(subCmd)
 
 	rootHelp, err := executeCommand(rootCmd, "-h")
 	if err != nil {
@@ -439,7 +439,7 @@ func TestChildSameName(t *testing.T) {
 		Run:  func(_ Commander, args []string) { fooCmdArgs = args },
 	}
 	barCmd := &Command{Use: "bar", Args: NoArgs, Run: emptyRun}
-	rootCmd.AddCommand(fooCmd, barCmd)
+	rootCmd.Add(fooCmd, barCmd)
 
 	output, err := executeCommand(rootCmd, "foo", "one", "two")
 	if output != "" {
@@ -467,8 +467,8 @@ func TestGrandChildSameName(t *testing.T) {
 		Args: ExactArgs(2),
 		Run:  func(_ Commander, args []string) { fooCmdArgs = args },
 	}
-	barCmd.AddCommand(fooCmd)
-	rootCmd.AddCommand(barCmd)
+	barCmd.Add(fooCmd)
+	rootCmd.Add(barCmd)
 
 	output, err := executeCommand(rootCmd, "bar", "foo", "one", "two")
 	if output != "" {
@@ -558,7 +558,7 @@ func TestFlagShort(t *testing.T) {
 func TestChildFlag(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	var intFlagValue int
 	childCmd.Flags().IntVarP(&intFlagValue, "intf", "i", -1, "")
@@ -579,7 +579,7 @@ func TestChildFlag(t *testing.T) {
 func TestChildFlagWithParentLocalFlag(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	var intFlagValue int
 	rootCmd.Flags().StringP("sf", "s", "", "")
@@ -612,7 +612,7 @@ func TestFlagInvalidInput(t *testing.T) {
 func TestFlagBeforeCommand(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	var flagValue int
 	childCmd.Flags().IntVarP(&flagValue, "intf", "i", -1, "")
@@ -791,7 +791,7 @@ func TestChildFlagShadowsParentPersistentFlag(t *testing.T) {
 	child.Flags().String("strf", "", "")
 	child.Flags().Int("intf", -1, "")
 
-	parent.AddCommand(child)
+	parent.Add(child)
 
 	childInherited := child.InheritedFlags()
 	childLocal := child.LocalFlags()
@@ -819,7 +819,7 @@ func TestPersistentFlagsOnChild(t *testing.T) {
 		Args: ArbitraryArgs,
 		Run:  func(_ Commander, args []string) { childCmdArgs = args },
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	var parentFlagValue int
 	var childFlagValue int
@@ -879,7 +879,7 @@ func TestPersistentRequiredFlags(t *testing.T) {
 	assertNoErr(t, child.MarkFlagRequired("bar2"))
 	child.Flags().String("bar3", "", "")
 
-	parent.AddCommand(child)
+	parent.Add(child)
 
 	expected := fmt.Sprintf("required flag(s) %q, %q, %q, %q not set", "bar1", "bar2", "foo1", "foo2")
 
@@ -901,7 +901,7 @@ func TestPersistentRequiredFlagsWithDisableFlagParsing(t *testing.T) {
 	child := &Command{Use: "child", Run: emptyRun}
 	child.DisableFlagParsing = true
 
-	parent.AddCommand(child)
+	parent.Add(child)
 
 	if _, err := executeCommand(parent, "--foo", "child"); err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -925,7 +925,7 @@ func TestInitHelpFlagMergesFlags(t *testing.T) {
 	rootCmd := &Command{Use: "root"}
 	rootCmd.PersistentFlags().Bool("help", false, "custom flag")
 	childCmd := &Command{Use: "child"}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	childCmd.InitDefaultHelpFlag()
 	got := childCmd.Flags().Lookup("help").Usage
@@ -936,7 +936,7 @@ func TestInitHelpFlagMergesFlags(t *testing.T) {
 
 func TestHelpCommandExecuted(t *testing.T) {
 	rootCmd := &Command{Use: "root", Long: "Long description", Run: emptyRun}
-	rootCmd.AddCommand(&Command{Use: "child", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "child", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, "help")
 	if err != nil {
@@ -949,7 +949,7 @@ func TestHelpCommandExecuted(t *testing.T) {
 func TestHelpCommandExecutedOnChild(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Long: "Long description", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	output, err := executeCommand(rootCmd, "help", "child")
 	if err != nil {
@@ -962,7 +962,7 @@ func TestHelpCommandExecutedOnChild(t *testing.T) {
 func TestHelpCommandExecutedOnChildWithFlagThatShadowsParentFlag(t *testing.T) {
 	parent := &Command{Use: "parent", Run: emptyRun}
 	child := &Command{Use: "child", Run: emptyRun}
-	parent.AddCommand(child)
+	parent.Add(child)
 
 	parent.PersistentFlags().Bool("foo", false, "parent foo usage")
 	parent.PersistentFlags().Bool("bar", false, "parent bar usage")
@@ -993,7 +993,7 @@ Global Flags:
 
 func TestSetHelpCommand(t *testing.T) {
 	c := &Command{Use: "c", Run: emptyRun}
-	c.AddCommand(&Command{Use: "empty", Run: emptyRun})
+	c.Add(&Command{Use: "empty", Run: emptyRun})
 
 	expected := "WORKS"
 	c.SetHelpCommand(&Command{
@@ -1028,7 +1028,7 @@ func TestHelpFlagExecuted(t *testing.T) {
 func TestHelpFlagExecutedOnChild(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Long: "Long description", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	output, err := executeCommand(rootCmd, "child", "--help")
 	if err != nil {
@@ -1046,7 +1046,7 @@ func TestHelpFlagInHelp(t *testing.T) {
 	parentCmd := &Command{Use: "parent", Run: func(Commander, []string) {}}
 
 	childCmd := &Command{Use: "child", Run: func(Commander, []string) {}}
-	parentCmd.AddCommand(childCmd)
+	parentCmd.Add(childCmd)
 
 	output, err := executeCommand(parentCmd, "help", "child")
 	if err != nil {
@@ -1069,7 +1069,7 @@ func TestFlagsInUsage(t *testing.T) {
 func TestHelpExecutedOnNonRunnableChild(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Long: "Long description"}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	output, err := executeCommand(rootCmd, "child")
 	if err != nil {
@@ -1163,7 +1163,7 @@ func TestShorthandVersionTemplate(t *testing.T) {
 func TestRootErrPrefixExecutedOnSubcommand(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	rootCmd.SetErrPrefix("root error prefix:")
-	rootCmd.AddCommand(&Command{Use: "sub", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "sub", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, "sub", "--unknown-flag")
 	if err == nil {
@@ -1176,7 +1176,7 @@ func TestRootErrPrefixExecutedOnSubcommand(t *testing.T) {
 func TestRootAndSubErrPrefix(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	subCmd := &Command{Use: "sub", Run: emptyRun}
-	rootCmd.AddCommand(subCmd)
+	rootCmd.Add(subCmd)
 	rootCmd.SetErrPrefix("root error prefix:")
 	subCmd.SetErrPrefix("sub error prefix:")
 
@@ -1195,7 +1195,7 @@ func TestRootAndSubErrPrefix(t *testing.T) {
 
 func TestVersionFlagExecutedOnSubcommand(t *testing.T) {
 	rootCmd := &Command{Use: "root", Version: "1.0.0"}
-	rootCmd.AddCommand(&Command{Use: "sub", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "sub", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, "--version", "sub")
 	if err != nil {
@@ -1207,7 +1207,7 @@ func TestVersionFlagExecutedOnSubcommand(t *testing.T) {
 
 func TestShorthandVersionFlagExecutedOnSubcommand(t *testing.T) {
 	rootCmd := &Command{Use: "root", Version: "1.0.0"}
-	rootCmd.AddCommand(&Command{Use: "sub", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "sub", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, "-v", "sub")
 	if err != nil {
@@ -1219,7 +1219,7 @@ func TestShorthandVersionFlagExecutedOnSubcommand(t *testing.T) {
 
 func TestVersionFlagOnlyAddedToRoot(t *testing.T) {
 	rootCmd := &Command{Use: "root", Version: "1.0.0", Run: emptyRun}
-	rootCmd.AddCommand(&Command{Use: "sub", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "sub", Run: emptyRun})
 
 	_, err := executeCommand(rootCmd, "sub", "--version")
 	if err == nil {
@@ -1231,7 +1231,7 @@ func TestVersionFlagOnlyAddedToRoot(t *testing.T) {
 
 func TestShortVersionFlagOnlyAddedToRoot(t *testing.T) {
 	rootCmd := &Command{Use: "root", Version: "1.0.0", Run: emptyRun}
-	rootCmd.AddCommand(&Command{Use: "sub", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "sub", Run: emptyRun})
 
 	_, err := executeCommand(rootCmd, "sub", "-v")
 	if err == nil {
@@ -1287,7 +1287,7 @@ func TestShorthandVersionFlagOnlyAddedIfVersionNotDefined(t *testing.T) {
 func TestUsageIsNotPrintedTwice(t *testing.T) {
 	var cmd = &Command{Use: "root"}
 	var sub = &Command{Use: "sub"}
-	cmd.AddCommand(sub)
+	cmd.Add(sub)
 
 	output, _ := executeCommand(cmd, "")
 	if strings.Count(output, "Usage:") != 1 {
@@ -1299,8 +1299,8 @@ func TestVisitParents(t *testing.T) {
 	c := &Command{Use: "app"}
 	sub := &Command{Use: "sub"}
 	dsub := &Command{Use: "dsub"}
-	sub.AddCommand(dsub)
-	c.AddCommand(sub)
+	sub.Add(dsub)
+	c.Add(sub)
 
 	total := 0
 	add := func(x Commander) {
@@ -1331,7 +1331,7 @@ func TestSuggestions(t *testing.T) {
 		SuggestFor: []string{"counts"},
 		Run:        emptyRun,
 	}
-	rootCmd.AddCommand(timesCmd)
+	rootCmd.Add(timesCmd)
 
 	templateWithSuggestions := "Error: unknown command \"%s\" for \"root\"\n\nDid you mean this?\n\t%s\n\nRun 'root --help' for usage.\n"
 	templateWithoutSuggestions := "Error: unknown command \"%s\" for \"root\"\nRun 'root --help' for usage.\n"
@@ -1376,8 +1376,8 @@ func TestCaseInsensitive(t *testing.T) {
 	childCmd := &Command{Use: "child", Run: emptyRun, Aliases: []string{"alternative"}}
 	granchildCmd := &Command{Use: "GRANDCHILD", Run: emptyRun, Aliases: []string{"ALIAS"}}
 
-	childCmd.AddCommand(granchildCmd)
-	rootCmd.AddCommand(childCmd)
+	childCmd.Add(granchildCmd)
+	rootCmd.Add(childCmd)
 
 	tests := []struct {
 		args                []string
@@ -1470,7 +1470,7 @@ func TestCaseSensitivityBackwardCompatibility(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Run: emptyRun}
 
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 	_, err := executeCommand(rootCmd, strings.ToUpper(childCmd.Use))
 	if err == nil {
 		t.Error("Expected error on calling a command in upper case while command names are case sensitive. Got nil.")
@@ -1481,7 +1481,7 @@ func TestCaseSensitivityBackwardCompatibility(t *testing.T) {
 func TestRemoveCommand(t *testing.T) {
 	rootCmd := &Command{Use: "root", Args: NoArgs, Run: emptyRun}
 	childCmd := &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 	rootCmd.RemoveCommand(childCmd)
 
 	_, err := executeCommand(rootCmd, "child")
@@ -1501,9 +1501,9 @@ func TestReplaceCommandWithRemove(t *testing.T) {
 		Use: "child",
 		Run: func(Commander, []string) { childUsed = 2 },
 	}
-	rootCmd.AddCommand(child1Cmd)
+	rootCmd.Add(child1Cmd)
 	rootCmd.RemoveCommand(child1Cmd)
-	rootCmd.AddCommand(child2Cmd)
+	rootCmd.Add(child2Cmd)
 
 	output, err := executeCommand(rootCmd, "child")
 	if output != "" {
@@ -1528,7 +1528,7 @@ func TestDeprecatedCommand(t *testing.T) {
 		Deprecated: "This command is deprecated",
 		Run:        emptyRun,
 	}
-	rootCmd.AddCommand(deprecatedCmd)
+	rootCmd.Add(deprecatedCmd)
 
 	output, err := executeCommand(rootCmd, "deprecated")
 	if err != nil {
@@ -1660,7 +1660,7 @@ func testPersistentHooks(t *testing.T, expectedHookRunOrder []string) {
 			validateHook(args, "child PersistentPostRun")
 		},
 	}
-	parentCmd.AddCommand(childCmd)
+	parentCmd.Add(childCmd)
 
 	output, err := executeCommand(parentCmd, "child", "one", "two")
 	if output != "" {
@@ -1689,7 +1689,7 @@ func TestGlobalNormFuncPropagation(t *testing.T) {
 
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	rootCmd.SetGlobalNormalizationFunc(normFunc)
 	if reflect.ValueOf(normFunc).Pointer() != reflect.ValueOf(rootCmd.GlobalNormalizationFunc()).Pointer() {
@@ -1725,12 +1725,12 @@ func TestNormPassedOnInherited(t *testing.T) {
 	c.SetGlobalNormalizationFunc(toUpper)
 
 	child1 := &Command{}
-	c.AddCommand(child1)
+	c.Add(child1)
 
 	c.PersistentFlags().Bool("flagname", true, "")
 
 	child2 := &Command{}
-	c.AddCommand(child2)
+	c.Add(child2)
 
 	inherited := child1.InheritedFlags()
 	if inherited.Lookup("flagname") == nil || inherited.Lookup("flagname") != inherited.Lookup("FLAGNAME") {
@@ -1767,7 +1767,7 @@ func TestFlagOnPflagCommandLine(t *testing.T) {
 	pflag.String(flagName, "", "about my flag")
 
 	c := &Command{Use: "c", Run: emptyRun}
-	c.AddCommand(&Command{Use: "child", Run: emptyRun})
+	c.Add(&Command{Use: "child", Run: emptyRun})
 
 	output, _ := executeCommand(c, "--help")
 	checkStringContains(t, output, flagName)
@@ -1815,7 +1815,7 @@ func TestCommandsAreSorted(t *testing.T) {
 	var rootCmd = &Command{Use: "root"}
 
 	for _, name := range originalNames {
-		rootCmd.AddCommand(&Command{Use: name})
+		rootCmd.Add(&Command{Use: name})
 	}
 
 	for i, c := range rootCmd.Commands() {
@@ -1836,7 +1836,7 @@ func TestEnableCommandSortingIsDisabled(t *testing.T) {
 	var rootCmd = &Command{Use: "root"}
 
 	for _, name := range originalNames {
-		rootCmd.AddCommand(&Command{Use: name})
+		rootCmd.Add(&Command{Use: name})
 	}
 
 	for i, c := range rootCmd.Commands() {
@@ -1856,8 +1856,8 @@ func TestUsageWithGroup(t *testing.T) {
 	rootCmd.AddGroup(&Group{ID: "group1", Title: "group1"})
 	rootCmd.AddGroup(&Group{ID: "group2", Title: "group2"})
 
-	rootCmd.AddCommand(&Command{Use: "cmd1", GroupID: "group1", Run: emptyRun})
-	rootCmd.AddCommand(&Command{Use: "cmd2", GroupID: "group2", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "cmd1", GroupID: "group1", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "cmd2", GroupID: "group2", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, "--help")
 	if err != nil {
@@ -1875,7 +1875,7 @@ func TestUsageHelpGroup(t *testing.T) {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	rootCmd.AddGroup(&Group{ID: "group", Title: "group"})
-	rootCmd.AddCommand(&Command{Use: "xxx", GroupID: "group", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "xxx", GroupID: "group", Run: emptyRun})
 	rootCmd.SetHelpCommandGroupID("group")
 
 	output, err := executeCommand(rootCmd, "--help")
@@ -1894,7 +1894,7 @@ func TestUsageCompletionGroup(t *testing.T) {
 	rootCmd.AddGroup(&Group{ID: "group", Title: "group"})
 	rootCmd.AddGroup(&Group{ID: "help", Title: "help"})
 
-	rootCmd.AddCommand(&Command{Use: "xxx", GroupID: "group", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "xxx", GroupID: "group", Run: emptyRun})
 	rootCmd.SetHelpCommandGroupID("help")
 	rootCmd.SetCompletionCommandGroupID("group")
 
@@ -1914,12 +1914,12 @@ func TestUngroupedCommand(t *testing.T) {
 	rootCmd.AddGroup(&Group{ID: "group", Title: "group"})
 	rootCmd.AddGroup(&Group{ID: "help", Title: "help"})
 
-	rootCmd.AddCommand(&Command{Use: "xxx", GroupID: "group", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "xxx", GroupID: "group", Run: emptyRun})
 	rootCmd.SetHelpCommandGroupID("help")
 	rootCmd.SetCompletionCommandGroupID("group")
 
 	// Add a command without a group
-	rootCmd.AddCommand(&Command{Use: "yyy", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "yyy", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, "--help")
 	if err != nil {
@@ -1934,7 +1934,7 @@ func TestAddGroup(t *testing.T) {
 	var rootCmd = &Command{Use: "root", Short: "test", Run: emptyRun}
 
 	rootCmd.AddGroup(&Group{ID: "group", Title: "Test group"})
-	rootCmd.AddCommand(&Command{Use: "cmd", GroupID: "group", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "cmd", GroupID: "group", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, "--help")
 	if err != nil {
@@ -1949,7 +1949,7 @@ func TestWrongGroupFirstLevel(t *testing.T) {
 
 	rootCmd.AddGroup(&Group{ID: "group", Title: "Test group"})
 	// Use the wrong group ID
-	rootCmd.AddCommand(&Command{Use: "cmd", GroupID: "wrong", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "cmd", GroupID: "wrong", Run: emptyRun})
 
 	defer func() {
 		if recover() == nil {
@@ -1965,11 +1965,11 @@ func TestWrongGroupFirstLevel(t *testing.T) {
 func TestWrongGroupNestedLevel(t *testing.T) {
 	var rootCmd = &Command{Use: "root", Short: "test", Run: emptyRun}
 	var childCmd = &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	childCmd.AddGroup(&Group{ID: "group", Title: "Test group"})
 	// Use the wrong group ID
-	childCmd.AddCommand(&Command{Use: "cmd", GroupID: "wrong", Run: emptyRun})
+	childCmd.Add(&Command{Use: "cmd", GroupID: "wrong", Run: emptyRun})
 
 	defer func() {
 		if recover() == nil {
@@ -1985,7 +1985,7 @@ func TestWrongGroupNestedLevel(t *testing.T) {
 func TestWrongGroupForHelp(t *testing.T) {
 	var rootCmd = &Command{Use: "root", Short: "test", Run: emptyRun}
 	var childCmd = &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	rootCmd.AddGroup(&Group{ID: "group", Title: "Test group"})
 	// Use the wrong group ID
@@ -2005,7 +2005,7 @@ func TestWrongGroupForHelp(t *testing.T) {
 func TestWrongGroupForCompletion(t *testing.T) {
 	var rootCmd = &Command{Use: "root", Short: "test", Run: emptyRun}
 	var childCmd = &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	rootCmd.AddGroup(&Group{ID: "group", Title: "Test group"})
 	// Use the wrong group ID
@@ -2223,7 +2223,7 @@ func TestTraverseWithParentFlags(t *testing.T) {
 	childCmd := &Command{Use: "child"}
 	childCmd.Flags().Int("int", -1, "")
 
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	c, args, err := rootCmd.Traverse([]string{"-b", "--str", "ok", "child", "--int"})
 	if err != nil {
@@ -2243,7 +2243,7 @@ func TestTraverseNoParentFlags(t *testing.T) {
 
 	childCmd := &Command{Use: "child"}
 	childCmd.Flags().String("str", "", "")
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	c, args, err := rootCmd.Traverse([]string{"child"})
 	if err != nil {
@@ -2262,7 +2262,7 @@ func TestTraverseWithBadParentFlags(t *testing.T) {
 
 	childCmd := &Command{Use: "child"}
 	childCmd.Flags().String("str", "", "")
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	expected := "unknown flag: --str"
 
@@ -2280,7 +2280,7 @@ func TestTraverseWithBadChildFlag(t *testing.T) {
 	rootCmd.Flags().String("str", "", "")
 
 	childCmd := &Command{Use: "child"}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	// Expect no error because the last commands args shouldn't be parsed in
 	// Traverse.
@@ -2300,12 +2300,12 @@ func TestTraverseWithTwoSubcommands(t *testing.T) {
 	rootCmd := &Command{Use: "root", TraverseChildren: true}
 
 	subCmd := &Command{Use: "sub", TraverseChildren: true}
-	rootCmd.AddCommand(subCmd)
+	rootCmd.Add(subCmd)
 
 	subsubCmd := &Command{
 		Use: "subsub",
 	}
-	subCmd.AddCommand(subsubCmd)
+	subCmd.Add(subsubCmd)
 
 	c, _, err := rootCmd.Traverse([]string{"sub", "subsub"})
 	if err != nil {
@@ -2346,8 +2346,8 @@ func (tc *calledAsTestcase) test(t *testing.T) {
 	child1 := &Command{Use: "child1", Run: run, Aliases: []string{"this"}}
 	child2 := &Command{Use: "child2", Run: run, Aliases: []string{"that"}}
 
-	parent.AddCommand(child1)
-	parent.AddCommand(child2)
+	parent.Add(child1)
+	parent.Add(child2)
 	parent.SetArgs(tc.args)
 
 	output := new(bytes.Buffer)
@@ -2433,7 +2433,7 @@ func TestFParseErrWhitelistParentCommand(t *testing.T) {
 	}
 	c.Flags().BoolP("boola", "a", false, "a boolean flag")
 
-	root.AddCommand(c)
+	root.Add(c)
 
 	output, err := executeCommand(root, "child", "-a", "--unknown", "flag")
 	if err == nil {
@@ -2457,7 +2457,7 @@ func TestFParseErrWhitelistChildCommand(t *testing.T) {
 	}
 	c.Flags().BoolP("boola", "a", false, "a boolean flag")
 
-	root.AddCommand(c)
+	root.Add(c)
 
 	_, err := executeCommand(root, "child", "-a", "--unknown", "flag")
 	if err != nil {
@@ -2486,8 +2486,8 @@ func TestFParseErrWhitelistSiblingCommand(t *testing.T) {
 	}
 	s.Flags().BoolP("boolb", "b", false, "a boolean flag")
 
-	root.AddCommand(c)
-	root.AddCommand(s)
+	root.Add(c)
+	root.Add(s)
 
 	output, err := executeCommand(root, "sibling", "-b", "--unknown", "flag")
 	if err == nil {
@@ -2591,7 +2591,7 @@ func TestSetContextPersistentPreRun(t *testing.T) {
 			}
 		},
 	}
-	root.AddCommand(child)
+	root.Add(child)
 	root.SetArgs([]string{"child"})
 	err := root.ExecuteX()
 	if err != nil {
@@ -2604,7 +2604,7 @@ const HelpFlag = "--help"
 
 func TestNoRootRunCommandExecutedWithVersionSet(t *testing.T) {
 	rootCmd := &Command{Use: "root", Version: "1.0.0", Long: "Long description"}
-	rootCmd.AddCommand(&Command{Use: "child", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "child", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd)
 	if err != nil {
@@ -2618,7 +2618,7 @@ func TestNoRootRunCommandExecutedWithVersionSet(t *testing.T) {
 
 func TestNoRootRunCommandExecutedWithoutVersionSet(t *testing.T) {
 	rootCmd := &Command{Use: "root", Long: "Long description"}
-	rootCmd.AddCommand(&Command{Use: "child", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "child", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd)
 	if err != nil {
@@ -2632,7 +2632,7 @@ func TestNoRootRunCommandExecutedWithoutVersionSet(t *testing.T) {
 
 func TestHelpCommandExecutedWithVersionSet(t *testing.T) {
 	rootCmd := &Command{Use: "root", Version: "1.0.0", Long: "Long description", Run: emptyRun}
-	rootCmd.AddCommand(&Command{Use: "child", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "child", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, "help")
 	if err != nil {
@@ -2646,7 +2646,7 @@ func TestHelpCommandExecutedWithVersionSet(t *testing.T) {
 
 func TestHelpCommandExecutedWithoutVersionSet(t *testing.T) {
 	rootCmd := &Command{Use: "root", Long: "Long description", Run: emptyRun}
-	rootCmd.AddCommand(&Command{Use: "child", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "child", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, "help")
 	if err != nil {
@@ -2660,7 +2660,7 @@ func TestHelpCommandExecutedWithoutVersionSet(t *testing.T) {
 
 func TestHelpflagCommandExecutedWithVersionSet(t *testing.T) {
 	rootCmd := &Command{Use: "root", Version: "1.0.0", Long: "Long description", Run: emptyRun}
-	rootCmd.AddCommand(&Command{Use: "child", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "child", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, HelpFlag)
 	if err != nil {
@@ -2674,7 +2674,7 @@ func TestHelpflagCommandExecutedWithVersionSet(t *testing.T) {
 
 func TestHelpflagCommandExecutedWithoutVersionSet(t *testing.T) {
 	rootCmd := &Command{Use: "root", Long: "Long description", Run: emptyRun}
-	rootCmd.AddCommand(&Command{Use: "child", Run: emptyRun})
+	rootCmd.Add(&Command{Use: "child", Run: emptyRun})
 
 	output, err := executeCommand(rootCmd, HelpFlag)
 	if err != nil {
@@ -2697,7 +2697,7 @@ func TestFind(t *testing.T) {
 	child := &Command{
 		Use: "child",
 	}
-	root.AddCommand(child)
+	root.Add(child)
 
 	testCases := []struct {
 		args              []string
@@ -2805,7 +2805,7 @@ func TestUnknownFlagShouldReturnSameErrorRegardlessOfArgPosition(t *testing.T) {
 	}
 	c.Flags().Bool("bar", false, "a boolean flag")
 
-	root.AddCommand(c)
+	root.Add(c)
 
 	for _, tc := range testCases {
 		t.Run(strings.Join(tc, " "), func(t *testing.T) {

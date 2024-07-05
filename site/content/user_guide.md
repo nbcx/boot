@@ -111,8 +111,8 @@ func init() {
 	viper.SetDefault("author", "NAME HERE <EMAIL ADDRESS>")
 	viper.SetDefault("license", "apache")
 
-	rootCmd.AddCommand(addCmd)
-	rootCmd.AddCommand(initCmd)
+	rootCmd.Add(addCmd)
+	rootCmd.Add(initCmd)
 }
 
 func initConfig() {
@@ -175,7 +175,7 @@ import (
 )
 
 func init() {
-  rootCmd.AddCommand(versionCmd)
+  rootCmd.Add(versionCmd)
 }
 
 var versionCmd = &cobra.Command{
@@ -191,10 +191,10 @@ var versionCmd = &cobra.Command{
 ### Organizing subcommands
 
 A command may have subcommands which in turn may have other subcommands. This is achieved by using
-`AddCommand`. In some cases, especially in larger applications, each subcommand may be defined in
+`Add`. In some cases, especially in larger applications, each subcommand may be defined in
 its own go package.
 
-The suggested approach is for the parent command to use `AddCommand` to add its most immediate
+The suggested approach is for the parent command to use `Add` to add its most immediate
 subcommands. For example, consider the following directory structure:
 
 ```text
@@ -233,7 +233,7 @@ import (
 )
 
 func init() {
-  rootCmd.AddCommand(tryCmd)
+  rootCmd.Add(tryCmd)
 }
 
 var tryCmd = &cobra.Command{
@@ -487,8 +487,8 @@ a count and a string.`,
   cmdTimes.Flags().IntVarP(&echoTimes, "times", "t", 1, "times to echo the input")
 
   var rootCmd = &cobra.Command{Use: "app"}
-  rootCmd.AddCommand(cmdPrint, cmdEcho)
-  cmdEcho.AddCommand(cmdTimes)
+  rootCmd.Add(cmdPrint, cmdEcho)
+  cmdEcho.Add(cmdTimes)
   rootCmd.Execute()
 }
 ```
@@ -668,7 +668,7 @@ func main() {
     },
   }
 
-  rootCmd.AddCommand(subCmd)
+  rootCmd.Add(subCmd)
 
   rootCmd.SetArgs([]string{""})
   rootCmd.Execute()
@@ -786,7 +786,7 @@ func main() {
 			fmt.Println("kubectl myplugin subcmd")
 		},
 	}
-	rootCmd.AddCommand(subCmd)
+	rootCmd.Add(subCmd)
 	rootCmd.Execute()
 }
 ```

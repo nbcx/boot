@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cobra
+package boot
 
 import (
 	"fmt"
@@ -258,7 +258,7 @@ func (c *Command) initCompleteCmd(args []string) {
 			fmt.Fprintf(finalCmd.ErrOrStderr(), "Completion ended with directive: %s\n", directive.string())
 		},
 	}
-	c.AddCommand(completeCmd)
+	c.Add(completeCmd)
 	subCmd, _, err := c.Find(args)
 	if err != nil || subCmd.Name() != ShellCompRequestCmd {
 		// Only create this special command if it is actually being called.
@@ -712,7 +712,7 @@ See each sub-command's help for details on how to use the generated script.
 		Hidden:            c.CompletionOptions.HiddenDefaultCmd,
 		GroupID:           c.completionCommandGroupID,
 	}
-	c.AddCommand(completionCmd)
+	c.Add(completionCmd)
 
 	out := c.OutOrStdout()
 	noDesc := c.CompletionOptions.DisableDescriptions
@@ -842,7 +842,7 @@ to your powershell profile.
 		powershell.Flags().BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
-	completionCmd.AddCommand(bash, zsh, fish, powershell)
+	completionCmd.Add(bash, zsh, fish, powershell)
 }
 
 func findFlag(cmd Commander, name string) *pflag.Flag {

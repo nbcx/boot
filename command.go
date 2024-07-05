@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cobra is a commander providing a simple interface to create powerful modern CLI interfaces.
+// package boot is a commander providing a simple interface to create powerful modern CLI interfaces.
 // In addition to providing an interface, Cobra simultaneously provides a controller to organize your application code.
-package cobra
+package boot
 
 import (
 	"bytes"
@@ -1281,7 +1281,7 @@ Simply type ` + c.displayName() + ` help [path to command] for full details.`,
 		}
 	}
 	c.RemoveCommand(c.helpCommand)
-	c.AddCommand(c.helpCommand)
+	c.Add(c.helpCommand)
 }
 
 // ResetCommands delete parent, subcommand and help command from c.
@@ -1309,8 +1309,8 @@ func (c *Command) Commands() []Commander {
 	return c.commands
 }
 
-// AddCommand adds one or more commands to this parent command.
-func (c *Command) AddCommand(cmds ...Commander) {
+// Add adds one or more commands to this parent command.
+func (c *Command) Add(cmds ...Commander) {
 	for i, x := range cmds {
 		if cmds[i] == c {
 			panic("Command can't be a child of itself")

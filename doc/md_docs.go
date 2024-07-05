@@ -24,12 +24,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
+	"github.com/nbcx/boot"
 )
 
 const markdownExtension = ".md"
 
-func printOptions(buf *bytes.Buffer, cmd cobra.Commander, name string) error {
+func printOptions(buf *bytes.Buffer, cmd boot.Commander, name string) error {
 	flags := cmd.NonInheritedFlags()
 	flags.SetOutput(buf)
 	if flags.HasAvailableFlags() {
@@ -49,12 +49,12 @@ func printOptions(buf *bytes.Buffer, cmd cobra.Commander, name string) error {
 }
 
 // GenMarkdown creates markdown output.
-func GenMarkdown(cmd *cobra.Command, w io.Writer) error {
+func GenMarkdown(cmd *boot.Command, w io.Writer) error {
 	return GenMarkdownCustom(cmd, w, func(s string) string { return s })
 }
 
 // GenMarkdownCustom creates custom markdown output.
-func GenMarkdownCustom(cmd cobra.Commander, w io.Writer, linkHandler func(string) string) error {
+func GenMarkdownCustom(cmd boot.Commander, w io.Writer, linkHandler func(string) string) error {
 	cmd.InitDefaultHelpCmd()
 	cmd.InitDefaultHelpFlag()
 
@@ -88,7 +88,7 @@ func GenMarkdownCustom(cmd cobra.Commander, w io.Writer, linkHandler func(string
 			link := pname + markdownExtension
 			link = strings.ReplaceAll(link, " ", "_")
 			buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", pname, linkHandler(link), parent.GetShort()))
-			cmd.VisitParents(func(c cobra.Commander) {
+			cmd.VisitParents(func(c boot.Commander) {
 				if c.GetDisableAutoGenTag() {
 					// cmd.DisableAutoGenTag = c.DisableAutoGenTag
 					cmd.SetDisableAutoGenTag(c.GetDisableAutoGenTag())
@@ -123,7 +123,7 @@ func GenMarkdownCustom(cmd cobra.Commander, w io.Writer, linkHandler func(string
 // If you have `cmd` with two subcmds, `sub` and `sub-third`,
 // and `sub` has a subcommand called `third`, it is undefined which
 // help output will be in the file `cmd-sub-third.1`.
-func GenMarkdownTree(cmd *cobra.Command, dir string) error {
+func GenMarkdownTree(cmd *boot.Command, dir string) error {
 	identity := func(s string) string { return s }
 	emptyStr := func(s string) string { return "" }
 	return GenMarkdownTreeCustom(cmd, dir, emptyStr, identity)
@@ -131,7 +131,7 @@ func GenMarkdownTree(cmd *cobra.Command, dir string) error {
 
 // GenMarkdownTreeCustom is the same as GenMarkdownTree, but
 // with custom filePrepender and linkHandler.
-func GenMarkdownTreeCustom(cmd cobra.Commander, dir string, filePrepender, linkHandler func(string) string) error {
+func GenMarkdownTreeCustom(cmd boot.Commander, dir string, filePrepender, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
 		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
 			continue

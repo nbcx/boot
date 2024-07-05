@@ -18,10 +18,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/spf13/cobra"
+	"github.com/nbcx/boot"
 )
 
-func emptyRun(cobra.Commander, []string) {}
+func emptyRun(boot.Commander, []string) {}
 
 func init() {
 	rootCmd.PersistentFlags().StringP("rootflag", "r", "two", "")
@@ -40,18 +40,18 @@ func init() {
 	printCmd.Flags().IntP("intthree", "i", 345, "help message for flag intthree")
 	printCmd.Flags().BoolP("boolthree", "b", true, "help message for flag boolthree")
 
-	echoCmd.AddCommand(timesCmd, echoSubCmd, deprecatedCmd)
-	rootCmd.AddCommand(printCmd, echoCmd, dummyCmd)
+	echoCmd.Add(timesCmd, echoSubCmd, deprecatedCmd)
+	rootCmd.Add(printCmd, echoCmd, dummyCmd)
 }
 
-var rootCmd = &cobra.Command{
+var rootCmd = &boot.Command{
 	Use:   "root",
 	Short: "Root short description",
 	Long:  "Root long description",
 	Run:   emptyRun,
 }
 
-var echoCmd = &cobra.Command{
+var echoCmd = &boot.Command{
 	Use:     "echo [string to echo]",
 	Aliases: []string{"say"},
 	Short:   "Echo anything to the screen",
@@ -59,14 +59,14 @@ var echoCmd = &cobra.Command{
 	Example: "Just run cobra-test echo",
 }
 
-var echoSubCmd = &cobra.Command{
+var echoSubCmd = &boot.Command{
 	Use:   "echosub [string to print]",
 	Short: "second sub command for echo",
 	Long:  "an absolutely utterly useless command for testing gendocs!.",
 	Run:   emptyRun,
 }
 
-var timesCmd = &cobra.Command{
+var timesCmd = &boot.Command{
 	Use:        "times [# times] [string to echo]",
 	SuggestFor: []string{"counts"},
 	Short:      "Echo anything to the screen more times",
@@ -74,20 +74,20 @@ var timesCmd = &cobra.Command{
 	Run:        emptyRun,
 }
 
-var deprecatedCmd = &cobra.Command{
+var deprecatedCmd = &boot.Command{
 	Use:        "deprecated [can't do anything here]",
 	Short:      "A command which is deprecated",
 	Long:       `an absolutely utterly useless command for testing deprecation!.`,
 	Deprecated: "Please use echo instead",
 }
 
-var printCmd = &cobra.Command{
+var printCmd = &boot.Command{
 	Use:   "print [string to print]",
 	Short: "Print anything to the screen",
 	Long:  `an absolutely utterly useless command for testing.`,
 }
 
-var dummyCmd = &cobra.Command{
+var dummyCmd = &boot.Command{
 	Use:   "dummy [action]",
 	Short: "Performs a dummy action",
 }

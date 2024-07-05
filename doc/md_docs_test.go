@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/spf13/cobra"
+	"github.com/nbcx/boot"
 )
 
 func TestGenMdDoc(t *testing.T) {
@@ -93,7 +93,7 @@ func TestGenMdNoTag(t *testing.T) {
 }
 
 func TestGenMdTree(t *testing.T) {
-	c := &cobra.Command{Use: "do [OPTIONS] arg1 arg2"}
+	c := &boot.Command{Use: "do [OPTIONS] arg1 arg2"}
 	tmpdir, err := ioutil.TempDir("", "test-gen-md-tree")
 	if err != nil {
 		t.Fatalf("Failed to create tmpdir: %v", err)

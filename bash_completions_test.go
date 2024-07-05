@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cobra
+package boot
 
 import (
 	"bytes"
@@ -160,8 +160,8 @@ func TestBashCompletions(t *testing.T) {
 		Run:        emptyRun,
 	}
 
-	echoCmd.AddCommand(timesCmd)
-	rootCmd.AddCommand(echoCmd, printCmd, deprecatedCmd, colonCmd)
+	echoCmd.Add(timesCmd)
+	rootCmd.Add(echoCmd, printCmd, deprecatedCmd, colonCmd)
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, rootCmd.GenBashCompletion(buf))

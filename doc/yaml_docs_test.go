@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/spf13/cobra"
+	"github.com/nbcx/boot"
 )
 
 func TestGenYamlDoc(t *testing.T) {
@@ -56,19 +56,19 @@ func TestGenYamlNoTag(t *testing.T) {
 }
 
 func TestGenYamlTree(t *testing.T) {
-	c := &cobra.Command{Use: "do [OPTIONS] arg1 arg2"}
+	c := &boot.Command{Use: "do [OPTIONS] arg1 arg2"}
 
-	tmpdir, err := ioutil.TempDir("", "test-gen-yaml-tree")
+	tmpDir, err := os.MkdirTemp("", "test-gen-yaml-tree")
 	if err != nil {
 		t.Fatalf("Failed to create tmpdir: %s", err.Error())
 	}
-	defer os.RemoveAll(tmpdir)
+	defer os.RemoveAll(tmpDir)
 
-	if err := GenYamlTree(c, tmpdir); err != nil {
+	if err := GenYamlTree(c, tmpDir); err != nil {
 		t.Fatalf("GenYamlTree failed: %s", err.Error())
 	}
 
-	if _, err := os.Stat(filepath.Join(tmpdir, "do.yaml")); err != nil {
+	if _, err := os.Stat(filepath.Join(tmpDir, "do.yaml")); err != nil {
 		t.Fatalf("Expected file 'do.yaml' to exist")
 	}
 }

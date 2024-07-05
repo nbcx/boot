@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cobra
+package boot
 
 import (
 	"bytes"
@@ -83,7 +83,7 @@ func TestCmdNameCompletionInGo(t *testing.T) {
 		Run:     emptyRun,
 	}
 
-	rootCmd.AddCommand(childCmd1, childCmd2, hiddenCmd, deprecatedCmd, aliasedCmd)
+	rootCmd.Add(childCmd1, childCmd2, hiddenCmd, deprecatedCmd, aliasedCmd)
 
 	// Test that sub-command names are completed
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "")
@@ -167,7 +167,7 @@ func TestNoCmdNameCompletionInGo(t *testing.T) {
 		Args:  MinimumNArgs(0),
 		Run:   emptyRun,
 	}
-	rootCmd.AddCommand(childCmd1)
+	rootCmd.Add(childCmd1)
 	childCmd1.PersistentFlags().StringP("persistent", "p", "", "persistent flag")
 	persistentFlag := childCmd1.PersistentFlags().Lookup("persistent")
 	childCmd1.Flags().StringP("nonPersistent", "n", "", "non-persistent flag")
@@ -177,7 +177,7 @@ func TestNoCmdNameCompletionInGo(t *testing.T) {
 		Use: "childCmd2",
 		Run: emptyRun,
 	}
-	childCmd1.AddCommand(childCmd2)
+	childCmd1.Add(childCmd2)
 
 	// Test that sub-command names are not completed if there is an argument already
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "childCmd1", "arg1", "")
@@ -385,7 +385,7 @@ func TestValidArgsAndCmdCompletionInGo(t *testing.T) {
 		Run: emptyRun,
 	}
 
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	// Test that both sub-commands and validArgs are completed
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "")
@@ -436,7 +436,7 @@ func TestValidArgsFuncAndCmdCompletionInGo(t *testing.T) {
 		Run:   emptyRun,
 	}
 
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	// Test that both sub-commands and validArgsFunction are completed
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "")
@@ -500,7 +500,7 @@ func TestFlagNameCompletionInGo(t *testing.T) {
 		Version: "1.2.3",
 		Run:     emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	rootCmd.Flags().IntP("first", "f", -1, "first flag")
 	rootCmd.PersistentFlags().BoolP("second", "s", false, "second flag")
@@ -591,7 +591,7 @@ func TestFlagNameCompletionInGoWithDesc(t *testing.T) {
 		Version: "1.2.3",
 		Run:     emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	rootCmd.Flags().IntP("first", "f", -1, "first flag\nlonger description for flag")
 	rootCmd.PersistentFlags().BoolP("second", "s", false, "second flag")
@@ -681,7 +681,7 @@ func TestFlagNameCompletionRepeat(t *testing.T) {
 		Short: "first command",
 		Run:   emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	rootCmd.Flags().IntP("first", "f", -1, "first flag")
 	firstFlag := rootCmd.Flags().Lookup("first")
@@ -821,7 +821,7 @@ func TestRequiredFlagNameCompletionInGo(t *testing.T) {
 		},
 		Run: emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	rootCmd.Flags().IntP("requiredFlag", "r", -1, "required flag")
 	assertNoErr(t, rootCmd.MarkFlagRequired("requiredFlag"))
@@ -1262,7 +1262,7 @@ func TestValidArgsFuncCmdContext(t *testing.T) {
 		ValidArgsFunction: validArgsFunc,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	//nolint:golint,staticcheck // We can safely use a basic type as key in tests.
 	ctx := context.WithValue(context.Background(), "testKey", "123")
@@ -1360,7 +1360,7 @@ func TestValidArgsFuncChildCmds(t *testing.T) {
 		ValidArgsFunction: validArgsFunc2,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child1Cmd, child2Cmd)
+	rootCmd.Add(child1Cmd, child2Cmd)
 
 	// Test completion of first sub-command with empty argument
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "child1", "")
@@ -1460,7 +1460,7 @@ func TestValidArgsFuncAliases(t *testing.T) {
 		ValidArgsFunction: validArgsFunc,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child)
+	rootCmd.Add(child)
 
 	// Test completion of first sub-command with empty argument
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "son", "")
@@ -1515,7 +1515,7 @@ func TestValidArgsFuncInBashScript(t *testing.T) {
 		ValidArgsFunction: validArgsFunc,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child)
+	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, rootCmd.GenBashCompletion(buf))
@@ -1530,7 +1530,7 @@ func TestNoValidArgsFuncInBashScript(t *testing.T) {
 		Use: "child",
 		Run: emptyRun,
 	}
-	rootCmd.AddCommand(child)
+	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, rootCmd.GenBashCompletion(buf))
@@ -1546,7 +1546,7 @@ func TestCompleteCmdInBashScript(t *testing.T) {
 		ValidArgsFunction: validArgsFunc,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child)
+	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, rootCmd.GenBashCompletion(buf))
@@ -1562,7 +1562,7 @@ func TestCompleteNoDesCmdInZshScript(t *testing.T) {
 		ValidArgsFunction: validArgsFunc,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child)
+	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, rootCmd.GenZshCompletionNoDesc(buf))
@@ -1578,7 +1578,7 @@ func TestCompleteCmdInZshScript(t *testing.T) {
 		ValidArgsFunction: validArgsFunc,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child)
+	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, rootCmd.GenZshCompletion(buf))
@@ -1693,7 +1693,7 @@ func TestValidArgsFuncChildCmdsWithDesc(t *testing.T) {
 		ValidArgsFunction: validArgsFunc2,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child1Cmd, child2Cmd)
+	rootCmd.Add(child1Cmd, child2Cmd)
 
 	// Test completion of first sub-command with empty argument
 	output, err := executeCommand(rootCmd, ShellCompRequestCmd, "child1", "")
@@ -1799,7 +1799,7 @@ func TestFlagCompletionWithNotInterspersedArgs(t *testing.T) {
 		Run:       emptyRun,
 		ValidArgs: []string{"arg1", "arg2"},
 	}
-	rootCmd.AddCommand(childCmd, childCmd2)
+	rootCmd.Add(childCmd, childCmd2)
 	childCmd.Flags().Bool("bool", false, "test bool flag")
 	childCmd.Flags().String("string", "", "test string flag")
 	_ = childCmd.RegisterFlagCompletionFunc("string", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
@@ -2025,7 +2025,7 @@ func TestFlagCompletionWorksRootCommandAddedAfterFlags(t *testing.T) {
 
 	// Important: This is a test for https://github.com/spf13/cobra/issues/1437
 	// Only add the subcommand after RegisterFlagCompletionFunc was called, do not change this order!
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	// Test that flag completion works for the subcmd
 	output, err := executeCommand(rootCmd, ShellCompRequestCmd, "child", "--string", "")
@@ -2058,7 +2058,7 @@ func TestFlagCompletionForPersistentFlagsCalledFromSubCmd(t *testing.T) {
 		},
 	}
 	childCmd.Flags().Bool("bool", false, "test bool flag")
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	// Test that persistent flag completion works for the subcmd
 	output, err := executeCommand(rootCmd, ShellCompRequestCmd, "child", "--string", "")
@@ -2102,7 +2102,7 @@ func TestFlagCompletionConcurrentRegistration(t *testing.T) {
 		childCmd.Flags().String(flagName, "", fmt.Sprintf("test %s flag on child", flagName))
 	}
 
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	// Register completion in different threads to test concurrency.
 	var wg sync.WaitGroup
@@ -2355,13 +2355,13 @@ func TestCompleteHelp(t *testing.T) {
 		Use: "child2",
 		Run: emptyRun,
 	}
-	rootCmd.AddCommand(child1Cmd, child2Cmd)
+	rootCmd.Add(child1Cmd, child2Cmd)
 
 	child3Cmd := &Command{
 		Use: "child3",
 		Run: emptyRun,
 	}
-	child1Cmd.AddCommand(child3Cmd)
+	child1Cmd.Add(child3Cmd)
 
 	// Test that completion includes the help command
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "")
@@ -2445,7 +2445,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 		Use: "sub",
 		Run: emptyRun,
 	}
-	rootCmd.AddCommand(subCmd)
+	rootCmd.Add(subCmd)
 
 	// Test that a completion command is created if there are other sub-commands
 	found := false
@@ -2566,7 +2566,7 @@ func TestCompleteCompletion(t *testing.T) {
 		Use: "sub",
 		Run: emptyRun,
 	}
-	rootCmd.AddCommand(subCmd)
+	rootCmd.Add(subCmd)
 
 	// Test sub-commands of the completion command
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "completion", "")
@@ -2717,7 +2717,7 @@ func TestCompleteWithDisableFlagParsing(t *testing.T) {
 		DisableFlagParsing: true,
 		ValidArgsFunction:  flagValidArgs,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	rootCmd.PersistentFlags().StringP("persistent", "p", "", "persistent flag")
 	childCmd.Flags().StringP("nonPersistent", "n", "", "non-persistent flag")
@@ -2820,7 +2820,7 @@ func TestFixedCompletions(t *testing.T) {
 		ValidArgsFunction: FixedCompletions(choices, ShellCompDirectiveNoFileComp),
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "child", "a")
 	if err != nil {
@@ -2852,7 +2852,7 @@ func TestCompletionForGroupedFlags(t *testing.T) {
 			},
 			Run: emptyRun,
 		}
-		rootCmd.AddCommand(childCmd)
+		rootCmd.Add(childCmd)
 
 		rootCmd.PersistentFlags().Int("ingroup1", -1, "ingroup1")
 		rootCmd.PersistentFlags().String("ingroup2", "", "ingroup2")
@@ -2952,7 +2952,7 @@ func TestCompletionForOneRequiredGroupFlags(t *testing.T) {
 			},
 			Run: emptyRun,
 		}
-		rootCmd.AddCommand(childCmd)
+		rootCmd.Add(childCmd)
 
 		rootCmd.PersistentFlags().Int("ingroup1", -1, "ingroup1")
 		rootCmd.PersistentFlags().String("ingroup2", "", "ingroup2")
@@ -3050,7 +3050,7 @@ func TestCompletionForMutuallyExclusiveFlags(t *testing.T) {
 			},
 			Run: emptyRun,
 		}
-		rootCmd.AddCommand(childCmd)
+		rootCmd.Add(childCmd)
 
 		rootCmd.PersistentFlags().IntSlice("ingroup1", []int{1}, "ingroup1")
 		rootCmd.PersistentFlags().String("ingroup2", "", "ingroup2")
@@ -3181,7 +3181,7 @@ func TestCompletionCobraFlags(t *testing.T) {
 			DisableFlagParsing: true,
 		}
 
-		rootCmd.AddCommand(childCmd, childCmd2, childCmd3, childCmd4, childCmd5)
+		rootCmd.Add(childCmd, childCmd2, childCmd3, childCmd4, childCmd5)
 
 		_ = childCmd.Flags().Bool("bool", false, "A bool flag")
 		_ = childCmd.MarkFlagRequired("bool")
@@ -3449,7 +3449,7 @@ func TestGetFlagCompletion(t *testing.T) {
 		return []string{"childvalue"}, ShellCompDirectiveNoFileComp | ShellCompDirectiveNoSpace
 	})
 
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	testcases := []struct {
 		desc      string
@@ -3615,7 +3615,7 @@ func TestDisableDescriptions(t *testing.T) {
 		Short: "The child command",
 		Run:   emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	specificDescriptionsEnvVar := configEnvVar(rootCmd.Name(), configEnvVarSuffixDescriptions)
 	globalDescriptionsEnvVar := configEnvVar(configEnvVarGlobalPrefix, configEnvVarSuffixDescriptions)

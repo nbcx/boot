@@ -24,10 +24,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
+	"github.com/nbcx/boot"
 )
 
-func printOptionsReST(buf *bytes.Buffer, cmd cobra.Commander, name string) error {
+func printOptionsReST(buf *bytes.Buffer, cmd boot.Commander, name string) error {
 	flags := cmd.NonInheritedFlags()
 	flags.SetOutput(buf)
 	if flags.HasAvailableFlags() {
@@ -54,12 +54,12 @@ func defaultLinkHandler(name, ref string) string {
 }
 
 // GenReST creates reStructured Text output.
-func GenReST(cmd *cobra.Command, w io.Writer) error {
+func GenReST(cmd *boot.Command, w io.Writer) error {
 	return GenReSTCustom(cmd, w, defaultLinkHandler)
 }
 
 // GenReSTCustom creates custom reStructured Text output.
-func GenReSTCustom(cmd cobra.Commander, w io.Writer, linkHandler func(string, string) string) error {
+func GenReSTCustom(cmd boot.Commander, w io.Writer, linkHandler func(string, string) string) error {
 	cmd.InitDefaultHelpCmd()
 	cmd.InitDefaultHelpFlag()
 
@@ -102,7 +102,7 @@ func GenReSTCustom(cmd cobra.Commander, w io.Writer, linkHandler func(string, st
 			pname := parent.CommandPath()
 			ref = strings.ReplaceAll(pname, " ", "_")
 			buf.WriteString(fmt.Sprintf("* %s \t - %s\n", linkHandler(pname, ref), parent.GetShort()))
-			cmd.VisitParents(func(c cobra.Commander) {
+			cmd.VisitParents(func(c boot.Commander) {
 				if c.GetDisableAutoGenTag() {
 					cmd.SetDisableAutoGenTag(c.GetDisableAutoGenTag())
 					// cmd.DisableAutoGenTag = c.DisableAutoGenTag
@@ -136,14 +136,14 @@ func GenReSTCustom(cmd cobra.Commander, w io.Writer, linkHandler func(string, st
 // If you have `cmd` with two subcmds, `sub` and `sub-third`,
 // and `sub` has a subcommand called `third`, it is undefined which
 // help output will be in the file `cmd-sub-third.1`.
-func GenReSTTree(cmd cobra.Commander, dir string) error {
+func GenReSTTree(cmd boot.Commander, dir string) error {
 	emptyStr := func(s string) string { return "" }
 	return GenReSTTreeCustom(cmd, dir, emptyStr, defaultLinkHandler)
 }
 
 // GenReSTTreeCustom is the same as GenReSTTree, but
 // with custom filePrepender and linkHandler.
-func GenReSTTreeCustom(cmd cobra.Commander, dir string, filePrepender func(string) string, linkHandler func(string, string) string) error {
+func GenReSTTreeCustom(cmd boot.Commander, dir string, filePrepender func(string) string, linkHandler func(string, string) string) error {
 	for _, c := range cmd.Commands() {
 		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
 			continue

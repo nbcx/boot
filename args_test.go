@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cobra
+package boot
 
 import (
 	"fmt"
@@ -384,7 +384,7 @@ func TestRangeArgs_WithInvalidCount_WithValidOnly_WithInvalidArgs(t *testing.T) 
 func TestRootTakesNoArgs(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	_, err := executeCommand(rootCmd, "illegal", "args")
 	if err == nil {
@@ -401,7 +401,7 @@ func TestRootTakesNoArgs(t *testing.T) {
 func TestRootTakesArgs(t *testing.T) {
 	rootCmd := &Command{Use: "root", Args: ArbitraryArgs, Run: emptyRun}
 	childCmd := &Command{Use: "child", Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	_, err := executeCommand(rootCmd, "legal", "args")
 	if err != nil {
@@ -412,7 +412,7 @@ func TestRootTakesArgs(t *testing.T) {
 func TestChildTakesNoArgs(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Args: NoArgs, Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	_, err := executeCommand(rootCmd, "child", "illegal", "args")
 	if err == nil {
@@ -429,7 +429,7 @@ func TestChildTakesNoArgs(t *testing.T) {
 func TestChildTakesArgs(t *testing.T) {
 	rootCmd := &Command{Use: "root", Run: emptyRun}
 	childCmd := &Command{Use: "child", Args: ArbitraryArgs, Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	_, err := executeCommand(rootCmd, "child", "legal", "args")
 	if err != nil {
@@ -531,8 +531,8 @@ func TestLegacyArgsSubcmdAcceptsArgs(t *testing.T) {
 	rootCmd := &Command{Use: "root", Args: nil, Run: emptyRun}
 	childCmd := &Command{Use: "child", Args: nil, Run: emptyRun}
 	grandchildCmd := &Command{Use: "grandchild", Args: nil, Run: emptyRun}
-	rootCmd.AddCommand(childCmd)
-	childCmd.AddCommand(grandchildCmd)
+	rootCmd.Add(childCmd)
+	childCmd.Add(grandchildCmd)
 
 	_, err := executeCommand(rootCmd, "child", "somearg")
 	if err != nil {

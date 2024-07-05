@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/spf13/cobra"
+	"github.com/nbcx/boot"
 )
 
 func TestGenRSTDoc(t *testing.T) {
@@ -79,7 +79,7 @@ func TestGenRSTNoTag(t *testing.T) {
 }
 
 func TestGenRSTTree(t *testing.T) {
-	c := &cobra.Command{Use: "do [OPTIONS] arg1 arg2"}
+	c := &boot.Command{Use: "do [OPTIONS] arg1 arg2"}
 
 	tmpdir, err := ioutil.TempDir("", "test-gen-rst-tree")
 	if err != nil {

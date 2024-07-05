@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cobra
+package boot
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ func TestCompleteNoDesCmdInFishScript(t *testing.T) {
 		ValidArgsFunction: validArgsFunc,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child)
+	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, rootCmd.GenFishCompletion(buf, false))
@@ -46,7 +46,7 @@ func TestCompleteCmdInFishScript(t *testing.T) {
 		ValidArgsFunction: validArgsFunc,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child)
+	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, rootCmd.GenFishCompletion(buf, true))
@@ -112,7 +112,7 @@ func TestGenFishCompletionFile(t *testing.T) {
 		ValidArgsFunction: validArgsFunc,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child)
+	rootCmd.Add(child)
 
 	assertNoErr(t, rootCmd.GenFishCompletionFile(tmpFile.Name(), false))
 }
@@ -134,7 +134,7 @@ func TestFailGenFishCompletionFile(t *testing.T) {
 		ValidArgsFunction: validArgsFunc,
 		Run:               emptyRun,
 	}
-	rootCmd.AddCommand(child)
+	rootCmd.Add(child)
 
 	got := rootCmd.GenFishCompletionFile(f.Name(), false)
 	if !errors.Is(got, os.ErrPermission) {

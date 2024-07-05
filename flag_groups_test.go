@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cobra
+package boot
 
 import (
 	"strings"
@@ -37,7 +37,7 @@ func TestValidateFlagGroups(t *testing.T) {
 			Run: func(cmd Commander, args []string) {
 			}}
 		subC.Flags().String("subonly", "", "")
-		c.AddCommand(subC)
+		c.Add(subC)
 		return c
 	}
 

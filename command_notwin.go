@@ -15,6 +15,6 @@
 //go:build !windows
 // +build !windows
 
-package cobra
+package boot
 
 var preExecHookFn func(*Command)

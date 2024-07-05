@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cobra
+package boot
 
 import (
 	"fmt"
@@ -62,7 +62,7 @@ func TestActiveHelpAlone(t *testing.T) {
 		Short: "The child command",
 		Run:   emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	childCmd.ValidArgsFunction = activeHelpFunc
 
@@ -92,7 +92,7 @@ func TestActiveHelpWithComps(t *testing.T) {
 		Short: "The child command",
 		Run:   emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	// Test that activeHelp can be added following other completions
 	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
@@ -177,7 +177,7 @@ func TestMultiActiveHelp(t *testing.T) {
 		Short: "The child command",
 		Run:   emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	// Test that multiple activeHelp message can be added
 	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
@@ -274,7 +274,7 @@ func TestConfigActiveHelp(t *testing.T) {
 		Short: "The child command",
 		Run:   emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	activeHelpCfg := "someconfig,anotherconfig"
 	// Set the variable that the user would be setting
@@ -327,7 +327,7 @@ func TestDisableActiveHelp(t *testing.T) {
 		Short: "The child command",
 		Run:   emptyRun,
 	}
-	rootCmd.AddCommand(childCmd)
+	rootCmd.Add(childCmd)
 
 	// Test the disabling of activeHelp using the specific program
 	// environment variable that the completions scripts will be setting.
