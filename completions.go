@@ -194,8 +194,7 @@ func (d ShellCompDirective) string() string {
 // initCompleteCmd adds a special hidden command that can be used to request custom completions.
 func (c *Root) initCompleteCmd(args []string) {
 	completeCmd := &CompleteCmd{
-		Root: Root{
-			Use:                   fmt.Sprintf("%s [command-line]", ShellCompRequestCmd),
+		Default: Default{
 			Aliases:               []string{ShellCompNoDescRequestCmd},
 			DisableFlagsInUseLine: true,
 			Hidden:                true,

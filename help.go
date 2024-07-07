@@ -7,7 +7,11 @@ import (
 )
 
 type CompleteCmd struct {
-	Root
+	Default
+}
+
+func (cmd *CompleteCmd) GetUse() string {
+	return fmt.Sprintf("%s [command-line]", ShellCompRequestCmd)
 }
 
 func (cmd *CompleteCmd) Run(args []string) error {
@@ -126,14 +130,17 @@ You will need to start a new shell for this setup to take effect.
 }
 
 type ZshCompleteCmd struct {
-	Root
+	Default
 	noDesc bool
+}
+
+func (cmd *ZshCompleteCmd) GetUse() string {
+	return "zsh"
 }
 
 func NewZshCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *ZshCompleteCmd {
 	return &ZshCompleteCmd{
-		Root: Root{
-			Use:   "zsh",
+		Default: Default{
 			Short: fmt.Sprintf(shortDesc, "zsh"),
 			Long: fmt.Sprintf(`Generate the autocompletion script for the zsh shell.
 
@@ -166,27 +173,30 @@ You will need to start a new shell for this setup to take effect.
 }
 
 func (p *ZshCompleteCmd) Run(args []string) error {
-	out := p.Root.Base().OutOrStdout()
+	out := p.Base().OutOrStdout()
 	if p.noDesc {
-		return p.Root.Base().GenZshCompletionNoDesc(out)
+		return p.Base().GenZshCompletionNoDesc(out)
 	}
-	return p.Root.Base().GenZshCompletion(out)
+	return p.Base().GenZshCompletion(out)
 }
 
 type FishCompleteCmd struct {
-	Root
+	Default
 	noDesc bool
 }
 
+func (cmd *FishCompleteCmd) GetUse() string {
+	return "fish"
+}
+
 func (p *FishCompleteCmd) Run(args []string) error {
-	out := p.Root.Base().OutOrStdout()
-	return p.Root.Base().GenFishCompletion(out, !p.noDesc)
+	out := p.Base().OutOrStdout()
+	return p.Base().GenFishCompletion(out, !p.noDesc)
 }
 
 func NewFishCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *FishCompleteCmd {
 	return &FishCompleteCmd{
-		Root: Root{
-			Use:   "fish",
+		Default: Default{
 			Short: fmt.Sprintf(shortDesc, "fish"),
 			Long: fmt.Sprintf(`Generate the autocompletion script for the fish shell.
 
@@ -208,22 +218,23 @@ You will need to start a new shell for this setup to take effect.
 }
 
 type PowershellCompleteCmd struct {
-	Root
+	Default
 	noDesc bool
 }
 
 func (cmd *PowershellCompleteCmd) Run(args []string) error {
-	out := cmd.Root.Base().OutOrStdout()
+	out := cmd.Base().OutOrStdout()
 	if cmd.noDesc {
-		return cmd.Root.Base().GenPowerShellCompletion(out)
+		return cmd.Base().GenPowerShellCompletion(out)
 	}
-	return cmd.Root.Base().GenPowerShellCompletionWithDesc(out)
+	return cmd.Base().GenPowerShellCompletionWithDesc(out)
 }
-
+func (cmd *PowershellCompleteCmd) GetUse() string {
+	return "powershell"
+}
 func NewPowershellCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *PowershellCompleteCmd {
 	return &PowershellCompleteCmd{
-		Root: Root{
-			Use:   "powershell",
+		Default: Default{
 			Short: fmt.Sprintf(shortDesc, "powershell"),
 			Long: fmt.Sprintf(`Generate the autocompletion script for powershell.
 
@@ -242,7 +253,7 @@ to your powershell profile.
 }
 
 type HelpCmd struct {
-	Root
+	Default
 }
 
 func (p *HelpCmd) Run(args []string) error {
@@ -259,10 +270,13 @@ func (p *HelpCmd) Run(args []string) error {
 	return nil
 }
 
+func (p *HelpCmd) GetUse() string {
+	return "help [command]"
+}
+
 func NewHelpCmd(cmd Commander) *HelpCmd {
 	return &HelpCmd{
-		Root: Root{
-			Use:   "help [command]",
+		Default: Default{
 			Short: "Help about any command",
 			Long: `Help provides help for any command in the application.
 Simply type ` + displayName(cmd) + ` help [path to command] for full details.`,
