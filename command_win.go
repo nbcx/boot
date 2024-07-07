@@ -27,7 +27,7 @@ import (
 
 var preExecHookFn = preExecHook
 
-func preExecHook(c *Command) {
+func preExecHook(c *Root) {
 	if MousetrapHelpText != "" && mousetrap.StartedByExplorer() {
 		c.Print(MousetrapHelpText)
 		if MousetrapDisplayDuration > 0 {

@@ -21,7 +21,7 @@ import (
 	"github.com/nbcx/boot"
 )
 
-func emptyRun(boot.Commander, []string) {}
+func emptyRun(boot.Commander, []string) error { return nil }
 
 func init() {
 	rootCmd.PersistentFlags().StringP("rootflag", "r", "two", "")
@@ -44,14 +44,14 @@ func init() {
 	rootCmd.Add(printCmd, echoCmd, dummyCmd)
 }
 
-var rootCmd = &boot.Command{
+var rootCmd = &boot.Root{
 	Use:   "root",
 	Short: "Root short description",
 	Long:  "Root long description",
-	Run:   emptyRun,
+	RunE:  emptyRun,
 }
 
-var echoCmd = &boot.Command{
+var echoCmd = &boot.Root{
 	Use:     "echo [string to echo]",
 	Aliases: []string{"say"},
 	Short:   "Echo anything to the screen",
@@ -59,35 +59,35 @@ var echoCmd = &boot.Command{
 	Example: "Just run cobra-test echo",
 }
 
-var echoSubCmd = &boot.Command{
+var echoSubCmd = &boot.Root{
 	Use:   "echosub [string to print]",
 	Short: "second sub command for echo",
 	Long:  "an absolutely utterly useless command for testing gendocs!.",
-	Run:   emptyRun,
+	RunE:  emptyRun,
 }
 
-var timesCmd = &boot.Command{
+var timesCmd = &boot.Root{
 	Use:        "times [# times] [string to echo]",
 	SuggestFor: []string{"counts"},
 	Short:      "Echo anything to the screen more times",
 	Long:       `a slightly useless command for testing.`,
-	Run:        emptyRun,
+	RunE:       emptyRun,
 }
 
-var deprecatedCmd = &boot.Command{
+var deprecatedCmd = &boot.Root{
 	Use:        "deprecated [can't do anything here]",
 	Short:      "A command which is deprecated",
 	Long:       `an absolutely utterly useless command for testing deprecation!.`,
 	Deprecated: "Please use echo instead",
 }
 
-var printCmd = &boot.Command{
+var printCmd = &boot.Root{
 	Use:   "print [string to print]",
 	Short: "Print anything to the screen",
 	Long:  `an absolutely utterly useless command for testing.`,
 }
 
-var dummyCmd = &boot.Command{
+var dummyCmd = &boot.Root{
 	Use:   "dummy [action]",
 	Short: "Performs a dummy action",
 }

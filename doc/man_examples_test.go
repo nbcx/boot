@@ -23,7 +23,7 @@ import (
 )
 
 func ExampleGenManTree() {
-	cmd := &boot.Command{
+	cmd := &boot.Root{
 		Use:   "test",
 		Short: "my test program",
 	}
@@ -35,7 +35,7 @@ func ExampleGenManTree() {
 }
 
 func ExampleGenMan() {
-	cmd := &boot.Command{
+	cmd := &boot.Root{
 		Use:   "test",
 		Short: "my test program",
 	}

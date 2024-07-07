@@ -51,19 +51,19 @@ func TestGenManDoc(t *testing.T) {
 	output := buf.String()
 
 	// Make sure parent has - in CommandPath() in SEE ALSO:
-	parentPath := echoCmd.Parent().CommandPath()
+	parentPath := boot.CommandPath(echoCmd.Parent())
 	dashParentPath := strings.ReplaceAll(parentPath, " ", "-")
 	expected := translate(dashParentPath)
 	expected = expected + "(" + header.Section + ")"
 	checkStringContains(t, output, expected)
 
-	checkStringContains(t, output, translate(echoCmd.Name()))
-	checkStringContains(t, output, translate(echoCmd.Name()))
+	checkStringContains(t, output, translate(boot.ParseName(echoCmd)))
+	checkStringContains(t, output, translate(boot.ParseName(echoCmd)))
 	checkStringContains(t, output, "boolone")
 	checkStringContains(t, output, "rootflag")
-	checkStringContains(t, output, translate(rootCmd.Name()))
-	checkStringContains(t, output, translate(echoSubCmd.Name()))
-	checkStringOmits(t, output, translate(deprecatedCmd.Name()))
+	checkStringContains(t, output, translate(boot.ParseName(rootCmd)))
+	checkStringContains(t, output, translate(boot.ParseName(echoSubCmd)))
+	checkStringOmits(t, output, translate(boot.ParseName(deprecatedCmd)))
 	checkStringContains(t, output, translate("Auto generated"))
 }
 
@@ -86,19 +86,19 @@ func TestGenManNoHiddenParents(t *testing.T) {
 	output := buf.String()
 
 	// Make sure parent has - in CommandPath() in SEE ALSO:
-	parentPath := echoCmd.Parent().CommandPath()
+	parentPath := boot.CommandPath(echoCmd.Parent())
 	dashParentPath := strings.ReplaceAll(parentPath, " ", "-")
 	expected := translate(dashParentPath)
 	expected = expected + "(" + header.Section + ")"
 	checkStringContains(t, output, expected)
 
-	checkStringContains(t, output, translate(echoCmd.Name()))
-	checkStringContains(t, output, translate(echoCmd.Name()))
+	checkStringContains(t, output, translate(boot.ParseName(echoCmd)))
+	checkStringContains(t, output, translate(boot.ParseName(echoCmd)))
 	checkStringContains(t, output, "boolone")
 	checkStringOmits(t, output, "rootflag")
-	checkStringContains(t, output, translate(rootCmd.Name()))
-	checkStringContains(t, output, translate(echoSubCmd.Name()))
-	checkStringOmits(t, output, translate(deprecatedCmd.Name()))
+	checkStringContains(t, output, translate(boot.ParseName(rootCmd)))
+	checkStringContains(t, output, translate(boot.ParseName(echoSubCmd)))
+	checkStringOmits(t, output, translate(boot.ParseName(deprecatedCmd)))
 	checkStringContains(t, output, translate("Auto generated"))
 	checkStringOmits(t, output, "OPTIONS INHERITED FROM PARENT COMMANDS")
 }
@@ -126,10 +126,10 @@ func TestGenManNoGenTag(t *testing.T) {
 }
 
 func TestGenManSeeAlso(t *testing.T) {
-	rootCmd := &boot.Command{Use: "root", Run: emptyRun}
-	aCmd := &boot.Command{Use: "aaa", Run: emptyRun, Hidden: true} // #229
-	bCmd := &boot.Command{Use: "bbb", Run: emptyRun}
-	cCmd := &boot.Command{Use: "ccc", Run: emptyRun}
+	rootCmd := &boot.Root{Use: "root", RunE: emptyRun}
+	aCmd := &boot.Root{Use: "aaa", RunE: emptyRun, Hidden: true} // #229
+	bCmd := &boot.Root{Use: "bbb", RunE: emptyRun}
+	cCmd := &boot.Root{Use: "ccc", RunE: emptyRun}
 	rootCmd.Add(aCmd, bCmd, cCmd)
 
 	buf := new(bytes.Buffer)
@@ -151,7 +151,7 @@ func TestGenManSeeAlso(t *testing.T) {
 }
 
 func TestManPrintFlagsHidesShortDeprecated(t *testing.T) {
-	c := &boot.Command{}
+	c := &boot.Root{}
 	c.Flags().StringP("foo", "f", "default", "Foo flag")
 	assertNoErr(t, c.Flags().MarkShorthandDeprecated("foo", "don't use it no more"))
 
@@ -166,7 +166,7 @@ func TestManPrintFlagsHidesShortDeprecated(t *testing.T) {
 }
 
 func TestGenManTree(t *testing.T) {
-	c := &boot.Command{Use: "do [OPTIONS] arg1 arg2"}
+	c := &boot.Root{Use: "do [OPTIONS] arg1 arg2"}
 	header := &GenManHeader{Section: "2"}
 	tmpdir, err := ioutil.TempDir("", "test-gen-man-tree")
 	if err != nil {

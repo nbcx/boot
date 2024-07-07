@@ -81,12 +81,12 @@ const bashCompletionFunc = `__root_custom_func() {
 `
 
 func TestBashCompletions(t *testing.T) {
-	rootCmd := &Command{
+	rootCmd := &Root{
 		Use:                    "root",
 		ArgAliases:             []string{"pods", "nodes", "services", "replicationcontrollers", "po", "no", "svc", "rc"},
 		ValidArgs:              []string{"pod", "node", "service", "replicationcontroller"},
 		BashCompletionFunction: bashCompletionFunc,
-		Run:                    emptyRun,
+		RunE:                   emptyRun,
 	}
 	rootCmd.Flags().IntP("introot", "i", -1, "help message for flag introot")
 	assertNoErr(t, rootCmd.MarkFlagRequired("introot"))
@@ -114,13 +114,13 @@ func TestBashCompletions(t *testing.T) {
 	rootCmd.Flags().StringP("two", "t", "", "this is two word flags")
 	rootCmd.Flags().BoolP("two-w-default", "T", false, "this is not two word flags")
 
-	echoCmd := &Command{
+	echoCmd := &Root{
 		Use:     "echo [string to echo]",
 		Aliases: []string{"say"},
 		Short:   "Echo anything to the screen",
 		Long:    "an utterly useless command for testing.",
 		Example: "Just run cobra-test echo",
-		Run:     emptyRun,
+		RunE:    emptyRun,
 	}
 
 	echoCmd.Flags().String("filename", "", "Enter a filename")
@@ -128,36 +128,36 @@ func TestBashCompletions(t *testing.T) {
 	echoCmd.Flags().String("config", "", "config to use (located in /config/PROFILE/)")
 	assertNoErr(t, echoCmd.Flags().SetAnnotation("config", BashCompSubdirsInDir, []string{"config"}))
 
-	printCmd := &Command{
+	printCmd := &Root{
 		Use:   "print [string to print]",
 		Args:  MinimumNArgs(1),
 		Short: "Print anything to the screen",
 		Long:  "an absolutely utterly useless command for testing.",
-		Run:   emptyRun,
+		RunE:  emptyRun,
 	}
 
-	deprecatedCmd := &Command{
+	deprecatedCmd := &Root{
 		Use:        "deprecated [can't do anything here]",
 		Args:       NoArgs,
 		Short:      "A command which is deprecated",
 		Long:       "an absolutely utterly useless command for testing deprecation!.",
 		Deprecated: "Please use echo instead",
-		Run:        emptyRun,
+		RunE:       emptyRun,
 	}
 
-	colonCmd := &Command{
-		Use: "cmd:colon",
-		Run: emptyRun,
+	colonCmd := &Root{
+		Use:  "cmd:colon",
+		RunE: emptyRun,
 	}
 
-	timesCmd := &Command{
+	timesCmd := &Root{
 		Use:        "times [# times] [string to echo]",
 		SuggestFor: []string{"counts"},
 		Args:       OnlyValidArgs,
 		ValidArgs:  []string{"one", "two", "three", "four"},
 		Short:      "Echo anything to the screen more times",
 		Long:       "a slightly useless command for testing.",
-		Run:        emptyRun,
+		RunE:       emptyRun,
 	}
 
 	echoCmd.Add(timesCmd)
@@ -192,15 +192,15 @@ func TestBashCompletions(t *testing.T) {
 	// check for filename extension flags
 	check(t, output, `must_have_one_noun+=("three")`)
 	// check for filename extension flags
-	check(t, output, fmt.Sprintf(`flags_completion+=("__%s_handle_filename_extension_flag json|yaml|yml")`, rootCmd.Name()))
+	check(t, output, fmt.Sprintf(`flags_completion+=("__%s_handle_filename_extension_flag json|yaml|yml")`, name(rootCmd)))
 	// check for filename extension flags in a subcommand
-	checkRegex(t, output, fmt.Sprintf(`_root_echo\(\)\n{[^}]*flags_completion\+=\("__%s_handle_filename_extension_flag json\|yaml\|yml"\)`, rootCmd.Name()))
+	checkRegex(t, output, fmt.Sprintf(`_root_echo\(\)\n{[^}]*flags_completion\+=\("__%s_handle_filename_extension_flag json\|yaml\|yml"\)`, name(rootCmd)))
 	// check for custom flags
 	check(t, output, `flags_completion+=("__complete_custom")`)
 	// check for subdirs_in_dir flags
-	check(t, output, fmt.Sprintf(`flags_completion+=("__%s_handle_subdirs_in_dir_flag themes")`, rootCmd.Name()))
+	check(t, output, fmt.Sprintf(`flags_completion+=("__%s_handle_subdirs_in_dir_flag themes")`, name(rootCmd)))
 	// check for subdirs_in_dir flags in a subcommand
-	checkRegex(t, output, fmt.Sprintf(`_root_echo\(\)\n{[^}]*flags_completion\+=\("__%s_handle_subdirs_in_dir_flag config"\)`, rootCmd.Name()))
+	checkRegex(t, output, fmt.Sprintf(`_root_echo\(\)\n{[^}]*flags_completion\+=\("__%s_handle_subdirs_in_dir_flag config"\)`, name(rootCmd)))
 
 	// check two word flags
 	check(t, output, `two_word_flags+=("--two")`)
@@ -215,7 +215,7 @@ func TestBashCompletions(t *testing.T) {
 	check(t, output, `local_nonpersistent_flags+=("--two-w-default")`)
 	check(t, output, `local_nonpersistent_flags+=("-T")`)
 
-	checkOmit(t, output, deprecatedCmd.Name())
+	checkOmit(t, output, name(deprecatedCmd))
 
 	// If available, run shellcheck against the script.
 	if err := exec.Command("which", "shellcheck").Run(); err != nil {
@@ -227,7 +227,7 @@ func TestBashCompletions(t *testing.T) {
 }
 
 func TestBashCompletionHiddenFlag(t *testing.T) {
-	c := &Command{Use: "c", Run: emptyRun}
+	c := &Root{Use: "c", RunE: emptyRun}
 
 	const flagName = "hiddenFlag"
 	c.Flags().Bool(flagName, false, "")
@@ -243,7 +243,7 @@ func TestBashCompletionHiddenFlag(t *testing.T) {
 }
 
 func TestBashCompletionDeprecatedFlag(t *testing.T) {
-	c := &Command{Use: "c", Run: emptyRun}
+	c := &Root{Use: "c", RunE: emptyRun}
 
 	const flagName = "deprecated-flag"
 	c.Flags().Bool(flagName, false, "")
@@ -259,7 +259,7 @@ func TestBashCompletionDeprecatedFlag(t *testing.T) {
 }
 
 func TestBashCompletionTraverseChildren(t *testing.T) {
-	c := &Command{Use: "c", Run: emptyRun, TraverseChildren: true}
+	c := &Root{Use: "c", RunE: emptyRun, TraverseChildren: true}
 
 	c.Flags().StringP("string-flag", "s", "", "string flag")
 	c.Flags().BoolP("bool-flag", "b", false, "bool flag")
@@ -277,13 +277,13 @@ func TestBashCompletionTraverseChildren(t *testing.T) {
 }
 
 func TestBashCompletionNoActiveHelp(t *testing.T) {
-	c := &Command{Use: "c", Run: emptyRun}
+	c := &Root{Use: "c", RunE: emptyRun}
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, c.GenBashCompletion(buf))
 	output := buf.String()
 
 	// check that active help is being disabled
-	activeHelpVar := activeHelpEnvVar(c.Name())
+	activeHelpVar := activeHelpEnvVar(name(c))
 	check(t, output, fmt.Sprintf("%s=0", activeHelpVar))
 }

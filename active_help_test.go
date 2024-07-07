@@ -27,9 +27,9 @@ const (
 )
 
 func TestActiveHelpAlone(t *testing.T) {
-	rootCmd := &Command{
-		Use: "root",
-		Run: emptyRun,
+	rootCmd := &Root{
+		Use:  "root",
+		RunE: emptyRun,
 	}
 
 	activeHelpFunc := func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
@@ -57,10 +57,10 @@ func TestActiveHelpAlone(t *testing.T) {
 	rootCmd.ValidArgsFunction = nil
 
 	// Test that activeHelp can be added to a child command
-	childCmd := &Command{
+	childCmd := &Root{
 		Use:   "thechild",
 		Short: "The child command",
-		Run:   emptyRun,
+		RunE:  emptyRun,
 	}
 	rootCmd.Add(childCmd)
 
@@ -82,15 +82,15 @@ func TestActiveHelpAlone(t *testing.T) {
 }
 
 func TestActiveHelpWithComps(t *testing.T) {
-	rootCmd := &Command{
-		Use: "root",
-		Run: emptyRun,
+	rootCmd := &Root{
+		Use:  "root",
+		RunE: emptyRun,
 	}
 
-	childCmd := &Command{
+	childCmd := &Root{
 		Use:   "thechild",
 		Short: "The child command",
-		Run:   emptyRun,
+		RunE:  emptyRun,
 	}
 	rootCmd.Add(childCmd)
 
@@ -167,15 +167,15 @@ func TestActiveHelpWithComps(t *testing.T) {
 }
 
 func TestMultiActiveHelp(t *testing.T) {
-	rootCmd := &Command{
-		Use: "root",
-		Run: emptyRun,
+	rootCmd := &Root{
+		Use:  "root",
+		RunE: emptyRun,
 	}
 
-	childCmd := &Command{
+	childCmd := &Root{
 		Use:   "thechild",
 		Short: "The child command",
-		Run:   emptyRun,
+		RunE:  emptyRun,
 	}
 	rootCmd.Add(childCmd)
 
@@ -229,9 +229,9 @@ func TestMultiActiveHelp(t *testing.T) {
 }
 
 func TestActiveHelpForFlag(t *testing.T) {
-	rootCmd := &Command{
-		Use: "root",
-		Run: emptyRun,
+	rootCmd := &Root{
+		Use:  "root",
+		RunE: emptyRun,
 	}
 	flagname := "flag"
 	rootCmd.Flags().String(flagname, "", "A flag")
@@ -264,21 +264,21 @@ func TestActiveHelpForFlag(t *testing.T) {
 }
 
 func TestConfigActiveHelp(t *testing.T) {
-	rootCmd := &Command{
-		Use: "root",
-		Run: emptyRun,
+	rootCmd := &Root{
+		Use:  "root",
+		RunE: emptyRun,
 	}
 
-	childCmd := &Command{
+	childCmd := &Root{
 		Use:   "thechild",
 		Short: "The child command",
-		Run:   emptyRun,
+		RunE:  emptyRun,
 	}
 	rootCmd.Add(childCmd)
 
 	activeHelpCfg := "someconfig,anotherconfig"
 	// Set the variable that the user would be setting
-	os.Setenv(activeHelpEnvVar(rootCmd.Name()), activeHelpCfg)
+	os.Setenv(activeHelpEnvVar(name(rootCmd)), activeHelpCfg)
 
 	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		receivedActiveHelpCfg := GetActiveHelpConfig(cmd)
@@ -296,7 +296,7 @@ func TestConfigActiveHelp(t *testing.T) {
 	// Test active help config for a flag
 	activeHelpCfg = "a config for a flag"
 	// Set the variable that the completions scripts will be setting
-	os.Setenv(activeHelpEnvVar(rootCmd.Name()), activeHelpCfg)
+	os.Setenv(activeHelpEnvVar(name(rootCmd)), activeHelpCfg)
 
 	flagname := "flag"
 	childCmd.Flags().String(flagname, "", "A flag")
@@ -317,15 +317,15 @@ func TestConfigActiveHelp(t *testing.T) {
 }
 
 func TestDisableActiveHelp(t *testing.T) {
-	rootCmd := &Command{
-		Use: "root",
-		Run: emptyRun,
+	rootCmd := &Root{
+		Use:  "root",
+		RunE: emptyRun,
 	}
 
-	childCmd := &Command{
+	childCmd := &Root{
 		Use:   "thechild",
 		Short: "The child command",
-		Run:   emptyRun,
+		RunE:  emptyRun,
 	}
 	rootCmd.Add(childCmd)
 
@@ -333,7 +333,7 @@ func TestDisableActiveHelp(t *testing.T) {
 	// environment variable that the completions scripts will be setting.
 	// Make sure the disabling value is "0" by hard-coding it in the tests;
 	// this is for backwards-compatibility as programs will be using this value.
-	os.Setenv(activeHelpEnvVar(rootCmd.Name()), "0")
+	os.Setenv(activeHelpEnvVar(name(rootCmd)), "0")
 
 	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		comps := []string{"first"}
@@ -345,7 +345,7 @@ func TestDisableActiveHelp(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	os.Unsetenv(activeHelpEnvVar(rootCmd.Name()))
+	os.Unsetenv(activeHelpEnvVar(name(rootCmd)))
 
 	// Make sure there is no ActiveHelp in the output
 	expected := strings.Join([]string{
@@ -361,7 +361,7 @@ func TestDisableActiveHelp(t *testing.T) {
 	os.Setenv(activeHelpGlobalEnvVar, "0")
 	// Set the specific variable, to make sure it is ignored when the global env
 	// var is set properly
-	os.Setenv(activeHelpEnvVar(rootCmd.Name()), "1")
+	os.Setenv(activeHelpEnvVar(name(rootCmd)), "1")
 
 	output, err = executeCommand(rootCmd, ShellCompNoDescRequestCmd, "thechild", "")
 	if err != nil {
@@ -383,7 +383,7 @@ func TestDisableActiveHelp(t *testing.T) {
 	os.Setenv(activeHelpGlobalEnvVar, "on")
 	// Set the specific variable, to make sure it is used (while ignoring the global env var)
 	activeHelpCfg := "1"
-	os.Setenv(activeHelpEnvVar(rootCmd.Name()), activeHelpCfg)
+	os.Setenv(activeHelpEnvVar(name(rootCmd)), activeHelpCfg)
 
 	childCmd.ValidArgsFunction = func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		receivedActiveHelpCfg := GetActiveHelpConfig(cmd)

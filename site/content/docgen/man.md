@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	cmd := &cobra.Command{
+	cmd := &cobra.Root{
 		Use:   "test",
 		Short: "my test program",
 	}

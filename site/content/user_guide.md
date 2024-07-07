@@ -46,7 +46,7 @@ Cobra doesn't require any special constructors. Simply create your commands.
 Ideally you place this in app/cmd/root.go:
 
 ```go
-var rootCmd = &cobra.Command{
+var rootCmd = &cobra.Root{
   Use:   "hugo",
   Short: "Hugo is a very fast static site generator",
   Long: `A Fast and Flexible Static Site Generator built with
@@ -85,7 +85,7 @@ var (
 	cfgFile     string
 	userLicense string
 
-	rootCmd = &cobra.Command{
+	rootCmd = &cobra.Root{
 		Use:   "cobra-cli",
 		Short: "A generator for Cobra based Applications",
 		Long: `Cobra is a CLI library for Go that empowers applications.
@@ -178,7 +178,7 @@ func init() {
   rootCmd.Add(versionCmd)
 }
 
-var versionCmd = &cobra.Command{
+var versionCmd = &cobra.Root{
   Use:   "version",
   Short: "Print the version number of Hugo",
   Long:  `All software has versions. This is Hugo's`,
@@ -236,7 +236,7 @@ func init() {
   rootCmd.Add(tryCmd)
 }
 
-var tryCmd = &cobra.Command{
+var tryCmd = &cobra.Root{
   Use:   "try",
   Short: "Try and possibly fail at something",
   RunE: func(cmd *cobra.Command, args []string) error {
@@ -292,7 +292,7 @@ parent commands are ignored. By enabling `Command.TraverseChildren`, Cobra will
 parse local flags on each command before executing the target command.
 
 ```go
-command := cobra.Command{
+command := cobra.Root{
   Use: "print [OPTIONS] [COMMANDS]",
   TraverseChildren: true,
 }
@@ -393,7 +393,7 @@ args that are not in the `ValidArgs` field of `Command`, you can call `MatchAll`
 shown below:
 
 ```go
-var cmd = &cobra.Command{
+var cmd = &cobra.Root{
   Short: "hello",
   Args: cobra.MatchAll(cobra.ExactArgs(2), cobra.OnlyValidArgs),
   Run: func(cmd *cobra.Command, args []string) {
@@ -406,7 +406,7 @@ It is possible to set any custom validator that satisfies `func(cmd *cobra.Comma
 For example:
 
 ```go
-var cmd = &cobra.Command{
+var cmd = &cobra.Root{
   Short: "hello",
   Args: func(cmd *cobra.Command, args []string) error {
     // Optionally run one of the validators provided by cobra
@@ -449,7 +449,7 @@ import (
 func main() {
   var echoTimes int
 
-  var cmdPrint = &cobra.Command{
+  var cmdPrint = &cobra.Root{
     Use:   "print [string to print]",
     Short: "Print anything to the screen",
     Long: `print is for printing anything back to the screen.
@@ -460,7 +460,7 @@ For many years people have printed back to the screen.`,
     },
   }
 
-  var cmdEcho = &cobra.Command{
+  var cmdEcho = &cobra.Root{
     Use:   "echo [string to echo]",
     Short: "Echo anything to the screen",
     Long: `echo is for echoing anything back.
@@ -471,7 +471,7 @@ Echo works a lot like print, except it has a child command.`,
     },
   }
 
-  var cmdTimes = &cobra.Command{
+  var cmdTimes = &cobra.Root{
     Use:   "times [string to echo]",
     Short: "Echo anything to the screen more times",
     Long: `echo things multiple times back to the user by providing
@@ -486,7 +486,7 @@ a count and a string.`,
 
   cmdTimes.Flags().IntVarP(&echoTimes, "times", "t", 1, "times to echo the input")
 
-  var rootCmd = &cobra.Command{Use: "app"}
+  var rootCmd = &cobra.Root{Use: "app"}
   rootCmd.Add(cmdPrint, cmdEcho)
   cmdEcho.Add(cmdTimes)
   rootCmd.Execute()
@@ -550,8 +550,8 @@ You can provide your own Help command or your own template for the default comma
 with the following functions:
 
 ```go
-cmd.SetHelpCommand(cmd *Command)
-cmd.SetHelpFunc(f func(*Command, []string))
+cmd.SetHelpCommand(cmd *Root)
+cmd.SetHelpFunc(f func(*Root, []string))
 cmd.SetHelpTemplate(s string)
 ```
 
@@ -591,7 +591,7 @@ You can provide your own usage function or template for Cobra to use.
 Like help, the function and template are overridable through public methods:
 
 ```go
-cmd.SetUsageFunc(f func(*Command) error)
+cmd.SetUsageFunc(f func(*Root) error)
 cmd.SetUsageTemplate(s string)
 ```
 
@@ -631,7 +631,7 @@ import (
 
 func main() {
 
-  var rootCmd = &cobra.Command{
+  var rootCmd = &cobra.Root{
     Use:   "root [sub]",
     Short: "My root command",
     PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -651,7 +651,7 @@ func main() {
     },
   }
 
-  var subCmd = &cobra.Command{
+  var subCmd = &cobra.Root{
     Use:   "sub [no options!]",
     Short: "My subcommand",
     PreRun: func(cmd *cobra.Command, args []string) {
@@ -774,13 +774,13 @@ import (
 )
 
 func main() {
-	rootCmd := &cobra.Command{
+	rootCmd := &cobra.Root{
 		Use: "kubectl-myplugin",
 		Annotations: map[string]string{
 			cobra.CommandDisplayNameAnnotation: "kubectl myplugin",
 		},
 	}
-	subCmd := &cobra.Command{
+	subCmd := &cobra.Root{
 		Use: "subcmd",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("kubectl myplugin subcmd")

@@ -20,11 +20,11 @@ import (
 )
 
 func TestValidateFlagGroups(t *testing.T) {
-	getCmd := func() *Command {
-		c := &Command{
-			Use: "testcmd",
-			Run: func(cmd Commander, args []string) {
-			}}
+	getCmd := func() *Root {
+		c := &Root{
+			Use:  "testcmd",
+			RunE: emptyRun,
+		}
 		// Define lots of flags to utilize for testing.
 		for _, v := range []string{"a", "b", "c", "d"} {
 			c.Flags().String(v, "", "")
@@ -32,10 +32,10 @@ func TestValidateFlagGroups(t *testing.T) {
 		for _, v := range []string{"e", "f", "g"} {
 			c.PersistentFlags().String(v, "", "")
 		}
-		subC := &Command{
-			Use: "subcmd",
-			Run: func(cmd Commander, args []string) {
-			}}
+		subC := &Root{
+			Use:  "subcmd",
+			RunE: emptyRun,
+		}
 		subC.Flags().String("subonly", "", "")
 		c.Add(subC)
 		return c
@@ -165,22 +165,22 @@ func TestValidateFlagGroups(t *testing.T) {
 			c := getCmd()
 			sub := c.Commands()[0]
 			for _, flagGroup := range tc.flagGroupsRequired {
-				c.MarkFlagsRequiredTogether(strings.Split(flagGroup, " ")...)
+				MarkFlagsRequiredTogether(c, strings.Split(flagGroup, " ")...)
 			}
 			for _, flagGroup := range tc.flagGroupsOneRequired {
-				c.MarkFlagsOneRequired(strings.Split(flagGroup, " ")...)
+				MarkFlagsOneRequired(c, strings.Split(flagGroup, " ")...)
 			}
 			for _, flagGroup := range tc.flagGroupsExclusive {
-				c.MarkFlagsMutuallyExclusive(strings.Split(flagGroup, " ")...)
+				MarkFlagsMutuallyExclusive(c, strings.Split(flagGroup, " ")...)
 			}
 			for _, flagGroup := range tc.subCmdFlagGroupsRequired {
-				sub.MarkFlagsRequiredTogether(strings.Split(flagGroup, " ")...)
+				MarkFlagsRequiredTogether(sub, strings.Split(flagGroup, " ")...)
 			}
 			for _, flagGroup := range tc.subCmdFlagGroupsOneRequired {
-				sub.MarkFlagsOneRequired(strings.Split(flagGroup, " ")...)
+				MarkFlagsOneRequired(sub, strings.Split(flagGroup, " ")...)
 			}
 			for _, flagGroup := range tc.subCmdFlagGroupsExclusive {
-				sub.MarkFlagsMutuallyExclusive(strings.Split(flagGroup, " ")...)
+				MarkFlagsMutuallyExclusive(sub, strings.Split(flagGroup, " ")...)
 			}
 			c.SetArgs(tc.args)
 			err := c.ExecuteX()

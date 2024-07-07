@@ -21,9 +21,9 @@ import (
 	"os"
 )
 
-func (c *Command) genBashCompletion(w io.Writer, includeDesc bool) error {
+func (c *Root) genBashCompletion(w io.Writer, includeDesc bool) error {
 	buf := new(bytes.Buffer)
-	genBashComp(buf, c.Name(), includeDesc)
+	genBashComp(buf, name(c), includeDesc)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -155,7 +155,7 @@ __%[1]s_process_completion_results() {
         done
 
         filteringCmd="_filedir $fullFilter"
-        __%[1]s_debug "File filtering command: $filteringCmd"
+        __%[1]s_debug "File filtering Root: $filteringCmd"
         $filteringCmd
     elif (((directive & shellCompDirectiveFilterDirs) != 0)); then
         # File completion for directories only
@@ -379,7 +379,7 @@ fi
 }
 
 // GenBashCompletionFileV2 generates Bash completion version 2.
-func (c *Command) GenBashCompletionFileV2(filename string, includeDesc bool) error {
+func (c *Root) GenBashCompletionFileV2(filename string, includeDesc bool) error {
 	outFile, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -391,6 +391,6 @@ func (c *Command) GenBashCompletionFileV2(filename string, includeDesc bool) err
 
 // GenBashCompletionV2 generates Bash completion file version 2
 // and writes it to the passed writer.
-func (c *Command) GenBashCompletionV2(w io.Writer, includeDesc bool) error {
+func (c *Root) GenBashCompletionV2(w io.Writer, includeDesc bool) error {
 	return c.genBashCompletion(w, includeDesc)
 }

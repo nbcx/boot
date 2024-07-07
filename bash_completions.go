@@ -145,7 +145,7 @@ __%[1]s_handle_go_custom_completion()
         done
 
         filteringCmd="_filedir $fullFilter"
-        __%[1]s_debug "File filtering command: $filteringCmd"
+        __%[1]s_debug "File filtering Root: $filteringCmd"
         $filteringCmd
     elif [ $((directive & shellCompDirectiveFilterDirs)) -ne 0 ]; then
         # File completion for directories only
@@ -447,30 +447,30 @@ fi
 func writeCommands(buf io.StringWriter, cmd Commander) {
 	WriteStringAndCheck(buf, "    commands=()\n")
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() && c != cmd.GetHelpCommand() {
+		if !IsAvailableCommand(c) && c != cmd.GetHelpCommand() {
 			continue
 		}
-		WriteStringAndCheck(buf, fmt.Sprintf("    commands+=(%q)\n", c.Name()))
+		WriteStringAndCheck(buf, fmt.Sprintf("    commands+=(%q)\n", name(c)))
 		writeCmdAliases(buf, c)
 	}
 	WriteStringAndCheck(buf, "\n")
 }
 
-func writeFlagHandler(buf io.StringWriter, name string, annotations map[string][]string, cmd Commander) {
+func writeFlagHandler(buf io.StringWriter, nameStr string, annotations map[string][]string, cmd Commander) {
 	for key, value := range annotations {
 		switch key {
 		case BashCompFilenameExt:
-			WriteStringAndCheck(buf, fmt.Sprintf("    flags_with_completion+=(%q)\n", name))
+			WriteStringAndCheck(buf, fmt.Sprintf("    flags_with_completion+=(%q)\n", nameStr))
 
 			var ext string
 			if len(value) > 0 {
-				ext = fmt.Sprintf("__%s_handle_filename_extension_flag ", cmd.Root().Name()) + strings.Join(value, "|")
+				ext = fmt.Sprintf("__%s_handle_filename_extension_flag ", name(cmd.Base())) + strings.Join(value, "|")
 			} else {
 				ext = "_filedir"
 			}
 			WriteStringAndCheck(buf, fmt.Sprintf("    flags_completion+=(%q)\n", ext))
 		case BashCompCustom:
-			WriteStringAndCheck(buf, fmt.Sprintf("    flags_with_completion+=(%q)\n", name))
+			WriteStringAndCheck(buf, fmt.Sprintf("    flags_with_completion+=(%q)\n", nameStr))
 
 			if len(value) > 0 {
 				handlers := strings.Join(value, "; ")
@@ -479,11 +479,11 @@ func writeFlagHandler(buf io.StringWriter, name string, annotations map[string][
 				WriteStringAndCheck(buf, "    flags_completion+=(:)\n")
 			}
 		case BashCompSubdirsInDir:
-			WriteStringAndCheck(buf, fmt.Sprintf("    flags_with_completion+=(%q)\n", name))
+			WriteStringAndCheck(buf, fmt.Sprintf("    flags_with_completion+=(%q)\n", nameStr))
 
 			var ext string
 			if len(value) == 1 {
-				ext = fmt.Sprintf("__%s_handle_subdirs_in_dir_flag ", cmd.Root().Name()) + value[0]
+				ext = fmt.Sprintf("__%s_handle_subdirs_in_dir_flag ", name(cmd.Base())) + value[0]
 			} else {
 				ext = "_filedir -d"
 			}
@@ -544,7 +544,7 @@ func prepareCustomAnnotationsForFlags(cmd Commander) {
 		if flag.Annotations == nil {
 			flag.Annotations = map[string][]string{}
 		}
-		flag.Annotations[BashCompCustom] = []string{fmt.Sprintf("__%[1]s_handle_go_custom_completion", cmd.Root().Name())}
+		flag.Annotations[BashCompCustom] = []string{fmt.Sprintf("__%[1]s_handle_go_custom_completion", name(cmd.Base()))}
 	}
 }
 
@@ -573,7 +573,7 @@ func writeFlags(buf io.StringWriter, cmd Commander) {
 		}
 		// localNonPersistentFlags are used to stop the completion of subcommands when one is set
 		// if TraverseChildren is true we should allow to complete subcommands
-		if localNonPersistentFlags.Lookup(flag.Name) != nil && !cmd.Root().GetTraverseChildren() {
+		if localNonPersistentFlags.Lookup(flag.Name) != nil && !cmd.Base().GetTraverseChildren() {
 			writeLocalNonPersistentFlag(buf, flag)
 		}
 	})
@@ -636,7 +636,7 @@ func writeCmdAliases(buf io.StringWriter, cmd Commander) {
 	WriteStringAndCheck(buf, fmt.Sprint(`    if [[ -z "${BASH_VERSION:-}" || "${BASH_VERSINFO[0]:-}" -gt 3 ]]; then`, "\n"))
 	for _, value := range cmd.GetAliases() {
 		WriteStringAndCheck(buf, fmt.Sprintf("        command_aliases+=(%q)\n", value))
-		WriteStringAndCheck(buf, fmt.Sprintf("        aliashash[%q]=%q\n", value, cmd.Name()))
+		WriteStringAndCheck(buf, fmt.Sprintf("        aliashash[%q]=%q\n", value, name(cmd)))
 	}
 	WriteStringAndCheck(buf, `    fi`)
 	WriteStringAndCheck(buf, "\n")
@@ -651,16 +651,16 @@ func writeArgAliases(buf io.StringWriter, cmd Commander) {
 
 func gen(buf io.StringWriter, cmd Commander) {
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() && c != cmd.GetHelpCommand() {
+		if !IsAvailableCommand(c) && c != cmd.GetHelpCommand() {
 			continue
 		}
 		gen(buf, c)
 	}
-	commandName := cmd.CommandPath()
+	commandName := CommandPath(cmd)
 	commandName = strings.ReplaceAll(commandName, " ", "_")
 	commandName = strings.ReplaceAll(commandName, ":", "__")
 
-	if cmd.Root() == cmd {
+	if cmd.Base() == cmd {
 		WriteStringAndCheck(buf, fmt.Sprintf("_%s_root_command()\n{\n", commandName))
 	} else {
 		WriteStringAndCheck(buf, fmt.Sprintf("_%s()\n{\n", commandName))
@@ -680,14 +680,14 @@ func gen(buf io.StringWriter, cmd Commander) {
 }
 
 // GenBashCompletion generates bash completion file and writes to the passed writer.
-func (c *Command) GenBashCompletion(w io.Writer) error {
+func (c *Root) GenBashCompletion(w io.Writer) error {
 	buf := new(bytes.Buffer)
-	writePreamble(buf, c.Name())
+	writePreamble(buf, name(c))
 	if len(c.BashCompletionFunction) > 0 {
 		buf.WriteString(c.BashCompletionFunction + "\n")
 	}
 	gen(buf, c)
-	writePostscript(buf, c.Name())
+	writePostscript(buf, name(c))
 
 	_, err := buf.WriteTo(w)
 	return err
@@ -698,7 +698,7 @@ func nonCompletableFlag(flag *pflag.Flag) bool {
 }
 
 // GenBashCompletionFile generates bash completion file.
-func (c *Command) GenBashCompletionFile(filename string) error {
+func (c *Root) GenBashCompletionFile(filename string) error {
 	outFile, err := os.Create(filename)
 	if err != nil {
 		return err

@@ -21,14 +21,14 @@ import (
 // MarkFlagRequired instructs the various shell completion implementations to
 // prioritize the named flag when performing completion,
 // and causes your command to report an error if invoked without the flag.
-func (c *Command) MarkFlagRequired(name string) error {
+func (c *Root) MarkFlagRequired(name string) error {
 	return MarkFlagRequired(c.Flags(), name)
 }
 
 // MarkPersistentFlagRequired instructs the various shell completion implementations to
 // prioritize the named persistent flag when performing completion,
 // and causes your command to report an error if invoked without the flag.
-func (c *Command) MarkPersistentFlagRequired(name string) error {
+func (c *Root) MarkPersistentFlagRequired(name string) error {
 	return MarkFlagRequired(c.PersistentFlags(), name)
 }
 
@@ -41,7 +41,7 @@ func MarkFlagRequired(flags *pflag.FlagSet, name string) error {
 
 // MarkFlagFilename instructs the various shell completion implementations to
 // limit completions for the named flag to the specified file extensions.
-func (c *Command) MarkFlagFilename(name string, extensions ...string) error {
+func (c *Root) MarkFlagFilename(name string, extensions ...string) error {
 	return MarkFlagFilename(c.Flags(), name, extensions...)
 }
 
@@ -51,14 +51,14 @@ func (c *Command) MarkFlagFilename(name string, extensions ...string) error {
 // This will only work for bash completion.
 // It is recommended to instead use c.RegisterFlagCompletionFunc(...) which allows
 // to register a Go function which will work across all shells.
-func (c *Command) MarkFlagCustom(name string, f string) error {
+func (c *Root) MarkFlagCustom(name string, f string) error {
 	return MarkFlagCustom(c.Flags(), name, f)
 }
 
 // MarkPersistentFlagFilename instructs the various shell completion
 // implementations to limit completions for the named persistent flag to the
 // specified file extensions.
-func (c *Command) MarkPersistentFlagFilename(name string, extensions ...string) error {
+func (c *Root) MarkPersistentFlagFilename(name string, extensions ...string) error {
 	return MarkFlagFilename(c.PersistentFlags(), name, extensions...)
 }
 
@@ -80,14 +80,14 @@ func MarkFlagCustom(flags *pflag.FlagSet, name string, f string) error {
 
 // MarkFlagDirname instructs the various shell completion implementations to
 // limit completions for the named flag to directory names.
-func (c *Command) MarkFlagDirname(name string) error {
+func (c *Root) MarkFlagDirname(name string) error {
 	return MarkFlagDirname(c.Flags(), name)
 }
 
 // MarkPersistentFlagDirname instructs the various shell completion
 // implementations to limit completions for the named persistent flag to
 // directory names.
-func (c *Command) MarkPersistentFlagDirname(name string) error {
+func (c *Root) MarkPersistentFlagDirname(name string) error {
 	return MarkFlagDirname(c.PersistentFlags(), name)
 }
 

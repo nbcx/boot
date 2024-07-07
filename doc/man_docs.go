@@ -35,7 +35,7 @@ import (
 // correctly if your command names have `-` in them. If you have `cmd` with two
 // subcmds, `sub` and `sub-third`, and `sub` has a subcommand called `third`
 // it is undefined which help output will be in the file `cmd-sub-third.1`.
-func GenManTree(cmd *boot.Command, header *GenManHeader, dir string) error {
+func GenManTree(cmd boot.Commander, header *GenManHeader, dir string) error {
 	return GenManTreeFromOpts(cmd, GenManTreeOptions{
 		Header:           header,
 		Path:             dir,
@@ -51,7 +51,7 @@ func GenManTreeFromOpts(cmd boot.Commander, opts GenManTreeOptions) error {
 		header = &GenManHeader{}
 	}
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
 			continue
 		}
 		if err := GenManTreeFromOpts(c, opts); err != nil {
@@ -67,7 +67,7 @@ func GenManTreeFromOpts(cmd boot.Commander, opts GenManTreeOptions) error {
 	if opts.CommandSeparator != "" {
 		separator = opts.CommandSeparator
 	}
-	basename := strings.ReplaceAll(cmd.CommandPath(), " ", separator)
+	basename := strings.ReplaceAll(boot.CommandPath(cmd), " ", separator)
 	filename := filepath.Join(opts.Path, basename+"."+section)
 	f, err := os.Create(filename)
 	if err != nil {
@@ -106,7 +106,7 @@ func GenMan(cmd boot.Commander, header *GenManHeader, w io.Writer) error {
 	if header == nil {
 		header = &GenManHeader{}
 	}
-	if err := fillHeader(header, cmd.CommandPath(), cmd.GetDisableAutoGenTag()); err != nil {
+	if err := fillHeader(header, boot.CommandPath(cmd), cmd.GetDisableAutoGenTag()); err != nil {
 		return err
 	}
 
@@ -151,7 +151,7 @@ func manPreamble(buf io.StringWriter, header *GenManHeader, cmd boot.Commander, 
 `, header.Title, header.Section, header.date, header.Source, header.Manual))
 	boot.WriteStringAndCheck(buf, fmt.Sprintf("%s \\- %s\n\n", dashedName, cmd.GetShort()))
 	boot.WriteStringAndCheck(buf, "# SYNOPSIS\n")
-	boot.WriteStringAndCheck(buf, fmt.Sprintf("**%s**\n\n", cmd.UseLine()))
+	boot.WriteStringAndCheck(buf, fmt.Sprintf("**%s**\n\n", boot.UseLine(cmd)))
 	boot.WriteStringAndCheck(buf, "# DESCRIPTION\n")
 	boot.WriteStringAndCheck(buf, description+"\n\n")
 }
@@ -200,11 +200,11 @@ func manPrintOptions(buf io.StringWriter, command boot.Commander) {
 }
 
 func genMan(cmd boot.Commander, header *GenManHeader) []byte {
-	cmd.InitDefaultHelpCmd()
-	cmd.InitDefaultHelpFlag()
+	boot.InitDefaultHelpCmd(cmd)
+	boot.InitDefaultHelpFlag(cmd)
 
 	// something like `rootcmd-subcmd1-subcmd2`
-	dashCommandName := strings.ReplaceAll(cmd.CommandPath(), " ", "-")
+	dashCommandName := strings.ReplaceAll(boot.CommandPath(cmd), " ", "-")
 
 	buf := new(bytes.Buffer)
 
@@ -218,11 +218,11 @@ func genMan(cmd boot.Commander, header *GenManHeader) []byte {
 		buf.WriteString("# SEE ALSO\n")
 		seealsos := make([]string, 0)
 		if cmd.HasParent() {
-			parentPath := cmd.Parent().CommandPath()
+			parentPath := boot.CommandPath(cmd.Parent())
 			dashParentPath := strings.ReplaceAll(parentPath, " ", "-")
 			seealso := fmt.Sprintf("**%s(%s)**", dashParentPath, header.Section)
 			seealsos = append(seealsos, seealso)
-			cmd.VisitParents(func(c boot.Commander) {
+			boot.VisitParents(cmd, func(c boot.Commander) {
 				if c.GetDisableAutoGenTag() {
 					cmd.SetDisableAutoGenTag(c.GetDisableAutoGenTag())
 				}
@@ -231,10 +231,10 @@ func genMan(cmd boot.Commander, header *GenManHeader) []byte {
 		children := cmd.Commands()
 		sort.Sort(byName(children))
 		for _, c := range children {
-			if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
+			if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
 				continue
 			}
-			seealso := fmt.Sprintf("**%s-%s(%s)**", dashCommandName, c.Name(), header.Section)
+			seealso := fmt.Sprintf("**%s-%s(%s)**", dashCommandName, boot.ParseName(c), header.Section)
 			seealsos = append(seealsos, seealso)
 		}
 		buf.WriteString(strings.Join(seealsos, ", ") + "\n")

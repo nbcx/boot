@@ -22,24 +22,24 @@ import (
 )
 
 // GenZshCompletionFile generates zsh completion file including descriptions.
-func (c *Command) GenZshCompletionFile(filename string) error {
+func (c *Root) GenZshCompletionFile(filename string) error {
 	return c.genZshCompletionFile(filename, true)
 }
 
 // GenZshCompletion generates zsh completion file including descriptions
 // and writes it to the passed writer.
-func (c *Command) GenZshCompletion(w io.Writer) error {
+func (c *Root) GenZshCompletion(w io.Writer) error {
 	return c.genZshCompletion(w, true)
 }
 
 // GenZshCompletionFileNoDesc generates zsh completion file without descriptions.
-func (c *Command) GenZshCompletionFileNoDesc(filename string) error {
+func (c *Root) GenZshCompletionFileNoDesc(filename string) error {
 	return c.genZshCompletionFile(filename, false)
 }
 
 // GenZshCompletionNoDesc generates zsh completion file without descriptions
 // and writes it to the passed writer.
-func (c *Command) GenZshCompletionNoDesc(w io.Writer) error {
+func (c *Root) GenZshCompletionNoDesc(w io.Writer) error {
 	return c.genZshCompletion(w, false)
 }
 
@@ -52,7 +52,7 @@ func (c *Command) GenZshCompletionNoDesc(w io.Writer) error {
 // ShellCompDirectiveFilterFileExt.
 //
 // Deprecated
-func (c *Command) MarkZshCompPositionalArgumentFile(argPosition int, patterns ...string) error {
+func (c *Root) MarkZshCompPositionalArgumentFile(argPosition int, patterns ...string) error {
 	return nil
 }
 
@@ -63,11 +63,11 @@ func (c *Command) MarkZshCompPositionalArgumentFile(argPosition int, patterns ..
 // any argument (can include the first one also).
 //
 // Deprecated
-func (c *Command) MarkZshCompPositionalArgumentWords(argPosition int, words ...string) error {
+func (c *Root) MarkZshCompPositionalArgumentWords(argPosition int, words ...string) error {
 	return nil
 }
 
-func (c *Command) genZshCompletionFile(filename string, includeDesc bool) error {
+func (c *Root) genZshCompletionFile(filename string, includeDesc bool) error {
 	outFile, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -77,9 +77,9 @@ func (c *Command) genZshCompletionFile(filename string, includeDesc bool) error 
 	return c.genZshCompletion(outFile, includeDesc)
 }
 
-func (c *Command) genZshCompletion(w io.Writer, includeDesc bool) error {
+func (c *Root) genZshCompletion(w io.Writer, includeDesc bool) error {
 	buf := new(bytes.Buffer)
-	genZshComp(buf, c.Name(), includeDesc)
+	genZshComp(buf, name(c), includeDesc)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -247,7 +247,7 @@ _%[1]s()
         done
         filteringCmd+=" ${flagPrefix}"
 
-        __%[1]s_debug "File filtering command: $filteringCmd"
+        __%[1]s_debug "File filtering Root: $filteringCmd"
         _arguments '*:filename:'"$filteringCmd"
     elif [ $((directive & shellCompDirectiveFilterDirs)) -ne 0 ]; then
         # File completion for directories only

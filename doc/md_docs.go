@@ -49,17 +49,17 @@ func printOptions(buf *bytes.Buffer, cmd boot.Commander, name string) error {
 }
 
 // GenMarkdown creates markdown output.
-func GenMarkdown(cmd *boot.Command, w io.Writer) error {
+func GenMarkdown(cmd boot.Commander, w io.Writer) error {
 	return GenMarkdownCustom(cmd, w, func(s string) string { return s })
 }
 
 // GenMarkdownCustom creates custom markdown output.
 func GenMarkdownCustom(cmd boot.Commander, w io.Writer, linkHandler func(string) string) error {
-	cmd.InitDefaultHelpCmd()
-	cmd.InitDefaultHelpFlag()
+	boot.InitDefaultHelpCmd(cmd)
+	boot.InitDefaultHelpFlag(cmd)
 
 	buf := new(bytes.Buffer)
-	name := cmd.CommandPath()
+	name := boot.CommandPath(cmd)
 
 	buf.WriteString("## " + name + "\n\n")
 	buf.WriteString(cmd.GetShort() + "\n\n")
@@ -69,7 +69,7 @@ func GenMarkdownCustom(cmd boot.Commander, w io.Writer, linkHandler func(string)
 	}
 
 	if cmd.Runnable() {
-		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmd.UseLine()))
+		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", boot.UseLine(cmd)))
 	}
 
 	if len(cmd.GetExample()) > 0 {
@@ -84,11 +84,11 @@ func GenMarkdownCustom(cmd boot.Commander, w io.Writer, linkHandler func(string)
 		buf.WriteString("### SEE ALSO\n\n")
 		if cmd.HasParent() {
 			parent := cmd.Parent()
-			pname := parent.CommandPath()
+			pname := boot.CommandPath(parent)
 			link := pname + markdownExtension
 			link = strings.ReplaceAll(link, " ", "_")
 			buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", pname, linkHandler(link), parent.GetShort()))
-			cmd.VisitParents(func(c boot.Commander) {
+			boot.VisitParents(cmd, func(c boot.Commander) {
 				if c.GetDisableAutoGenTag() {
 					// cmd.DisableAutoGenTag = c.DisableAutoGenTag
 					cmd.SetDisableAutoGenTag(c.GetDisableAutoGenTag())
@@ -100,10 +100,10 @@ func GenMarkdownCustom(cmd boot.Commander, w io.Writer, linkHandler func(string)
 		sort.Sort(byName(children))
 
 		for _, child := range children {
-			if !child.IsAvailableCommand() || child.IsAdditionalHelpTopicCommand() {
+			if !boot.IsAvailableCommand(child) || child.IsAdditionalHelpTopicCommand() {
 				continue
 			}
-			cname := name + " " + child.Name()
+			cname := name + " " + boot.ParseName(child)
 			link := cname + markdownExtension
 			link = strings.ReplaceAll(link, " ", "_")
 			buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", cname, linkHandler(link), child.GetShort()))
@@ -123,7 +123,7 @@ func GenMarkdownCustom(cmd boot.Commander, w io.Writer, linkHandler func(string)
 // If you have `cmd` with two subcmds, `sub` and `sub-third`,
 // and `sub` has a subcommand called `third`, it is undefined which
 // help output will be in the file `cmd-sub-third.1`.
-func GenMarkdownTree(cmd *boot.Command, dir string) error {
+func GenMarkdownTree(cmd boot.Commander, dir string) error {
 	identity := func(s string) string { return s }
 	emptyStr := func(s string) string { return "" }
 	return GenMarkdownTreeCustom(cmd, dir, emptyStr, identity)
@@ -133,7 +133,7 @@ func GenMarkdownTree(cmd *boot.Command, dir string) error {
 // with custom filePrepender and linkHandler.
 func GenMarkdownTreeCustom(cmd boot.Commander, dir string, filePrepender, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
 			continue
 		}
 		if err := GenMarkdownTreeCustom(c, dir, filePrepender, linkHandler); err != nil {
@@ -141,7 +141,7 @@ func GenMarkdownTreeCustom(cmd boot.Commander, dir string, filePrepender, linkHa
 		}
 	}
 
-	basename := strings.ReplaceAll(cmd.CommandPath(), " ", "_") + markdownExtension
+	basename := strings.ReplaceAll(boot.CommandPath(cmd), " ", "_") + markdownExtension
 	filename := filepath.Join(dir, basename)
 	f, err := os.Create(filename)
 	if err != nil {

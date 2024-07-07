@@ -60,7 +60,7 @@ filter __%[1]s_escapeStringWithSpecialChars {
 
     __%[1]s_debug ""
     __%[1]s_debug "========= starting completion logic =========="
-    __%[1]s_debug "WordToComplete: $WordToComplete Command: $Command CursorPosition: $CursorPosition"
+    __%[1]s_debug "WordToComplete: $WordToComplete Root: $Command CursorPosition: $CursorPosition"
 
     # The user could have moved the cursor backwards on the command-line.
     # We need to trigger completion from the $CursorPosition location, so we need
@@ -70,7 +70,7 @@ filter __%[1]s_escapeStringWithSpecialChars {
     if ($Command.Length -gt $CursorPosition) {
         $Command=$Command.Substring(0,$CursorPosition)
     }
-    __%[1]s_debug "Truncated command: $Command"
+    __%[1]s_debug "Truncated Root: $Command"
 
     $ShellCompDirectiveError=%[4]d
     $ShellCompDirectiveNoSpace=%[5]d
@@ -285,14 +285,14 @@ Register-ArgumentCompleter -CommandName '%[1]s' -ScriptBlock ${__%[2]sCompleterB
 		ShellCompDirectiveFilterFileExt, ShellCompDirectiveFilterDirs, ShellCompDirectiveKeepOrder, activeHelpEnvVar(name)))
 }
 
-func (c *Command) genPowerShellCompletion(w io.Writer, includeDesc bool) error {
+func (c *Root) genPowerShellCompletion(w io.Writer, includeDesc bool) error {
 	buf := new(bytes.Buffer)
-	genPowerShellComp(buf, c.Name(), includeDesc)
+	genPowerShellComp(buf, name(c), includeDesc)
 	_, err := buf.WriteTo(w)
 	return err
 }
 
-func (c *Command) genPowerShellCompletionFile(filename string, includeDesc bool) error {
+func (c *Root) genPowerShellCompletionFile(filename string, includeDesc bool) error {
 	outFile, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -303,23 +303,23 @@ func (c *Command) genPowerShellCompletionFile(filename string, includeDesc bool)
 }
 
 // GenPowerShellCompletionFile generates powershell completion file without descriptions.
-func (c *Command) GenPowerShellCompletionFile(filename string) error {
+func (c *Root) GenPowerShellCompletionFile(filename string) error {
 	return c.genPowerShellCompletionFile(filename, false)
 }
 
 // GenPowerShellCompletion generates powershell completion file without descriptions
 // and writes it to the passed writer.
-func (c *Command) GenPowerShellCompletion(w io.Writer) error {
+func (c *Root) GenPowerShellCompletion(w io.Writer) error {
 	return c.genPowerShellCompletion(w, false)
 }
 
 // GenPowerShellCompletionFileWithDesc generates powershell completion file with descriptions.
-func (c *Command) GenPowerShellCompletionFileWithDesc(filename string) error {
+func (c *Root) GenPowerShellCompletionFileWithDesc(filename string) error {
 	return c.genPowerShellCompletionFile(filename, true)
 }
 
 // GenPowerShellCompletionWithDesc generates powershell completion file with descriptions
 // and writes it to the passed writer.
-func (c *Command) GenPowerShellCompletionWithDesc(w io.Writer) error {
+func (c *Root) GenPowerShellCompletionWithDesc(w io.Writer) error {
 	return c.genPowerShellCompletion(w, true)
 }

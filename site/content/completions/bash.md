@@ -50,7 +50,7 @@ __kubectl_custom_func() {
 And then I set that in my command definition:
 
 ```go
-cmds := &cobra.Command{
+cmds := &cobra.Root{
 	Use:   "kubectl",
 	Short: "kubectl controls the Kubernetes cluster manager",
 	Long: `kubectl controls the Kubernetes cluster manager.

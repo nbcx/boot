@@ -32,7 +32,7 @@ Adding Active Help is done through the use of the `cobra.AppendActiveHelp(...)` 
 Adding Active Help when completing a noun is done within the `ValidArgsFunction(...)` of a command.  Please notice the use of `cobra.AppendActiveHelp(...)` in the following example:
 
 ```go
-cmd := &cobra.Command{
+cmd := &cobra.Root{
 	Use:   "add [NAME] [URL]",
 	Short: "add a chart repository",
 	Args:  require.ExactArgs(2),

@@ -49,11 +49,11 @@ type CommandCalledAs struct {
 	called bool
 }
 
-// Command is just that, a command for your application.
+// Root is just that, a command for your application.
 // E.g.  'go run ...' - 'run' is the command. Cobra requires
 // you to define the usage and description as part of your command
 // definition to ensure usability.
-type Command struct {
+type Root struct {
 	// Use is the one-line usage message.
 	// Recommended syntax is as follows:
 	//   [ ] identifies an optional argument. Arguments that are not enclosed in brackets are required.
@@ -131,15 +131,17 @@ type Command struct {
 	// PersistentPreRunE: PersistentPreRun but returns an error.
 	PersistentPreRunE func(cmd Commander, args []string) error
 	// PreRun: children of this command will not inherit.
-	PreRun func(cmd Commander, args []string)
+	// PreRun func(cmd Commander, args []string)
 	// PreRunE: PreRun but returns an error.
 	PreRunE func(cmd Commander, args []string) error
 	// Run: Typically the actual work function. Most commands will only implement this.
-	Run func(cmd Commander, args []string)
+	// Run func(cmd Commander, args []string)
 	// RunE: Run but returns an error.
+	// RunE func(cmd Commander, args []string) error
 	RunE func(cmd Commander, args []string) error
+
 	// PostRun: run after the Run command.
-	PostRun func(cmd Commander, args []string)
+	// PostRun func(cmd Commander, args []string)
 	// PostRunE: PostRun but returns an error.
 	PostRunE func(cmd Commander, args []string) error
 	// PersistentPostRun: children of this command will inherit and execute after PostRun.
@@ -265,76 +267,76 @@ type Command struct {
 // Notice that a call to Execute and ExecuteC will replace a nil context of
 // a command with a context.Background, so a background context will be
 // returned by Context after one of these functions has been called.
-func (c *Command) Context() context.Context {
+func (c *Root) Context() context.Context {
 	return c.ctx
 }
 
 // SetContext sets context for the command. This context will be overwritten by
 // Command.ExecuteContext or Command.ExecuteContextC.
-func (c *Command) SetContext(ctx context.Context) {
+func (c *Root) SetContext(ctx context.Context) {
 	c.ctx = ctx
 }
 
 // SetArgs sets arguments for the command. It is set to os.Args[1:] by default, if desired, can be overridden
 // particularly useful when testing.
-func (c *Command) SetArgs(a []string) {
+func (c *Root) SetArgs(a []string) {
 	c.args = a
 }
 
 // SetOutput sets the destination for usage and error messages.
 // If output is nil, os.Stderr is used.
 // Deprecated: Use SetOut and/or SetErr instead
-func (c *Command) SetOutput(output io.Writer) {
+func (c *Root) SetOutput(output io.Writer) {
 	c.outWriter = output
 	c.errWriter = output
 }
 
 // SetOut sets the destination for usage messages.
 // If newOut is nil, os.Stdout is used.
-func (c *Command) SetOut(newOut io.Writer) {
+func (c *Root) SetOut(newOut io.Writer) {
 	c.outWriter = newOut
 }
 
 // SetErr sets the destination for error messages.
 // If newErr is nil, os.Stderr is used.
-func (c *Command) SetErr(newErr io.Writer) {
+func (c *Root) SetErr(newErr io.Writer) {
 	c.errWriter = newErr
 }
 
 // SetIn sets the source for input data
 // If newIn is nil, os.Stdin is used.
-func (c *Command) SetIn(newIn io.Reader) {
+func (c *Root) SetIn(newIn io.Reader) {
 	c.inReader = newIn
 }
 
 // SetUsageFunc sets usage function. Usage can be defined by application.
-func (c *Command) SetUsageFunc(f func(Commander) error) {
+func (c *Root) SetUsageFunc(f func(Commander) error) {
 	c.usageFunc = f
 }
 
 // SetUsageTemplate sets usage template. Can be defined by Application.
-func (c *Command) SetUsageTemplate(s string) {
+func (c *Root) SetUsageTemplate(s string) {
 	c.usageTemplate = s
 }
 
 // SetFlagErrorFunc sets a function to generate an error when flag parsing
 // fails.
-func (c *Command) SetFlagErrorFunc(f func(Commander, error) error) {
+func (c *Root) SetFlagErrorFunc(f func(Commander, error) error) {
 	c.flagErrorFunc = f
 }
 
 // SetHelpFunc sets help function. Can be defined by Application.
-func (c *Command) SetHelpFunc(f func(Commander, []string)) {
+func (c *Root) SetHelpFunc(f func(Commander, []string)) {
 	c.helpFunc = f
 }
 
 // SetHelpCommand sets help command.
-func (c *Command) SetHelpCommand(cmd Commander) {
+func (c *Root) SetHelpCommand(cmd Commander) {
 	c.helpCommand = cmd
 }
 
 // SetHelpCommandGroupID sets the group id of the help command.
-func (c *Command) SetHelpCommandGroupID(groupID string) {
+func (c *Root) SetHelpCommandGroupID(groupID string) {
 	if c.helpCommand != nil {
 		c.helpCommand.SetGroupID(groupID)
 	}
@@ -343,29 +345,29 @@ func (c *Command) SetHelpCommandGroupID(groupID string) {
 }
 
 // SetCompletionCommandGroupID sets the group id of the completion command.
-func (c *Command) SetCompletionCommandGroupID(groupID string) {
+func (c *Root) SetCompletionCommandGroupID(groupID string) {
 	// completionCommandGroupID is used if no completion command is defined by the user
-	c.Root().SetCompletionCommandGroupID(groupID)
+	c.Base().SetCompletionCommandGroupID(groupID)
 }
 
 // SetHelpTemplate sets help template to be used. Application can use it to set custom template.
-func (c *Command) SetHelpTemplate(s string) {
+func (c *Root) SetHelpTemplate(s string) {
 	c.helpTemplate = s
 }
 
 // SetVersionTemplate sets version template to be used. Application can use it to set custom template.
-func (c *Command) SetVersionTemplate(s string) {
+func (c *Root) SetVersionTemplate(s string) {
 	c.versionTemplate = s
 }
 
 // SetErrPrefix sets error message prefix to be used. Application can use it to set custom prefix.
-func (c *Command) SetErrPrefix(s string) {
+func (c *Root) SetErrPrefix(s string) {
 	c.errPrefix = s
 }
 
 // SetGlobalNormalizationFunc sets a normalization function to all flag sets and also to child commands.
 // The user should not have a cyclic dependency on commands.
-func (c *Command) SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string) flag.NormalizedName) {
+func (c *Root) SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string) flag.NormalizedName) {
 	c.Flags().SetNormalizeFunc(n)
 	c.PersistentFlags().SetNormalizeFunc(n)
 	c.globNormFunc = n
@@ -376,26 +378,26 @@ func (c *Command) SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string
 }
 
 // OutOrStdout returns output to stdout.
-func (c *Command) OutOrStdout() io.Writer {
+func (c *Root) OutOrStdout() io.Writer {
 	return c.getOut(os.Stdout)
 }
 
 // OutOrStderr returns output to stderr
-func (c *Command) OutOrStderr() io.Writer {
+func (c *Root) OutOrStderr() io.Writer {
 	return c.getOut(os.Stderr)
 }
 
 // ErrOrStderr returns output to stderr
-func (c *Command) ErrOrStderr() io.Writer {
+func (c *Root) ErrOrStderr() io.Writer {
 	return c.getErr(os.Stderr)
 }
 
 // InOrStdin returns input to stdin
-func (c *Command) InOrStdin() io.Reader {
+func (c *Root) InOrStdin() io.Reader {
 	return c.getIn(os.Stdin)
 }
 
-func (c *Command) getOut(def io.Writer) io.Writer {
+func (c *Root) getOut(def io.Writer) io.Writer {
 	if c.outWriter != nil {
 		return c.outWriter
 	}
@@ -405,7 +407,7 @@ func (c *Command) getOut(def io.Writer) io.Writer {
 	return def
 }
 
-func (c *Command) getErr(def io.Writer) io.Writer {
+func (c *Root) getErr(def io.Writer) io.Writer {
 	if c.errWriter != nil {
 		return c.errWriter
 	}
@@ -415,7 +417,7 @@ func (c *Command) getErr(def io.Writer) io.Writer {
 	return def
 }
 
-func (c *Command) getIn(def io.Reader) io.Reader {
+func (c *Root) getIn(def io.Reader) io.Reader {
 	if c.inReader != nil {
 		return c.inReader
 	}
@@ -427,7 +429,7 @@ func (c *Command) getIn(def io.Reader) io.Reader {
 
 // UsageFunc returns either the function set by SetUsageFunc for this command
 // or a parent, or it returns a default usage function.
-func (c *Command) UsageFunc() (f func(Commander) error) {
+func (c *Root) UsageFunc() (f func(Commander) error) {
 	if c.usageFunc != nil {
 		return c.usageFunc
 	}
@@ -438,7 +440,7 @@ func (c *Command) UsageFunc() (f func(Commander) error) {
 		c.mergePersistentFlags()
 		err := tmpl(c.OutOrStderr(), c.UsageTemplate(), c)
 		if err != nil {
-			c.PrintErrln(err)
+			c.PrintErrLn(err)
 		}
 		return err
 	}
@@ -447,13 +449,13 @@ func (c *Command) UsageFunc() (f func(Commander) error) {
 // Usage puts out the usage for the command.
 // Used when a user provides invalid input.
 // Can be defined by user by overriding UsageFunc.
-func (c *Command) Usage() error {
+func (c *Root) Usage() error {
 	return c.UsageFunc()(c)
 }
 
 // HelpFunc returns either the function set by SetHelpFunc for this command
 // or a parent, or it returns a function with default help behavior.
-func (c *Command) HelpFunc() func(Commander, []string) {
+func (c *Root) HelpFunc() func(Commander, []string) {
 	if c.helpFunc != nil {
 		return c.helpFunc
 	}
@@ -466,7 +468,7 @@ func (c *Command) HelpFunc() func(Commander, []string) {
 		// See https://github.com/spf13/cobra/issues/1002
 		err := tmpl(c.OutOrStdout(), c.HelpTemplate(), c)
 		if err != nil {
-			c.PrintErrln(err)
+			c.PrintErrLn(err)
 		}
 	}
 }
@@ -474,13 +476,13 @@ func (c *Command) HelpFunc() func(Commander, []string) {
 // Help puts out the help for the command.
 // Used when a user calls help [command].
 // Can be defined by user by overriding HelpFunc.
-func (c *Command) Help() error {
+func (c *Root) Help() error {
 	c.HelpFunc()(c, []string{})
 	return nil
 }
 
 // UsageString returns usage string.
-func (c *Command) UsageString() string {
+func (c *Root) UsageString() string {
 	// Storing normal writers
 	tmpOutput := c.outWriter
 	tmpErr := c.errWriter
@@ -501,7 +503,7 @@ func (c *Command) UsageString() string {
 // FlagErrorFunc returns either the function set by SetFlagErrorFunc for this
 // command or a parent, or it returns a function which returns the original
 // error.
-func (c *Command) FlagErrorFunc() (f func(Commander, error) error) {
+func (c *Root) FlagErrorFunc() (f func(Commander, error) error) {
 	if c.flagErrorFunc != nil {
 		return c.flagErrorFunc
 	}
@@ -517,7 +519,7 @@ func (c *Command) FlagErrorFunc() (f func(Commander, error) error) {
 var minUsagePadding = 25
 
 // UsagePadding return padding for the usage.
-func (c *Command) UsagePadding() int {
+func (c *Root) UsagePadding() int {
 	if c.parent == nil || minUsagePadding > c.parent.GetCommandsMaxUseLen() {
 		return minUsagePadding
 	}
@@ -527,7 +529,7 @@ func (c *Command) UsagePadding() int {
 var minCommandPathPadding = 11
 
 // CommandPathPadding return padding for the command path.
-func (c *Command) CommandPathPadding() int {
+func (c *Root) CommandPathPadding() int {
 	if c.parent == nil || minCommandPathPadding > c.parent.GetCommandsMaxCommandPathLen() {
 		return minCommandPathPadding
 	}
@@ -537,7 +539,7 @@ func (c *Command) CommandPathPadding() int {
 var minNamePadding = 11
 
 // NamePadding returns padding for the name.
-func (c *Command) NamePadding() int {
+func (c *Root) NamePadding() int {
 	if c.parent == nil || minNamePadding > c.parent.GetCommandsMaxNameLen() {
 		return minNamePadding
 	}
@@ -545,7 +547,7 @@ func (c *Command) NamePadding() int {
 }
 
 // UsageTemplate returns usage template for the command.
-func (c *Command) UsageTemplate() string {
+func (c *Root) UsageTemplate() string {
 	if c.usageTemplate != "" {
 		return c.usageTemplate
 	}
@@ -586,7 +588,7 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 }
 
 // HelpTemplate return help template for the command.
-func (c *Command) HelpTemplate() string {
+func (c *Root) HelpTemplate() string {
 	if c.helpTemplate != "" {
 		return c.helpTemplate
 	}
@@ -600,7 +602,7 @@ func (c *Command) HelpTemplate() string {
 }
 
 // VersionTemplate return version template for the command.
-func (c *Command) VersionTemplate() string {
+func (c *Root) VersionTemplate() string {
 	if c.versionTemplate != "" {
 		return c.versionTemplate
 	}
@@ -613,7 +615,7 @@ func (c *Command) VersionTemplate() string {
 }
 
 // ErrPrefix return error message prefix for the command
-func (c *Command) ErrPrefix() string {
+func (c *Root) ErrPrefix() string {
 	if c.errPrefix != "" {
 		return c.errPrefix
 	}
@@ -685,7 +687,7 @@ Loop:
 // argsMinusFirstX removes only the first x from args.  Otherwise, commands that look like
 // openshift admin policy add-role-to-user admin my-user, lose the admin argument (arg[4]).
 // Special care needs to be taken not to remove a flag value.
-func (c *Command) argsMinusFirstX(args []string, x string) []string {
+func (c *Root) argsMinusFirstX(args []string, x string) []string {
 	if len(args) == 0 {
 		return args
 	}
@@ -727,7 +729,7 @@ func isFlagArg(arg string) bool {
 
 // Find the target command given the args and command tree
 // Meant to be run on the highest node. Only searches down.
-func (c *Command) Find(args []string) (Commander, []string, error) {
+func Find(c Commander, args []string) (Commander, []string, error) {
 	var innerFind func(Commander, []string) (Commander, []string)
 
 	innerFind = func(c Commander, innerArgs []string) (Commander, []string) {
@@ -737,7 +739,7 @@ func (c *Command) Find(args []string) (Commander, []string, error) {
 		}
 		nextSubCmd := argsWOflags[0]
 
-		cmd := c.findNext(nextSubCmd)
+		cmd := findNext(c, nextSubCmd)
 		if cmd != nil {
 			return innerFind(cmd, c.argsMinusFirstX(innerArgs, nextSubCmd))
 		}
@@ -751,15 +753,15 @@ func (c *Command) Find(args []string) (Commander, []string, error) {
 	return commandFound, a, nil
 }
 
-func (c *Command) findSuggestions(arg string) string {
-	if c.DisableSuggestions {
+func findSuggestions(c Commander, arg string) string {
+	if c.GetDisableSuggestions() {
 		return ""
 	}
-	if c.SuggestionsMinimumDistance <= 0 {
-		c.SuggestionsMinimumDistance = 2
+	if c.GetSuggestionsMinimumDistance() <= 0 {
+		c.SetSuggestionsMinimumDistance(2)
 	}
 	var sb strings.Builder
-	if suggestions := c.SuggestionsFor(arg); len(suggestions) > 0 {
+	if suggestions := SuggestionsFor(c, arg); len(suggestions) > 0 {
 		sb.WriteString("\n\nDid you mean this?\n")
 		for _, s := range suggestions {
 			_, _ = fmt.Fprintf(&sb, "\t%v\n", s)
@@ -768,14 +770,14 @@ func (c *Command) findSuggestions(arg string) string {
 	return sb.String()
 }
 
-func (c *Command) findNext(next string) Commander {
+func findNext(c Commander, next string) Commander {
 	matches := make([]Commander, 0)
-	for _, cmd := range c.commands {
-		if commandNameMatches(cmd.Name(), next) || cmd.HasAlias(next) {
+	for _, cmd := range c.GetCommands() {
+		if commandNameMatches(name(cmd), next) || cmd.HasAlias(next) {
 			cmd.GetCommandCalledAs().name = next
 			return cmd
 		}
-		if EnablePrefixMatching && cmd.hasNameOrAliasPrefix(next) {
+		if EnablePrefixMatching && hasNameOrAliasPrefix(cmd, next) {
 			matches = append(matches, cmd)
 		}
 	}
@@ -791,7 +793,7 @@ func (c *Command) findNext(next string) Commander {
 
 // Traverse the command tree to find the command, and parse args for
 // each parent.
-func (c *Command) Traverse(args []string) (Commander, []string, error) {
+func Traverse(c Commander, args []string) (Commander, []string, error) {
 	flags := []string{}
 	inFlag := false
 
@@ -800,11 +802,11 @@ func (c *Command) Traverse(args []string) (Commander, []string, error) {
 		// A long flag with a space separated value
 		case strings.HasPrefix(arg, "--") && !strings.Contains(arg, "="):
 			// TODO: this isn't quite right, we should really check ahead for 'true' or 'false'
-			inFlag = !hasNoOptDefVal(arg[2:], c.Flags())
+			inFlag = !hasNoOptDefVal(arg[2:], c.GetFlags())
 			flags = append(flags, arg)
 			continue
 		// A short flag with a space separated value
-		case strings.HasPrefix(arg, "-") && !strings.Contains(arg, "=") && len(arg) == 2 && !shortHasNoOptDefVal(arg[1:], c.Flags()):
+		case strings.HasPrefix(arg, "-") && !strings.Contains(arg, "=") && len(arg) == 2 && !shortHasNoOptDefVal(arg[1:], c.GetFlags()):
 			inFlag = true
 			flags = append(flags, arg)
 			continue
@@ -819,7 +821,7 @@ func (c *Command) Traverse(args []string) (Commander, []string, error) {
 			continue
 		}
 
-		cmd := c.findNext(arg)
+		cmd := findNext(c, arg)
 		if cmd == nil {
 			return c, args, nil
 		}
@@ -827,25 +829,25 @@ func (c *Command) Traverse(args []string) (Commander, []string, error) {
 		if err := c.ParseFlags(flags); err != nil {
 			return nil, args, err
 		}
-		return cmd.Traverse(args[i+1:])
+		return Traverse(cmd, args[i+1:])
 	}
 	return c, args, nil
 }
 
 // SuggestionsFor provides suggestions for the typedName.
-func (c *Command) SuggestionsFor(typedName string) []string {
+func SuggestionsFor(c Commander, typedName string) []string {
 	suggestions := []string{}
-	for _, cmd := range c.commands {
-		if cmd.IsAvailableCommand() {
-			levenshteinDistance := ld(typedName, cmd.Name(), true)
-			suggestByLevenshtein := levenshteinDistance <= c.SuggestionsMinimumDistance
-			suggestByPrefix := strings.HasPrefix(strings.ToLower(cmd.Name()), strings.ToLower(typedName))
+	for _, cmd := range c.GetCommands() {
+		if IsAvailableCommand(cmd) {
+			levenshteinDistance := ld(typedName, name(cmd), true)
+			suggestByLevenshtein := levenshteinDistance <= c.GetSuggestionsMinimumDistance()
+			suggestByPrefix := strings.HasPrefix(strings.ToLower(name(cmd)), strings.ToLower(typedName))
 			if suggestByLevenshtein || suggestByPrefix {
-				suggestions = append(suggestions, cmd.Name())
+				suggestions = append(suggestions, name(cmd))
 			}
 			for _, explicitSuggestion := range cmd.GetSuggestFor() {
 				if strings.EqualFold(typedName, explicitSuggestion) {
-					suggestions = append(suggestions, cmd.Name())
+					suggestions = append(suggestions, name(cmd))
 				}
 			}
 		}
@@ -854,40 +856,40 @@ func (c *Command) SuggestionsFor(typedName string) []string {
 }
 
 // VisitParents visits all parents of the command and invokes fn on each parent.
-func (c *Command) VisitParents(fn func(Commander)) {
+func VisitParents(c Commander, fn func(Commander)) {
 	if c.HasParent() {
 		fn(c.Parent())
-		c.Parent().VisitParents(fn)
+		VisitParents(c.Parent(), fn)
 	}
 }
 
 // Root finds root command.
-func (c *Command) Root() Commander {
+func (c *Root) Base() Commander {
 	if c.HasParent() {
-		return c.Parent().Root()
+		return c.Parent().Base()
 	}
 	return c
 }
 
 // ArgsLenAtDash will return the length of c.Flags().Args at the moment
 // when a -- was found during args parsing.
-func (c *Command) ArgsLenAtDash() int {
+func (c *Root) ArgsLenAtDash() int {
 	return c.Flags().ArgsLenAtDash()
 }
 
-func (c *Command) Execute(a []string) (err error) {
+func Execute(c Commander, a []string) (err error) {
 	if c == nil {
 		return fmt.Errorf("called Execute() on a nil Command")
 	}
 
-	if len(c.Deprecated) > 0 {
-		c.Printf("Command %q is deprecated, %s\n", c.Name(), c.Deprecated)
+	if len(c.GetDeprecated()) > 0 {
+		c.Printf("Command %q is deprecated, %s\n", name(c), c.GetDeprecated())
 	}
 
 	// initialize help and version flag at the last point possible to allow for user
 	// overriding
-	c.InitDefaultHelpFlag()
-	c.InitDefaultVersionFlag()
+	InitDefaultHelpFlag(c)
+	InitDefaultVersionFlag(c)
 
 	err = c.ParseFlags(a)
 	if err != nil {
@@ -896,7 +898,7 @@ func (c *Command) Execute(a []string) (err error) {
 
 	// If help is called, regardless of other flags, return we want help.
 	// Also say we need help if the command isn't runnable.
-	helpVal, err := c.Flags().GetBool("help")
+	helpVal, err := c.GetFlags().GetBool("help")
 	if err != nil {
 		// should be impossible to get here as we always declare a help
 		// flag in InitDefaultHelpFlag()
@@ -909,8 +911,8 @@ func (c *Command) Execute(a []string) (err error) {
 	}
 
 	// for back-compat, only add version flag behavior if version is defined
-	if c.Version != "" {
-		versionVal, err := c.Flags().GetBool("version")
+	if c.GetVersion() != "" {
+		versionVal, err := c.GetFlags().GetBool("version")
 		if err != nil {
 			c.Println("\"version\" flag declared as non-bool. Please correct your code")
 			return err
@@ -928,16 +930,16 @@ func (c *Command) Execute(a []string) (err error) {
 		return flag.ErrHelp
 	}
 
-	c.preRun()
+	// todo: wait
+	// c.preRun()
+	// defer c.postRun()
 
-	defer c.postRun()
-
-	argWoFlags := c.Flags().Args()
-	if c.DisableFlagParsing {
+	argWoFlags := c.GetFlags().Args()
+	if c.GetDisableFlagParsing() {
 		argWoFlags = a
 	}
 
-	if err := c.ValidateArgs(argWoFlags); err != nil {
+	if err := ValidateArgs(c, argWoFlags); err != nil {
 		return err
 	}
 
@@ -969,34 +971,45 @@ func (c *Command) Execute(a []string) (err error) {
 			}
 		}
 	}
-	if c.PreRunE != nil {
-		if err := c.PreRunE(c, argWoFlags); err != nil {
-			return err
-		}
-	} else if c.PreRun != nil {
-		c.PreRun(c, argWoFlags)
-	}
 
-	if err := c.ValidateRequiredFlags(); err != nil {
-		return err
-	}
-	if err := c.ValidateFlagGroups(); err != nil {
+	// if c.PreRunE != nil {
+	// 	if err := c.PreRunE(c, argWoFlags); err != nil {
+	// 		return err
+	// 	}
+	// } else if c.PreRun != nil {
+	// 	c.PreRun(c, argWoFlags)
+	// }
+	if err := c.PreRun(argWoFlags); err != nil {
 		return err
 	}
 
-	if c.RunE != nil {
-		if err := c.RunE(c, argWoFlags); err != nil {
-			return err
-		}
-	} else {
-		c.Run(c, argWoFlags)
+	if err := ValidateRequiredFlags(c); err != nil {
+		return err
 	}
-	if c.PostRunE != nil {
-		if err := c.PostRunE(c, argWoFlags); err != nil {
-			return err
-		}
-	} else if c.PostRun != nil {
-		c.PostRun(c, argWoFlags)
+	if err := ValidateFlagGroups(c); err != nil {
+		return err
+	}
+
+	// if c.RunE != nil {
+	// 	if err := c.RunE(c, argWoFlags); err != nil {
+	// 		return err
+	// 	}
+	// } else {
+	// 	c.Run(c, argWoFlags)
+	// }
+	if err := c.Run(argWoFlags); err != nil {
+		return err
+	}
+
+	// if c.PostRunE != nil {
+	// 	if err := c.PostRunE(c, argWoFlags); err != nil {
+	// 		return err
+	// 	}
+	// } else if c.PostRun != nil {
+	// 	c.PostRun(c, argWoFlags)
+	// }
+	if err := c.PostRun(argWoFlags); err != nil {
+		return err
 	}
 	var p Commander
 	for p = c; p != nil; p = p.Parent() {
@@ -1018,13 +1031,13 @@ func (c *Command) Execute(a []string) (err error) {
 	return nil
 }
 
-func (c *Command) preRun() {
+func (c *Root) preRun() {
 	for _, x := range initializers {
 		x()
 	}
 }
 
-func (c *Command) postRun() {
+func (c *Root) postRun() {
 	for _, x := range finalizers {
 		x()
 	}
@@ -1033,15 +1046,15 @@ func (c *Command) postRun() {
 // ExecuteContext is the same as Execute(), but sets the ctx on the command.
 // Retrieve ctx by calling cmd.Context() inside your *Run lifecycle or ValidArgs
 // functions.
-func (c *Command) ExecuteContext(ctx context.Context) error {
-	c.ctx = ctx
-	return c.ExecuteX()
-}
+// func (c *Root) ExecuteContext(ctx context.Context) error {
+// 	c.ctx = ctx
+// 	return c.ExecuteX()
+// }
 
 // Execute uses the args (os.Args[1:] by default)
 // and run through the command tree finding appropriate matches
 // for commands and then corresponding flags.
-func (c *Command) ExecuteX() error { // todo: 原Execute
+func (c *Root) ExecuteX() error { // todo: 原Execute
 	_, err := c.ExecuteC()
 	return err
 }
@@ -1049,21 +1062,24 @@ func (c *Command) ExecuteX() error { // todo: 原Execute
 // ExecuteContextC is the same as ExecuteC(), but sets the ctx on the command.
 // Retrieve ctx by calling cmd.Context() inside your *Run lifecycle or ValidArgs
 // functions.
-func (c *Command) ExecuteContextC(ctx context.Context) (Commander, error) {
-	c.ctx = ctx
-	return c.ExecuteC()
-}
+// func (c *Root) ExecuteContextC(ctx context.Context) (Commander, error) {
+// 	c.ctx = ctx
+// 	return c.ExecuteC()
+// }
 
 // ExecuteC executes the command.
-func (c *Command) ExecuteC() (cmd Commander, err error) {
+func (c *Root) ExecuteC() (cmd Commander, err error) {
 	if c.ctx == nil {
 		c.ctx = context.Background()
 	}
 
 	// Regardless of what command execute is called on, run on Root only
-	if c.HasParent() {
-		return c.Root().ExecuteC()
-	}
+	// if c.HasParent() {
+	// 	fmt.Println("hello>>>>>>>>>>>>>>")
+	// 	// return c.Base().ExecuteC()
+	// } else {
+	// 	fmt.Println("hello2>>>>>>>>>>>>>>")
+	// }
 
 	// windows hook
 	if preExecHookFn != nil {
@@ -1071,13 +1087,13 @@ func (c *Command) ExecuteC() (cmd Commander, err error) {
 	}
 
 	// initialize help at the last point to allow for user overriding
-	c.InitDefaultHelpCmd()
+	InitDefaultHelpCmd(c)
 	// initialize completion at the last point to allow for user overriding
-	c.InitDefaultCompletionCmd()
+	InitDefaultCompletionCmd(c)
 
 	// Now that all commands have been created, let's make sure all groups
 	// are properly created also
-	c.CheckCommandGroups()
+	CheckCommandGroups(c)
 
 	args := c.args
 
@@ -1091,9 +1107,9 @@ func (c *Command) ExecuteC() (cmd Commander, err error) {
 
 	var flags []string
 	if c.TraverseChildren {
-		cmd, flags, err = c.Traverse(args)
+		cmd, flags, err = Traverse(c, args)
 	} else {
-		cmd, flags, err = c.Find(args)
+		cmd, flags, err = Find(c, args)
 	}
 	if err != nil {
 		var dc Commander
@@ -1104,24 +1120,24 @@ func (c *Command) ExecuteC() (cmd Commander, err error) {
 			dc = c
 		}
 		if !dc.GetSilenceErrors() {
-			dc.PrintErrln(c.ErrPrefix(), err.Error())
-			dc.PrintErrf("Run '%v --help' for usage.\n", c.CommandPath())
+			dc.PrintErrLn(c.ErrPrefix(), err.Error())
+			dc.PrintErrF("Run '%v --help' for usage.\n", CommandPath(c))
 		}
 		return dc, err
 	}
 	as := cmd.GetCommandCalledAs()
 	as.called = true
 	if as.name == "" {
-		as.name = cmd.Name()
+		as.name = name(cmd)
 	}
 
 	// We have to pass global context to children command
 	// if context is present on the parent command.
-	if cmd.Ctx() == nil {
-		cmd.SetCtx(c.ctx)
+	if cmd.Context() == nil {
+		cmd.SetContext(c.ctx)
 	}
 
-	err = cmd.Execute(flags)
+	err = Execute(cmd, flags)
 	if err != nil {
 		// Always show help if requested, even if SilenceErrors is in
 		// effect
@@ -1133,7 +1149,7 @@ func (c *Command) ExecuteC() (cmd Commander, err error) {
 		// If root command has SilenceErrors flagged,
 		// all subcommands should respect it
 		if !cmd.GetSilenceErrors() && !c.GetSilenceErrors() {
-			c.PrintErrln(cmd.ErrPrefix(), err.Error())
+			c.PrintErrLn(cmd.ErrPrefix(), err.Error())
 		}
 
 		// If root command has SilenceUsage flagged,
@@ -1145,20 +1161,22 @@ func (c *Command) ExecuteC() (cmd Commander, err error) {
 	return cmd, err
 }
 
-func (c *Command) ValidateArgs(args []string) error {
-	if c.Args == nil {
+func ValidateArgs(c Commander, args []string) error {
+	cArgs := c.GetArgs()
+	if cArgs == nil {
 		return ArbitraryArgs(c, args)
 	}
-	return c.GetArgs()(c, args)
+	return cArgs(c, args)
 }
 
 // ValidateRequiredFlags validates all required flags are present and returns an error otherwise
-func (c *Command) ValidateRequiredFlags() error {
-	if c.DisableFlagParsing {
+func ValidateRequiredFlags(c Commander) error {
+	if c.GetDisableFlagParsing() {
+		// if c.DisableFlagParsing {
 		return nil
 	}
 
-	flags := c.Flags()
+	flags := c.GetFlags()
 	missingFlagNames := []string{}
 	flags.VisitAll(func(pflag *flag.Flag) {
 		requiredAnnotation, found := pflag.Annotations[BashCompOneRequiredFlag]
@@ -1178,32 +1196,32 @@ func (c *Command) ValidateRequiredFlags() error {
 
 // checkCommandGroups checks if a command has been added to a group that does not exists.
 // If so, we panic because it indicates a coding error that should be corrected.
-func (c *Command) CheckCommandGroups() {
-	for _, sub := range c.commands {
+func CheckCommandGroups(c Commander) {
+	for _, sub := range c.GetCommands() {
 		// if Group is not defined let the developer know right away
-		if sub.GetGroupID() != "" && !c.ContainsGroup(sub.GetGroupID()) {
-			panic(fmt.Sprintf("group id '%s' is not defined for subcommand '%s'", sub.GetGroupID(), sub.CommandPath()))
+		if sub.GetGroupID() != "" && !ContainsGroup(c, sub.GetGroupID()) {
+			panic(fmt.Sprintf("group id '%s' is not defined for subcommand '%s'", sub.GetGroupID(), CommandPath(sub)))
 		}
 
-		sub.CheckCommandGroups()
+		CheckCommandGroups(sub)
 	}
 }
 
 // InitDefaultHelpFlag adds default help flag to c.
 // It is called automatically by executing the c or by calling help and usage.
 // If c already has help flag, it will do nothing.
-func (c *Command) InitDefaultHelpFlag() {
+func InitDefaultHelpFlag(c Commander) {
 	c.mergePersistentFlags()
-	if c.Flags().Lookup("help") == nil {
+	if c.GetFlags().Lookup("help") == nil {
 		usage := "help for "
-		name := c.displayName()
+		name := displayName(c)
 		if name == "" {
 			usage += "this command"
 		} else {
 			usage += name
 		}
-		c.Flags().BoolP("help", "h", false, usage)
-		_ = c.Flags().SetAnnotation("help", FlagSetByCobraAnnotation, []string{"true"})
+		c.GetFlags().BoolP("help", "h", false, usage)
+		_ = c.GetFlags().SetAnnotation("help", FlagSetByCobraAnnotation, []string{"true"})
 	}
 }
 
@@ -1211,81 +1229,82 @@ func (c *Command) InitDefaultHelpFlag() {
 // It is called automatically by executing the c.
 // If c already has a version flag, it will do nothing.
 // If c.Version is empty, it will do nothing.
-func (c *Command) InitDefaultVersionFlag() {
-	if c.Version == "" {
+func InitDefaultVersionFlag(c Commander) {
+	if c.GetVersion() == "" {
 		return
 	}
 
 	c.mergePersistentFlags()
-	if c.Flags().Lookup("version") == nil {
+	if c.GetFlags().Lookup("version") == nil {
 		usage := "version for "
-		if c.Name() == "" {
+		if name(c) == "" {
 			usage += "this command"
 		} else {
-			usage += c.Name()
+			usage += name(c)
 		}
-		if c.Flags().ShorthandLookup("v") == nil {
-			c.Flags().BoolP("version", "v", false, usage)
+		if c.GetFlags().ShorthandLookup("v") == nil {
+			c.GetFlags().BoolP("version", "v", false, usage)
 		} else {
-			c.Flags().Bool("version", false, usage)
+			c.GetFlags().Bool("version", false, usage)
 		}
-		_ = c.Flags().SetAnnotation("version", FlagSetByCobraAnnotation, []string{"true"})
+		_ = c.GetFlags().SetAnnotation("version", FlagSetByCobraAnnotation, []string{"true"})
 	}
 }
 
 // InitDefaultHelpCmd adds default help command to c.
 // It is called automatically by executing the c or by calling help and usage.
 // If c already has help command or c has no subcommands, it will do nothing.
-func (c *Command) InitDefaultHelpCmd() {
+func InitDefaultHelpCmd(c Commander) {
 	if !c.HasSubCommands() {
 		return
 	}
 
-	if c.helpCommand == nil {
-		c.helpCommand = &Command{
-			Use:   "help [command]",
-			Short: "Help about any command",
-			Long: `Help provides help for any command in the application.
-Simply type ` + c.displayName() + ` help [path to command] for full details.`,
-			ValidArgsFunction: func(c Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
-				var completions []string
-				cmd, _, e := c.Root().Find(args)
-				if e != nil {
-					return nil, ShellCompDirectiveNoFileComp
-				}
-				if cmd == nil {
-					// Root help command.
-					cmd = c.Root()
-				}
-				for _, subCmd := range cmd.Commands() {
-					if subCmd.IsAvailableCommand() || subCmd == cmd.GetHelpCommand() {
-						if strings.HasPrefix(subCmd.Name(), toComplete) {
-							completions = append(completions, fmt.Sprintf("%s\t%s", subCmd.Name(), subCmd.GetShort()))
-						}
-					}
-				}
-				return completions, ShellCompDirectiveNoFileComp
-			},
-			Run: func(c Commander, args []string) {
-				cmd, _, e := c.Root().Find(args)
-				if cmd == nil || e != nil {
-					c.Printf("Unknown help topic %#q\n", args)
-					CheckErr(c.Root().Usage())
-				} else {
-					cmd.InitDefaultHelpFlag()    // make possible 'help' flag to be shown
-					cmd.InitDefaultVersionFlag() // make possible 'version' flag to be shown
-					CheckErr(cmd.Help())
-				}
-			},
-			GroupID: c.helpCommandGroupID,
-		}
-	}
-	c.RemoveCommand(c.helpCommand)
-	c.Add(c.helpCommand)
+	// if c.helpCommand == nil {
+	// 	// 		c.helpCommand = &Root{
+	// 	// 			Use:   "help [command]",
+	// 	// 			Short: "Help about any command",
+	// 	// 			Long: `Help provides help for any command in the application.
+	// 	// Simply type ` + c.displayName() + ` help [path to command] for full details.`,
+	// 	// 			ValidArgsFunction: func(c Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
+	// 	// 				var completions []string
+	// 	// 				cmd, _, e := c.Base().Find(args)
+	// 	// 				if e != nil {
+	// 	// 					return nil, ShellCompDirectiveNoFileComp
+	// 	// 				}
+	// 	// 				if cmd == nil {
+	// 	// 					// Root help command.
+	// 	// 					cmd = c.Base()
+	// 	// 				}
+	// 	// 				for _, subCmd := range cmd.Commands() {
+	// 	// 					if subCmd.IsAvailableCommand() || subCmd == cmd.GetHelpCommand() {
+	// 	// 						if strings.HasPrefix(subCmd.Name(), toComplete) {
+	// 	// 							completions = append(completions, fmt.Sprintf("%s\t%s", subCmd.Name(), subCmd.GetShort()))
+	// 	// 						}
+	// 	// 					}
+	// 	// 				}
+	// 	// 				return completions, ShellCompDirectiveNoFileComp
+	// 	// 			},
+	// 	// 			Run: func(c Commander, args []string) {
+	// 	// 				cmd, _, e := c.Base().Find(args)
+	// 	// 				if cmd == nil || e != nil {
+	// 	// 					c.Printf("Unknown help topic %#q\n", args)
+	// 	// 					CheckErr(c.Base().Usage())
+	// 	// 				} else {
+	// 	// 					cmd.InitDefaultHelpFlag()    // make possible 'help' flag to be shown
+	// 	// 					cmd.InitDefaultVersionFlag() // make possible 'version' flag to be shown
+	// 	// 					CheckErr(cmd.Help())
+	// 	// 				}
+	// 	// 			},
+	// 	// 			GroupID: c.helpCommandGroupID,
+	// 	// 		}
+	// 	c.helpCommand = NewHelpCmd(c)
+	// }
+	// c.RemoveCommand(c.helpCommand)
+	c.Add(NewHelpCmd(c))
 }
 
 // ResetCommands delete parent, subcommand and help command from c.
-func (c *Command) ResetCommands() {
+func (c *Root) ResetCommands() {
 	c.parent = nil
 	c.commands = nil
 	c.helpCommand = nil
@@ -1297,10 +1316,10 @@ type commandSorterByName []Commander
 
 func (c commandSorterByName) Len() int           { return len(c) }
 func (c commandSorterByName) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
-func (c commandSorterByName) Less(i, j int) bool { return c[i].Name() < c[j].Name() }
+func (c commandSorterByName) Less(i, j int) bool { return name(c[i]) < name(c[j]) }
 
 // Commands returns a sorted slice of child commands.
-func (c *Command) Commands() []Commander {
+func (c *Root) Commands() []Commander {
 	// do not sort commands if it already sorted or sorting was disabled
 	if EnableCommandSorting && !c.commandsAreSorted {
 		sort.Sort(commandSorterByName(c.commands))
@@ -1310,7 +1329,7 @@ func (c *Command) Commands() []Commander {
 }
 
 // Add adds one or more commands to this parent command.
-func (c *Command) Add(cmds ...Commander) {
+func (c *Root) Add(cmds ...Commander) {
 	for i, x := range cmds {
 		if cmds[i] == c {
 			panic("Command can't be a child of itself")
@@ -1322,11 +1341,11 @@ func (c *Command) Add(cmds ...Commander) {
 		if usageLen > c.commandsMaxUseLen {
 			c.commandsMaxUseLen = usageLen
 		}
-		commandPathLen := len(x.CommandPath())
+		commandPathLen := len(CommandPath(x))
 		if commandPathLen > c.commandsMaxCommandPathLen {
 			c.commandsMaxCommandPathLen = commandPathLen
 		}
-		nameLen := len(x.Name())
+		nameLen := len(name(x))
 		if nameLen > c.commandsMaxNameLen {
 			c.commandsMaxNameLen = nameLen
 		}
@@ -1340,14 +1359,14 @@ func (c *Command) Add(cmds ...Commander) {
 }
 
 // Groups returns a slice of child command groups.
-func (c *Command) Groups() []*Group {
+func (c *Root) Groups() []*Group {
 	return c.commandgroups
 }
 
 // AllChildCommandsHaveGroup returns if all subcommands are assigned to a group
-func (c *Command) AllChildCommandsHaveGroup() bool {
+func (c *Root) AllChildCommandsHaveGroup() bool {
 	for _, sub := range c.commands {
-		if (sub.IsAvailableCommand() || sub == c.helpCommand) && sub.GetGroupID() == "" {
+		if (IsAvailableCommand(sub) || sub == c.helpCommand) && sub.GetGroupID() == "" {
 			return false
 		}
 	}
@@ -1355,8 +1374,8 @@ func (c *Command) AllChildCommandsHaveGroup() bool {
 }
 
 // ContainsGroup return if groupID exists in the list of command groups.
-func (c *Command) ContainsGroup(groupID string) bool {
-	for _, x := range c.commandgroups {
+func ContainsGroup(c Commander, groupID string) bool {
+	for _, x := range c.GetCommandGroups() {
 		if x.ID == groupID {
 			return true
 		}
@@ -1365,12 +1384,12 @@ func (c *Command) ContainsGroup(groupID string) bool {
 }
 
 // AddGroup adds one or more command groups to this parent command.
-func (c *Command) AddGroup(groups ...*Group) {
+func (c *Root) AddGroup(groups ...*Group) {
 	c.commandgroups = append(c.commandgroups, groups...)
 }
 
 // RemoveCommand removes one or more commands from a parent command.
-func (c *Command) RemoveCommand(cmds ...Commander) {
+func (c *Root) RemoveCommand(cmds ...Commander) {
 	commands := []Commander{}
 main:
 	for _, command := range c.commands {
@@ -1393,11 +1412,11 @@ main:
 		if usageLen > c.commandsMaxUseLen {
 			c.commandsMaxUseLen = usageLen
 		}
-		commandPathLen := len(command.CommandPath())
+		commandPathLen := len(CommandPath(command))
 		if commandPathLen > c.commandsMaxCommandPathLen {
 			c.commandsMaxCommandPathLen = commandPathLen
 		}
-		nameLen := len(command.Name())
+		nameLen := len(name(command))
 		if nameLen > c.commandsMaxNameLen {
 			c.commandsMaxNameLen = nameLen
 		}
@@ -1405,73 +1424,74 @@ main:
 }
 
 // Print is a convenience method to Print to the defined output, fallback to Stderr if not set.
-func (c *Command) Print(i ...interface{}) {
+func (c *Root) Print(i ...interface{}) {
 	fmt.Fprint(c.OutOrStderr(), i...)
 }
 
 // Println is a convenience method to Println to the defined output, fallback to Stderr if not set.
-func (c *Command) Println(i ...interface{}) {
+func (c *Root) Println(i ...interface{}) {
 	c.Print(fmt.Sprintln(i...))
 }
 
 // Printf is a convenience method to Printf to the defined output, fallback to Stderr if not set.
-func (c *Command) Printf(format string, i ...interface{}) {
+func (c *Root) Printf(format string, i ...interface{}) {
 	c.Print(fmt.Sprintf(format, i...))
 }
 
 // PrintErr is a convenience method to Print to the defined Err output, fallback to Stderr if not set.
-func (c *Command) PrintErr(i ...interface{}) {
+func (c *Root) PrintErr(i ...interface{}) {
 	fmt.Fprint(c.ErrOrStderr(), i...)
 }
 
-// PrintErrln is a convenience method to Println to the defined Err output, fallback to Stderr if not set.
-func (c *Command) PrintErrln(i ...interface{}) {
+// PrintErrLn is a convenience method to Println to the defined Err output, fallback to Stderr if not set.
+func (c *Root) PrintErrLn(i ...interface{}) {
 	c.PrintErr(fmt.Sprintln(i...))
 }
 
-// PrintErrf is a convenience method to Printf to the defined Err output, fallback to Stderr if not set.
-func (c *Command) PrintErrf(format string, i ...interface{}) {
+// PrintErrF is a convenience method to Printf to the defined Err output, fallback to Stderr if not set.
+func (c *Root) PrintErrF(format string, i ...interface{}) {
 	c.PrintErr(fmt.Sprintf(format, i...))
 }
 
 // CommandPath returns the full path to this command.
-func (c *Command) CommandPath() string {
+func CommandPath(c Commander) string {
 	if c.HasParent() {
-		return c.Parent().CommandPath() + " " + c.Name()
+		return CommandPath(c.Parent()) + " " + name(c)
 	}
-	return c.displayName()
+	return displayName(c)
 }
 
-func (c *Command) displayName() string {
-	if displayName, ok := c.Annotations[CommandDisplayNameAnnotation]; ok {
+func displayName(c Commander) string {
+	annotations := c.GetAnnotations()
+	if displayName, ok := annotations[CommandDisplayNameAnnotation]; ok {
 		return displayName
 	}
-	return c.Name()
+	return name(c)
 }
 
 // UseLine puts out the full usage for a given command (including parents).
-func (c *Command) UseLine() string {
-	var useline string
-	use := strings.Replace(c.Use, c.Name(), c.displayName(), 1)
+func UseLine(c Commander) string {
+	var useLine string
+	use := strings.Replace(c.GetUse(), name(c), displayName(c), 1)
 	if c.HasParent() {
-		useline = c.parent.CommandPath() + " " + use
+		useLine = CommandPath(c.Base()) + " " + use
 	} else {
-		useline = use
+		useLine = use
 	}
-	if c.DisableFlagsInUseLine {
-		return useline
+	if c.GetDisableFlagsInUseLine() {
+		return useLine
 	}
-	if c.HasAvailableFlags() && !strings.Contains(useline, "[flags]") {
-		useline += " [flags]"
+	if HasAvailableFlags(c) && !strings.Contains(useLine, "[flags]") {
+		useLine += " [flags]"
 	}
-	return useline
+	return useLine
 }
 
 // DebugFlags used to determine which flags have been assigned to which commands
 // and which persist.
-func (c *Command) DebugFlags() {
+func (c *Root) DebugFlags() {
 	// todo: wait do
-	// c.Println("DebugFlags called on", c.Name())
+	// c.Println("DebugFlags called on", name(c))
 	// var debugflags func(Commander)
 
 	// debugflags = func(x Commander) {
@@ -1510,8 +1530,8 @@ func (c *Command) DebugFlags() {
 }
 
 // Name returns the command's name: the first word in the use line.
-func (c *Command) Name() string {
-	name := c.Use
+func name(c Commander) string {
+	name := c.GetUse()
 	i := strings.Index(name, " ")
 	if i >= 0 {
 		name = name[:i]
@@ -1520,7 +1540,7 @@ func (c *Command) Name() string {
 }
 
 // HasAlias determines if a given string is an alias of the command.
-func (c *Command) HasAlias(s string) bool {
+func (c *Root) HasAlias(s string) bool {
 	for _, a := range c.Aliases {
 		if commandNameMatches(a, s) {
 			return true
@@ -1531,7 +1551,7 @@ func (c *Command) HasAlias(s string) bool {
 
 // CalledAs returns the command name or alias that was used to invoke
 // this command or an empty string if the command has not been called.
-func (c *Command) CalledAs() string {
+func (c *Root) CalledAs() string {
 	if c.commandCalledAs.called {
 		return c.commandCalledAs.name
 	}
@@ -1540,14 +1560,17 @@ func (c *Command) CalledAs() string {
 
 // hasNameOrAliasPrefix returns true if the Name or any of aliases start
 // with prefix
-func (c *Command) hasNameOrAliasPrefix(prefix string) bool {
-	if strings.HasPrefix(c.Name(), prefix) {
-		c.commandCalledAs.name = c.Name()
+func hasNameOrAliasPrefix(c Commander, prefix string) bool {
+
+	if strings.HasPrefix(name(c), prefix) {
+		c.GetCommandCalledAs().name = name(c)
+		// c.commandCalledAs.name = name(c)
 		return true
 	}
-	for _, alias := range c.Aliases {
+
+	for _, alias := range c.GetAliases() {
 		if strings.HasPrefix(alias, prefix) {
-			c.commandCalledAs.name = alias
+			c.GetCommandCalledAs().name = alias
 			return true
 		}
 	}
@@ -1555,29 +1578,31 @@ func (c *Command) hasNameOrAliasPrefix(prefix string) bool {
 }
 
 // NameAndAliases returns a list of the command name and all aliases
-func (c *Command) NameAndAliases() string {
-	return strings.Join(append([]string{c.Name()}, c.Aliases...), ", ")
+func (c *Root) NameAndAliases() string {
+	return strings.Join(append([]string{name(c)}, c.Aliases...), ", ")
 }
 
 // HasExample determines if the command has example.
-func (c *Command) HasExample() bool {
+func (c *Root) HasExample() bool {
 	return len(c.Example) > 0
 }
 
 // Runnable determines if the command is itself runnable.
-func (c *Command) Runnable() bool {
-	return c.Run != nil || c.RunE != nil
+func (c *Root) Runnable() bool {
+	return true // todo: wait check
+	// return c.Run != nil || c.RunE != nil
 }
 
 // HasSubCommands determines if the command has children commands.
-func (c *Command) HasSubCommands() bool {
+func (c *Root) HasSubCommands() bool {
 	return len(c.commands) > 0
 }
 
 // IsAvailableCommand determines if a command is available as a non-help command
 // (this includes all non deprecated/hidden commands).
-func (c *Command) IsAvailableCommand() bool {
-	if len(c.Deprecated) != 0 || c.Hidden {
+func IsAvailableCommand(c Commander) bool {
+
+	if len(c.GetDeprecated()) != 0 || c.GetHidden() {
 		return false
 	}
 
@@ -1585,7 +1610,7 @@ func (c *Command) IsAvailableCommand() bool {
 		return false
 	}
 
-	if c.Runnable() || c.HasAvailableSubCommands() {
+	if c.Runnable() || HasAvailableSubCommands(c) {
 		return true
 	}
 
@@ -1597,7 +1622,7 @@ func (c *Command) IsAvailableCommand() bool {
 // fact that it is NOT runnable/hidden/deprecated, and has no sub commands that
 // are runnable/hidden/deprecated.
 // Concrete example: https://github.com/spf13/cobra/issues/393#issuecomment-282741924.
-func (c *Command) IsAdditionalHelpTopicCommand() bool {
+func (c *Root) IsAdditionalHelpTopicCommand() bool {
 	// if a command is runnable, deprecated, or hidden it is not a 'help' command
 	if c.Runnable() || len(c.Deprecated) != 0 || c.Hidden {
 		return false
@@ -1617,7 +1642,7 @@ func (c *Command) IsAdditionalHelpTopicCommand() bool {
 // HasHelpSubCommands determines if a command has any available 'help' sub commands
 // that need to be shown in the usage/help default template under 'additional help
 // topics'.
-func (c *Command) HasHelpSubCommands() bool {
+func (c *Root) HasHelpSubCommands() bool {
 	// return true on the first found available 'help' sub command
 	for _, sub := range c.commands {
 		if sub.IsAdditionalHelpTopicCommand() {
@@ -1631,11 +1656,11 @@ func (c *Command) HasHelpSubCommands() bool {
 
 // HasAvailableSubCommands determines if a command has available sub commands that
 // need to be shown in the usage/help default template under 'available commands'.
-func (c *Command) HasAvailableSubCommands() bool {
+func HasAvailableSubCommands(c Commander) bool {
 	// return true on the first found available (non deprecated/help/hidden)
 	// sub command
-	for _, sub := range c.commands {
-		if sub.IsAvailableCommand() {
+	for _, sub := range c.GetCommands() {
+		if IsAvailableCommand(sub) {
 			return true
 		}
 	}
@@ -1646,20 +1671,20 @@ func (c *Command) HasAvailableSubCommands() bool {
 }
 
 // HasParent determines if the command is a child command.
-func (c *Command) HasParent() bool {
+func (c *Root) HasParent() bool {
 	return c.parent != nil
 }
 
 // GlobalNormalizationFunc returns the global normalization function or nil if it doesn't exist.
-func (c *Command) GlobalNormalizationFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
+func (c *Root) GlobalNormalizationFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
 	return c.globNormFunc
 }
 
 // Flags returns the complete FlagSet that applies
 // to this command (local and persistent declared here and by all parents).
-func (c *Command) Flags() *flag.FlagSet {
+func (c *Root) Flags() *flag.FlagSet {
 	if c.flags == nil {
-		c.flags = flag.NewFlagSet(c.displayName(), flag.ContinueOnError)
+		c.flags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
 		if c.flagErrorBuf == nil {
 			c.flagErrorBuf = new(bytes.Buffer)
 		}
@@ -1671,10 +1696,10 @@ func (c *Command) Flags() *flag.FlagSet {
 
 // LocalNonPersistentFlags are flags specific to this command which will NOT persist to subcommands.
 // This function does not modify the flags of the current command, it's purpose is to return the current state.
-func (c *Command) LocalNonPersistentFlags() *flag.FlagSet {
+func (c *Root) LocalNonPersistentFlags() *flag.FlagSet {
 	persistentFlags := c.PersistentFlags()
 
-	out := flag.NewFlagSet(c.displayName(), flag.ContinueOnError)
+	out := flag.NewFlagSet(displayName(c), flag.ContinueOnError)
 	c.LocalFlags().VisitAll(func(f *flag.Flag) {
 		if persistentFlags.Lookup(f.Name) == nil {
 			out.AddFlag(f)
@@ -1685,11 +1710,11 @@ func (c *Command) LocalNonPersistentFlags() *flag.FlagSet {
 
 // LocalFlags returns the local FlagSet specifically set in the current command.
 // This function does not modify the flags of the current command, it's purpose is to return the current state.
-func (c *Command) LocalFlags() *flag.FlagSet {
+func (c *Root) LocalFlags() *flag.FlagSet {
 	c.mergePersistentFlags()
 
 	if c.lflags == nil {
-		c.lflags = flag.NewFlagSet(c.displayName(), flag.ContinueOnError)
+		c.lflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
 		if c.flagErrorBuf == nil {
 			c.flagErrorBuf = new(bytes.Buffer)
 		}
@@ -1713,11 +1738,11 @@ func (c *Command) LocalFlags() *flag.FlagSet {
 
 // InheritedFlags returns all flags which were inherited from parent commands.
 // This function does not modify the flags of the current command, it's purpose is to return the current state.
-func (c *Command) InheritedFlags() *flag.FlagSet {
+func (c *Root) InheritedFlags() *flag.FlagSet {
 	c.mergePersistentFlags()
 
 	if c.iflags == nil {
-		c.iflags = flag.NewFlagSet(c.displayName(), flag.ContinueOnError)
+		c.iflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
 		if c.flagErrorBuf == nil {
 			c.flagErrorBuf = new(bytes.Buffer)
 		}
@@ -1739,14 +1764,14 @@ func (c *Command) InheritedFlags() *flag.FlagSet {
 
 // NonInheritedFlags returns all flags which were not inherited from parent commands.
 // This function does not modify the flags of the current command, it's purpose is to return the current state.
-func (c *Command) NonInheritedFlags() *flag.FlagSet {
+func (c *Root) NonInheritedFlags() *flag.FlagSet {
 	return c.LocalFlags()
 }
 
 // PersistentFlags returns the persistent FlagSet specifically set in the current command.
-func (c *Command) PersistentFlags() *flag.FlagSet {
+func (c *Root) PersistentFlags() *flag.FlagSet {
 	if c.pflags == nil {
-		c.pflags = flag.NewFlagSet(c.displayName(), flag.ContinueOnError)
+		c.pflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
 		if c.flagErrorBuf == nil {
 			c.flagErrorBuf = new(bytes.Buffer)
 		}
@@ -1756,12 +1781,12 @@ func (c *Command) PersistentFlags() *flag.FlagSet {
 }
 
 // ResetFlags deletes all flags from command.
-func (c *Command) ResetFlags() {
+func (c *Root) ResetFlags() {
 	c.flagErrorBuf = new(bytes.Buffer)
 	c.flagErrorBuf.Reset()
-	c.flags = flag.NewFlagSet(c.displayName(), flag.ContinueOnError)
+	c.flags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
 	c.flags.SetOutput(c.flagErrorBuf)
-	c.pflags = flag.NewFlagSet(c.displayName(), flag.ContinueOnError)
+	c.pflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
 	c.pflags.SetOutput(c.flagErrorBuf)
 
 	c.lflags = nil
@@ -1770,50 +1795,50 @@ func (c *Command) ResetFlags() {
 }
 
 // HasFlags checks if the command contains any flags (local plus persistent from the entire structure).
-func (c *Command) HasFlags() bool {
+func (c *Root) HasFlags() bool {
 	return c.Flags().HasFlags()
 }
 
 // HasPersistentFlags checks if the command contains persistent flags.
-func (c *Command) HasPersistentFlags() bool {
+func (c *Root) HasPersistentFlags() bool {
 	return c.PersistentFlags().HasFlags()
 }
 
 // HasLocalFlags checks if the command has flags specifically declared locally.
-func (c *Command) HasLocalFlags() bool {
+func (c *Root) HasLocalFlags() bool {
 	return c.LocalFlags().HasFlags()
 }
 
 // HasInheritedFlags checks if the command has flags inherited from its parent command.
-func (c *Command) HasInheritedFlags() bool {
+func (c *Root) HasInheritedFlags() bool {
 	return c.InheritedFlags().HasFlags()
 }
 
 // HasAvailableFlags checks if the command contains any flags (local plus persistent from the entire
 // structure) which are not hidden or deprecated.
-func (c *Command) HasAvailableFlags() bool {
-	return c.Flags().HasAvailableFlags()
+func HasAvailableFlags(c Commander) bool {
+	return c.GetFlags().HasAvailableFlags()
 }
 
 // HasAvailablePersistentFlags checks if the command contains persistent flags which are not hidden or deprecated.
-func (c *Command) HasAvailablePersistentFlags() bool {
+func (c *Root) HasAvailablePersistentFlags() bool {
 	return c.PersistentFlags().HasAvailableFlags()
 }
 
 // HasAvailableLocalFlags checks if the command has flags specifically declared locally which are not hidden
 // or deprecated.
-func (c *Command) HasAvailableLocalFlags() bool {
+func (c *Root) HasAvailableLocalFlags() bool {
 	return c.LocalFlags().HasAvailableFlags()
 }
 
 // HasAvailableInheritedFlags checks if the command has flags inherited from its parent command which are
 // not hidden or deprecated.
-func (c *Command) HasAvailableInheritedFlags() bool {
+func (c *Root) HasAvailableInheritedFlags() bool {
 	return c.InheritedFlags().HasAvailableFlags()
 }
 
 // Flag climbs up the command tree looking for matching flag.
-func (c *Command) Flag(name string) (flag *flag.Flag) {
+func (c *Root) Flag(name string) (flag *flag.Flag) {
 	flag = c.Flags().Lookup(name)
 
 	if flag == nil {
@@ -1824,7 +1849,7 @@ func (c *Command) Flag(name string) (flag *flag.Flag) {
 }
 
 // Recursively find matching persistent flag.
-func (c *Command) persistentFlag(name string) (flag *flag.Flag) {
+func (c *Root) persistentFlag(name string) (flag *flag.Flag) {
 	if c.HasPersistentFlags() {
 		flag = c.PersistentFlags().Lookup(name)
 	}
@@ -1837,7 +1862,7 @@ func (c *Command) persistentFlag(name string) (flag *flag.Flag) {
 }
 
 // ParseFlags parses persistent flag tree and local flags.
-func (c *Command) ParseFlags(args []string) error {
+func (c *Root) ParseFlags(args []string) error {
 	if c.DisableFlagParsing {
 		return nil
 	}
@@ -1861,13 +1886,13 @@ func (c *Command) ParseFlags(args []string) error {
 }
 
 // Parent returns a commands parent command.
-func (c *Command) Parent() Commander {
+func (c *Root) Parent() Commander {
 	return c.parent
 }
 
 // mergePersistentFlags merges c.PersistentFlags() to c.Flags()
 // and adds missing persistent flags of all parents.
-func (c *Command) mergePersistentFlags() {
+func (c *Root) mergePersistentFlags() {
 	c.updateParentsPflags()
 	c.Flags().AddFlagSet(c.PersistentFlags())
 	c.Flags().AddFlagSet(c.parentsPflags)
@@ -1876,9 +1901,9 @@ func (c *Command) mergePersistentFlags() {
 // updateParentsPflags updates c.parentsPflags by adding
 // new persistent flags of all parents.
 // If c.parentsPflags == nil, it makes new.
-func (c *Command) updateParentsPflags() {
+func (c *Root) updateParentsPflags() {
 	if c.parentsPflags == nil {
-		c.parentsPflags = flag.NewFlagSet(c.displayName(), flag.ContinueOnError)
+		c.parentsPflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
 		c.parentsPflags.SetOutput(c.flagErrorBuf)
 		c.parentsPflags.SortFlags = false
 	}
@@ -1887,9 +1912,9 @@ func (c *Command) updateParentsPflags() {
 		c.parentsPflags.SetNormalizeFunc(c.globNormFunc)
 	}
 
-	c.Root().PersistentFlags().AddFlagSet(flag.CommandLine)
+	c.Base().PersistentFlags().AddFlagSet(flag.CommandLine)
 
-	c.VisitParents(func(parent Commander) {
+	VisitParents(c, func(parent Commander) {
 		c.parentsPflags.AddFlagSet(parent.PersistentFlags())
 	})
 }

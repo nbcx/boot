@@ -50,7 +50,7 @@ type cmdDoc struct {
 // correctly if your command names have `-` in them. If you have `cmd` with two
 // subcmds, `sub` and `sub-third`, and `sub` has a subcommand called `third`
 // it is undefined which help output will be in the file `cmd-sub-third.1`.
-func GenYamlTree(cmd *boot.Command, dir string) error {
+func GenYamlTree(cmd boot.Commander, dir string) error {
 	identity := func(s string) string { return s }
 	emptyStr := func(s string) string { return "" }
 	return GenYamlTreeCustom(cmd, dir, emptyStr, identity)
@@ -59,7 +59,7 @@ func GenYamlTree(cmd *boot.Command, dir string) error {
 // GenYamlTreeCustom creates yaml structured ref files.
 func GenYamlTreeCustom(cmd boot.Commander, dir string, filePrepender, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
 			continue
 		}
 		if err := GenYamlTreeCustom(c, dir, filePrepender, linkHandler); err != nil {
@@ -67,7 +67,7 @@ func GenYamlTreeCustom(cmd boot.Commander, dir string, filePrepender, linkHandle
 		}
 	}
 
-	basename := strings.ReplaceAll(cmd.CommandPath(), " ", "_") + ".yaml"
+	basename := strings.ReplaceAll(boot.CommandPath(cmd), " ", "_") + ".yaml"
 	filename := filepath.Join(dir, basename)
 	f, err := os.Create(filename)
 	if err != nil {
@@ -85,23 +85,23 @@ func GenYamlTreeCustom(cmd boot.Commander, dir string, filePrepender, linkHandle
 }
 
 // GenYaml creates yaml output.
-func GenYaml(cmd *boot.Command, w io.Writer) error {
+func GenYaml(cmd boot.Commander, w io.Writer) error {
 	return GenYamlCustom(cmd, w, func(s string) string { return s })
 }
 
 // GenYamlCustom creates custom yaml output.
 func GenYamlCustom(cmd boot.Commander, w io.Writer, linkHandler func(string) string) error {
-	cmd.InitDefaultHelpCmd()
-	cmd.InitDefaultHelpFlag()
+	boot.InitDefaultHelpCmd(cmd)
+	boot.InitDefaultHelpFlag(cmd)
 
 	yamlDoc := cmdDoc{}
-	yamlDoc.Name = cmd.CommandPath()
+	yamlDoc.Name = boot.CommandPath(cmd)
 
 	yamlDoc.Synopsis = forceMultiLine(cmd.GetShort())
 	yamlDoc.Description = forceMultiLine(cmd.GetLong())
 
 	if cmd.Runnable() {
-		yamlDoc.Usage = cmd.UseLine()
+		yamlDoc.Usage = boot.UseLine(cmd)
 	}
 
 	if len(cmd.GetExample()) > 0 {
@@ -121,15 +121,15 @@ func GenYamlCustom(cmd boot.Commander, w io.Writer, linkHandler func(string) str
 		result := []string{}
 		if cmd.HasParent() {
 			parent := cmd.Parent()
-			result = append(result, parent.CommandPath()+" - "+parent.GetShort())
+			result = append(result, boot.CommandPath(parent)+" - "+parent.GetShort())
 		}
 		children := cmd.Commands()
 		sort.Sort(byName(children))
 		for _, child := range children {
-			if !child.IsAvailableCommand() || child.IsAdditionalHelpTopicCommand() {
+			if !boot.IsAvailableCommand(child) || child.IsAdditionalHelpTopicCommand() {
 				continue
 			}
-			result = append(result, child.CommandPath()+" - "+child.GetShort())
+			result = append(result, boot.CommandPath(child)+" - "+child.GetShort())
 		}
 		yamlDoc.SeeAlso = result
 	}

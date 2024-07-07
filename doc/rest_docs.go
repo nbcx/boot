@@ -54,17 +54,17 @@ func defaultLinkHandler(name, ref string) string {
 }
 
 // GenReST creates reStructured Text output.
-func GenReST(cmd *boot.Command, w io.Writer) error {
+func GenReST(cmd boot.Commander, w io.Writer) error {
 	return GenReSTCustom(cmd, w, defaultLinkHandler)
 }
 
 // GenReSTCustom creates custom reStructured Text output.
 func GenReSTCustom(cmd boot.Commander, w io.Writer, linkHandler func(string, string) string) error {
-	cmd.InitDefaultHelpCmd()
-	cmd.InitDefaultHelpFlag()
+	boot.InitDefaultHelpCmd(cmd)
+	boot.InitDefaultHelpFlag(cmd)
 
 	buf := new(bytes.Buffer)
-	name := cmd.CommandPath()
+	name := boot.CommandPath(cmd)
 
 	short := cmd.GetShort()
 	long := cmd.GetLong()
@@ -82,7 +82,7 @@ func GenReSTCustom(cmd boot.Commander, w io.Writer, linkHandler func(string, str
 	buf.WriteString("\n" + long + "\n\n")
 
 	if cmd.Runnable() {
-		buf.WriteString(fmt.Sprintf("::\n\n  %s\n\n", cmd.UseLine()))
+		buf.WriteString(fmt.Sprintf("::\n\n  %s\n\n", boot.UseLine(cmd)))
 	}
 
 	if len(cmd.GetExample()) > 0 {
@@ -99,10 +99,10 @@ func GenReSTCustom(cmd boot.Commander, w io.Writer, linkHandler func(string, str
 		buf.WriteString("~~~~~~~~\n\n")
 		if cmd.HasParent() {
 			parent := cmd.Parent()
-			pname := parent.CommandPath()
+			pname := boot.CommandPath(parent)
 			ref = strings.ReplaceAll(pname, " ", "_")
 			buf.WriteString(fmt.Sprintf("* %s \t - %s\n", linkHandler(pname, ref), parent.GetShort()))
-			cmd.VisitParents(func(c boot.Commander) {
+			boot.VisitParents(cmd, func(c boot.Commander) {
 				if c.GetDisableAutoGenTag() {
 					cmd.SetDisableAutoGenTag(c.GetDisableAutoGenTag())
 					// cmd.DisableAutoGenTag = c.DisableAutoGenTag
@@ -114,10 +114,10 @@ func GenReSTCustom(cmd boot.Commander, w io.Writer, linkHandler func(string, str
 		sort.Sort(byName(children))
 
 		for _, child := range children {
-			if !child.IsAvailableCommand() || child.IsAdditionalHelpTopicCommand() {
+			if !boot.IsAvailableCommand(child) || child.IsAdditionalHelpTopicCommand() {
 				continue
 			}
-			cname := name + " " + child.Name()
+			cname := name + " " + boot.ParseName(child)
 			ref = strings.ReplaceAll(cname, " ", "_")
 			buf.WriteString(fmt.Sprintf("* %s \t - %s\n", linkHandler(cname, ref), child.GetShort()))
 		}
@@ -145,7 +145,7 @@ func GenReSTTree(cmd boot.Commander, dir string) error {
 // with custom filePrepender and linkHandler.
 func GenReSTTreeCustom(cmd boot.Commander, dir string, filePrepender func(string) string, linkHandler func(string, string) string) error {
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
 			continue
 		}
 		if err := GenReSTTreeCustom(c, dir, filePrepender, linkHandler); err != nil {
@@ -153,7 +153,7 @@ func GenReSTTreeCustom(cmd boot.Commander, dir string, filePrepender func(string
 		}
 	}
 
-	basename := strings.ReplaceAll(cmd.CommandPath(), " ", "_") + ".rst"
+	basename := strings.ReplaceAll(boot.CommandPath(cmd), " ", "_") + ".rst"
 	filename := filepath.Join(dir, basename)
 	f, err := os.Create(filename)
 	if err != nil {

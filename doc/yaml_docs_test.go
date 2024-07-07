@@ -39,7 +39,7 @@ func TestGenYamlDoc(t *testing.T) {
 	checkStringContains(t, output, "rootflag")
 	checkStringContains(t, output, rootCmd.Short)
 	checkStringContains(t, output, echoSubCmd.Short)
-	checkStringContains(t, output, fmt.Sprintf("- %s - %s", echoSubCmd.CommandPath(), echoSubCmd.Short))
+	checkStringContains(t, output, fmt.Sprintf("- %s - %s", boot.CommandPath(echoSubCmd), echoSubCmd.Short))
 }
 
 func TestGenYamlNoTag(t *testing.T) {
@@ -56,7 +56,7 @@ func TestGenYamlNoTag(t *testing.T) {
 }
 
 func TestGenYamlTree(t *testing.T) {
-	c := &boot.Command{Use: "do [OPTIONS] arg1 arg2"}
+	c := &boot.Root{Use: "do [OPTIONS] arg1 arg2"}
 
 	tmpDir, err := os.MkdirTemp("", "test-gen-yaml-tree")
 	if err != nil {
@@ -74,7 +74,7 @@ func TestGenYamlTree(t *testing.T) {
 }
 
 func TestGenYamlDocRunnable(t *testing.T) {
-	// Testing a runnable command: should contain the "usage" field
+	// Testing a runnable Root: should contain the "usage" field
 	buf := new(bytes.Buffer)
 	if err := GenYaml(rootCmd, buf); err != nil {
 		t.Fatal(err)

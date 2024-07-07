@@ -35,7 +35,7 @@ Cobra provides:
 
 Cobra is built on a structure of commands, arguments & flags.
 
-**Commands** represent actions, **Args** are things and **Flags** are modifiers for those actions.
+**Roots** represent actions, **Args** are things and **Flags** are modifiers for those actions.
 
 The best applications read like sentences when used, and as a result, users
 intuitively know how to interact with them.

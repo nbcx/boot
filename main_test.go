@@ -5,24 +5,38 @@ import (
 	"testing"
 )
 
+type b struct {
+	Default
+}
+
+func (p *b) GetUse() string {
+	return "b"
+}
+
+func (p *b) Run(args []string) error {
+	fmt.Println("b   >>>", args)
+	return nil
+}
+
 func TestMain(t *testing.T) {
 	var rootCmdArgs []string
-	root := &Command{
+	root := &Root{
 		Use: "root",
 		// Args: ExactArgs(2),
-		Run: func(_ Commander, args []string) { rootCmdArgs = args },
+		RunE: func(_ Commander, args []string) error { rootCmdArgs = args; return nil },
 	}
-	aCmd := &Command{Use: "a", Args: NoArgs, Run: func(cmd Commander, args []string) { fmt.Println("a....") }}
-	bCmd := &Command{Use: "b", Args: NoArgs, Run: emptyRun}
+	aCmd := &Root{Use: "a", Args: NoArgs, RunE: func(cmd Commander, args []string) error { fmt.Println("a...."); return nil }}
+	bCmd := &b{} // &Root{Use: "b", Args: NoArgs, RunE: emptyRun}
 	root.Add(aCmd, bCmd)
 
 	// buf := new(bytes.Buffer)
 	// root.SetOut(buf)
 	// root.SetErr(buf)
-	root.SetArgs([]string{"a"})
+	root.SetArgs([]string{"b", "jj"})
 
 	err := root.ExecuteX()
-
-	fmt.Println(err, rootCmdArgs)
+	if err != nil {
+		fmt.Println("execute x", err, rootCmdArgs)
+	}
 
 }

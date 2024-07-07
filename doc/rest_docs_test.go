@@ -79,7 +79,7 @@ func TestGenRSTNoTag(t *testing.T) {
 }
 
 func TestGenRSTTree(t *testing.T) {
-	c := &boot.Command{Use: "do [OPTIONS] arg1 arg2"}
+	c := &boot.Root{Use: "do [OPTIONS] arg1 arg2"}
 
 	tmpdir, err := ioutil.TempDir("", "test-gen-rst-tree")
 	if err != nil {

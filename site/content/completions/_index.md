@@ -27,7 +27,7 @@ and then modifying the generated `cmd/completion.go` file to look something like
 (writing the shell script to stdout allows the most flexible use):
 
 ```go
-var completionCmd = &cobra.Command{
+var completionCmd = &cobra.Root{
 	Use:   "completion [bash|zsh|fish|powershell]",
 	Short: "Generate completion script",
 	Long: fmt.Sprintf(`To load completions:
@@ -68,20 +68,20 @@ PowerShell:
   # To load completions for every new session, run:
   PS> %[1]s completion powershell > %[1]s.ps1
   # and source this file from your PowerShell profile.
-`,cmd.Root().Name()),
+`,cmd..Root.Base().Name()),
 	DisableFlagsInUseLine: true,
 	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 	Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 	Run: func(cmd *cobra.Command, args []string) {
 		switch args[0] {
 		case "bash":
-			cmd.Root().GenBashCompletion(os.Stdout)
+			cmd..Root.Base().GenBashCompletion(os.Stdout)
 		case "zsh":
-			cmd.Root().GenZshCompletion(os.Stdout)
+			cmd..Root.Base().GenZshCompletion(os.Stdout)
 		case "fish":
-			cmd.Root().GenFishCompletion(os.Stdout, true)
+			cmd..Root.Base().GenFishCompletion(os.Stdout, true)
 		case "powershell":
-			cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
+			cmd..Root.Base().GenPowerShellCompletionWithDesc(os.Stdout)
 		}
 	},
 }
@@ -94,7 +94,7 @@ PowerShell:
 Cobra provides a few options for the default `completion` command.  To configure such options you must set
 the `CompletionOptions` field on the *root* command.
 
-To tell Cobra *not* to provide the default `completion` command:
+To tell Cobra *not* to provide the default `completion` Root:
 ```
 rootCmd.CompletionOptions.DisableDefaultCmd = true
 ```
@@ -129,7 +129,7 @@ Some simplified code from `kubectl get` looks like:
 ```go
 validArgs = []string{ "pod", "node", "service", "replicationcontroller" }
 
-cmd := &cobra.Command{
+cmd := &cobra.Root{
 	Use:     "get [(-o|--output=)json|yaml|template|...] (RESOURCE [NAME] | RESOURCE/NAME ...)",
 	Short:   "Display one or many resources",
 	Long:    get_long,
@@ -155,7 +155,7 @@ If your nouns have aliases, you can define them alongside `ValidArgs` using `Arg
 ```go
 argAliases = []string { "pods", "nodes", "services", "svc", "replicationcontrollers", "rc" }
 
-cmd := &cobra.Command{
+cmd := &cobra.Root{
     ...
 	ValidArgs:  validArgs,
 	ArgAliases: argAliases
@@ -170,7 +170,7 @@ In some cases it is not possible to provide a list of completions in advance.  I
 Simplified code from `helm status` looks like:
 
 ```go
-cmd := &cobra.Command{
+cmd := &cobra.Root{
 	Use:   "status RELEASE_NAME",
 	Short: "Display the status of the named release",
 	Long:  status_long,
@@ -245,7 +245,7 @@ harbor
 :4
 Completion ended with directive: ShellCompDirectiveNoFileComp # This is on stderr
 ```
-***Important:*** If the noun to complete is empty (when the user has not yet typed any letters of that noun), you must pass an empty parameter to the `__complete` command:
+***Important:*** If the noun to complete is empty (when the user has not yet typed any letters of that noun), you must pass an empty parameter to the `__complete` Root:
 ```bash
 $ helm __complete status ""<ENTER>
 harbor

@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	cmd := &cobra.Command{
+	cmd := &cobra.Root{
 		Use:   "test",
 		Short: "my test program",
 	}
@@ -74,13 +74,13 @@ This will write the markdown doc for ONLY "cmd" into the out, buffer.
 Both `GenMarkdown` and `GenMarkdownTree` have alternate versions with callbacks to get some control of the output:
 
 ```go
-func GenMarkdownTreeCustom(cmd *Command, dir string, filePrepender, linkHandler func(string) string) error {
+func GenMarkdownTreeCustom(cmd *Root, dir string, filePrepender, linkHandler func(string) string) error {
 	//...
 }
 ```
 
 ```go
-func GenMarkdownCustom(cmd *Command, out *bytes.Buffer, linkHandler func(string) string) error {
+func GenMarkdownCustom(cmd *Root, out *bytes.Buffer, linkHandler func(string) string) error {
 	//...
 }
 ```

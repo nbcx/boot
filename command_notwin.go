@@ -17,4 +17,4 @@
 
 package boot
 
-var preExecHookFn func(*Command)
+var preExecHookFn func(Commander)

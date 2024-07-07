@@ -30,14 +30,14 @@ const (
 
 // MarkFlagsRequiredTogether marks the given flags with annotations so that Cobra errors
 // if the command is invoked with a subset (but not all) of the given flags.
-func (c *Command) MarkFlagsRequiredTogether(flagNames ...string) {
+func MarkFlagsRequiredTogether(c Commander, flagNames ...string) {
 	c.mergePersistentFlags()
 	for _, v := range flagNames {
-		f := c.Flags().Lookup(v)
+		f := c.GetFlags().Lookup(v)
 		if f == nil {
 			panic(fmt.Sprintf("Failed to find flag %q and mark it as being required in a flag group", v))
 		}
-		if err := c.Flags().SetAnnotation(v, requiredAsGroupAnnotation, append(f.Annotations[requiredAsGroupAnnotation], strings.Join(flagNames, " "))); err != nil {
+		if err := c.GetFlags().SetAnnotation(v, requiredAsGroupAnnotation, append(f.Annotations[requiredAsGroupAnnotation], strings.Join(flagNames, " "))); err != nil {
 			// Only errs if the flag isn't found.
 			panic(err)
 		}
@@ -46,14 +46,14 @@ func (c *Command) MarkFlagsRequiredTogether(flagNames ...string) {
 
 // MarkFlagsOneRequired marks the given flags with annotations so that Cobra errors
 // if the command is invoked without at least one flag from the given set of flags.
-func (c *Command) MarkFlagsOneRequired(flagNames ...string) {
+func MarkFlagsOneRequired(c Commander, flagNames ...string) {
 	c.mergePersistentFlags()
 	for _, v := range flagNames {
-		f := c.Flags().Lookup(v)
+		f := c.GetFlags().Lookup(v)
 		if f == nil {
 			panic(fmt.Sprintf("Failed to find flag %q and mark it as being in a one-required flag group", v))
 		}
-		if err := c.Flags().SetAnnotation(v, oneRequiredAnnotation, append(f.Annotations[oneRequiredAnnotation], strings.Join(flagNames, " "))); err != nil {
+		if err := c.GetFlags().SetAnnotation(v, oneRequiredAnnotation, append(f.Annotations[oneRequiredAnnotation], strings.Join(flagNames, " "))); err != nil {
 			// Only errs if the flag isn't found.
 			panic(err)
 		}
@@ -62,15 +62,15 @@ func (c *Command) MarkFlagsOneRequired(flagNames ...string) {
 
 // MarkFlagsMutuallyExclusive marks the given flags with annotations so that Cobra errors
 // if the command is invoked with more than one flag from the given set of flags.
-func (c *Command) MarkFlagsMutuallyExclusive(flagNames ...string) {
+func MarkFlagsMutuallyExclusive(c Commander, flagNames ...string) {
 	c.mergePersistentFlags()
 	for _, v := range flagNames {
-		f := c.Flags().Lookup(v)
+		f := c.GetFlags().Lookup(v)
 		if f == nil {
 			panic(fmt.Sprintf("Failed to find flag %q and mark it as being in a mutually exclusive flag group", v))
 		}
 		// Each time this is called is a single new entry; this allows it to be a member of multiple groups if needed.
-		if err := c.Flags().SetAnnotation(v, mutuallyExclusiveAnnotation, append(f.Annotations[mutuallyExclusiveAnnotation], strings.Join(flagNames, " "))); err != nil {
+		if err := c.GetFlags().SetAnnotation(v, mutuallyExclusiveAnnotation, append(f.Annotations[mutuallyExclusiveAnnotation], strings.Join(flagNames, " "))); err != nil {
 			panic(err)
 		}
 	}
@@ -78,12 +78,13 @@ func (c *Command) MarkFlagsMutuallyExclusive(flagNames ...string) {
 
 // ValidateFlagGroups validates the mutuallyExclusive/oneRequired/requiredAsGroup logic and returns the
 // first error encountered.
-func (c *Command) ValidateFlagGroups() error {
-	if c.DisableFlagParsing {
+func ValidateFlagGroups(c Commander) error {
+	if c.GetDisableFlagParsing() {
+		// if c.DisableFlagParsing {
 		return nil
 	}
 
-	flags := c.Flags()
+	flags := c.GetFlags()
 
 	// groupStatus format is the list of flags as a unique ID,
 	// then a map of each flag name and whether it is set or not.
@@ -222,7 +223,7 @@ func sortedKeys(m map[string]map[string]bool) []string {
 // - when none of the flags in a one-required group are present, all flags in the group will be marked required
 // - when a flag in a mutually exclusive group is present, other flags in the group will be marked as hidden
 // This allows the standard completion logic to behave appropriately for flag groups
-func (c *Command) enforceFlagGroupsForCompletion() {
+func (c *Root) enforceFlagGroupsForCompletion() {
 	if c.DisableFlagParsing {
 		return
 	}
