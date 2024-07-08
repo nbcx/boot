@@ -185,13 +185,13 @@ func manPrintFlags(buf io.StringWriter, flags *pflag.FlagSet) {
 }
 
 func manPrintOptions(buf io.StringWriter, command boot.Commander) {
-	flags := command.NonInheritedFlags()
+	flags := boot.NonInheritedFlags(command)
 	if flags.HasAvailableFlags() {
 		boot.WriteStringAndCheck(buf, "# OPTIONS\n")
 		manPrintFlags(buf, flags)
 		boot.WriteStringAndCheck(buf, "\n")
 	}
-	flags = command.InheritedFlags()
+	flags = boot.InheritedFlags(command)
 	if flags.HasAvailableFlags() {
 		boot.WriteStringAndCheck(buf, "# OPTIONS INHERITED FROM PARENT COMMANDS\n")
 		manPrintFlags(buf, flags)

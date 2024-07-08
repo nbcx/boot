@@ -28,7 +28,7 @@ import (
 )
 
 func printOptionsReST(buf *bytes.Buffer, cmd boot.Commander, name string) error {
-	flags := cmd.NonInheritedFlags()
+	flags := boot.NonInheritedFlags(cmd)
 	flags.SetOutput(buf)
 	if flags.HasAvailableFlags() {
 		buf.WriteString("Options\n")
@@ -37,7 +37,7 @@ func printOptionsReST(buf *bytes.Buffer, cmd boot.Commander, name string) error 
 		buf.WriteString("\n")
 	}
 
-	parentFlags := cmd.InheritedFlags()
+	parentFlags := boot.InheritedFlags(cmd)
 	parentFlags.SetOutput(buf)
 	if parentFlags.HasAvailableFlags() {
 		buf.WriteString("Options inherited from parent commands\n")

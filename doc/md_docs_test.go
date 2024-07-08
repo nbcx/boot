@@ -59,7 +59,7 @@ func TestGenMdDocWithNoLongOrSynopsis(t *testing.T) {
 func TestGenMdNoHiddenParents(t *testing.T) {
 	// We generate on subcommand so we have both subcommands and parents.
 	for _, name := range []string{"rootflag", "strtwo"} {
-		f := rootCmd.PersistentFlags().Lookup(name)
+		f := boot.PersistentFlags(rootCmd).Lookup(name)
 		f.Hidden = true
 		defer func() { f.Hidden = false }()
 	}

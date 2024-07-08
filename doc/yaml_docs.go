@@ -108,11 +108,11 @@ func GenYamlCustom(cmd boot.Commander, w io.Writer, linkHandler func(string) str
 		yamlDoc.Example = cmd.GetExample()
 	}
 
-	flags := cmd.NonInheritedFlags()
+	flags := boot.NonInheritedFlags(cmd)
 	if flags.HasFlags() {
 		yamlDoc.Options = genFlagResult(flags)
 	}
-	flags = cmd.InheritedFlags()
+	flags = boot.InheritedFlags(cmd)
 	if flags.HasFlags() {
 		yamlDoc.InheritedOptions = genFlagResult(flags)
 	}

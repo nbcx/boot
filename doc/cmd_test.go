@@ -24,19 +24,19 @@ import (
 func emptyRun(boot.Commander, []string) error { return nil }
 
 func init() {
-	rootCmd.PersistentFlags().StringP("rootflag", "r", "two", "")
-	rootCmd.PersistentFlags().StringP("strtwo", "t", "two", "help message for parent flag strtwo")
+	boot.PersistentFlags(rootCmd).StringP("rootflag", "r", "two", "")
+	boot.PersistentFlags(rootCmd).StringP("strtwo", "t", "two", "help message for parent flag strtwo")
 
-	echoCmd.PersistentFlags().StringP("strone", "s", "one", "help message for flag strone")
-	echoCmd.PersistentFlags().BoolP("persistentbool", "p", false, "help message for flag persistentbool")
+	boot.PersistentFlags(echoCmd).StringP("strone", "s", "one", "help message for flag strone")
+	boot.PersistentFlags(echoCmd).BoolP("persistentbool", "p", false, "help message for flag persistentbool")
 	boot.Flags(echoCmd).IntP("intone", "i", 123, "help message for flag intone")
 	boot.Flags(echoCmd).BoolP("boolone", "b", true, "help message for flag boolone")
 
-	timesCmd.PersistentFlags().StringP("strtwo", "t", "2", "help message for child flag strtwo")
+	boot.PersistentFlags(timesCmd).StringP("strtwo", "t", "2", "help message for child flag strtwo")
 	boot.Flags(timesCmd).IntP("inttwo", "j", 234, "help message for flag inttwo")
 	boot.Flags(timesCmd).BoolP("booltwo", "c", false, "help message for flag booltwo")
 
-	printCmd.PersistentFlags().StringP("strthree", "s", "three", "help message for flag strthree")
+	boot.PersistentFlags(printCmd).StringP("strthree", "s", "three", "help message for flag strthree")
 	boot.Flags(printCmd).IntP("intthree", "i", 345, "help message for flag intthree")
 	boot.Flags(printCmd).BoolP("boolthree", "b", true, "help message for flag boolthree")
 
