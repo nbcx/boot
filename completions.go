@@ -132,7 +132,7 @@ func FixedCompletions(choices []string, directive ShellCompDirective) func(cmd C
 
 // RegisterFlagCompletionFunc should be called to register a function to provide completion for a flag.
 func (c *Root) RegisterFlagCompletionFunc(flagName string, f func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)) error {
-	flag := c.Flag(flagName)
+	flag := Flag(c, flagName)
 	if flag == nil {
 		return fmt.Errorf("RegisterFlagCompletionFunc: flag '%s' does not exist", flagName)
 	}
@@ -148,7 +148,7 @@ func (c *Root) RegisterFlagCompletionFunc(flagName string, f func(cmd Commander,
 
 // GetFlagCompletionFunc returns the completion function for the given flag of the command, if available.
 func (c *Root) GetFlagCompletionFunc(flagName string) (func(Commander, []string, string) ([]string, ShellCompDirective), bool) {
-	flag := c.Flag(flagName)
+	flag := Flag(c, flagName)
 	if flag == nil {
 		return nil, false
 	}
@@ -334,11 +334,11 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 	// if -- was already set or interspersed is false and there is already one arg then
 	// the extra added -- is counted as arg.
 	flagCompletion := true
-	_ = finalCmd.ParseFlags(append(finalArgs, "--"))
+	_ = ParseFlags(finalCmd, append(finalArgs, "--"))
 	newArgCount := Flags(finalCmd).NArg()
 
 	// Parse the flags early so we can check if required flags are set
-	if err = finalCmd.ParseFlags(finalArgs); err != nil {
+	if err = ParseFlags(finalCmd, finalArgs); err != nil {
 		return finalCmd, []string{}, ShellCompDirectiveDefault, fmt.Errorf("Error while parsing flags from args %v: %s", finalArgs, err.Error())
 	}
 
@@ -422,7 +422,7 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 			// We cannot use finalCmd.Flags() because we may not have called ParsedFlags() for commands
 			// that have set DisableFlagParsing; it is ParseFlags() that merges the inherited and
 			// non-inherited flags.
-			finalCmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
+			InheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
 				doCompleteFlags(flag)
 			})
 			// Try to complete non-inherited flags even if DisableFlagParsing==true.
@@ -430,7 +430,7 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 			// if the actual parsing of flags is not done by Cobra.
 			// For instance, Helm uses this to provide flag name completion for
 			// some of its plugins.
-			finalCmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
+			NonInheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
 				doCompleteFlags(flag)
 			})
 		}
@@ -457,8 +457,8 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 			// local flags because we can use a local flag on a parent command
 			if !finalCmd.Base().GetTraverseChildren() {
 				// Check if there are any local, non-persistent flags on the command-line
-				localNonPersistentFlags := finalCmd.LocalNonPersistentFlags()
-				finalCmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
+				localNonPersistentFlags := LocalNonPersistentFlags(finalCmd)
+				NonInheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
 					if localNonPersistentFlags.Lookup(flag.Name) != nil && flag.Changed {
 						foundLocalNonPersistentFlag = true
 					}
@@ -597,10 +597,10 @@ func completeRequireFlags(finalCmd Commander, toComplete string) []string {
 	// We cannot use finalCmd.Flags() because we may not have called ParsedFlags() for commands
 	// that have set DisableFlagParsing; it is ParseFlags() that merges the inherited and
 	// non-inherited flags.
-	finalCmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
+	InheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
 		doCompleteRequiredFlags(flag)
 	})
-	finalCmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
+	NonInheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
 		doCompleteRequiredFlags(flag)
 	})
 
@@ -762,7 +762,7 @@ See each sub-command's help for details on how to use the generated script.
 	// 	}
 	bash := NewBashCompleteCmd(c, shortDesc)
 	if haveNoDescFlag {
-		bash.Flags().BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
+		Flags(bash).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
 	// 	zsh := &Root{
@@ -803,7 +803,7 @@ See each sub-command's help for details on how to use the generated script.
 	//	}
 	zsh := NewZshCompleteCmd(c, shortDesc, noDesc)
 	if haveNoDescFlag {
-		zsh.Flags().BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
+		Flags(zsh).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
 	// 	fish := &Root{
@@ -829,7 +829,7 @@ See each sub-command's help for details on how to use the generated script.
 	// 	}
 	fish := NewFishCompleteCmd(c, shortDesc, noDesc)
 	if haveNoDescFlag {
-		fish.Flags().BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
+		Flags(fish).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
 	// 	powershell := &Root{
@@ -856,7 +856,7 @@ See each sub-command's help for details on how to use the generated script.
 	//	}
 	powershell := NewPowershellCompleteCmd(c, shortDesc, noDesc)
 	if haveNoDescFlag {
-		powershell.Flags().BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
+		Flags(powershell).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
 	completionCmd.Add(bash, zsh, fish, powershell)
@@ -870,7 +870,7 @@ func findFlag(cmd Commander, name string) *pflag.Flag {
 		if short := flagSet.ShorthandLookup(name); short != nil {
 			name = short.Name
 		} else {
-			set := cmd.InheritedFlags()
+			set := InheritedFlags(cmd)
 			if short = set.ShorthandLookup(name); short != nil {
 				name = short.Name
 			} else {
@@ -878,7 +878,7 @@ func findFlag(cmd Commander, name string) *pflag.Flag {
 			}
 		}
 	}
-	return cmd.Flag(name)
+	return Flag(cmd, name)
 }
 
 // CompDebug prints the specified string to the same file as where the

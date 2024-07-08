@@ -23,7 +23,6 @@ import (
 	"io"
 	"os"
 	"sort"
-	"strings"
 
 	flag "github.com/spf13/pflag"
 )
@@ -262,6 +261,56 @@ type Default struct {
 	SuggestionsMinimumDistance int
 }
 
+// GetFParseErrWhitelist implements Commander.
+func (c *Default) GetFParseErrWhitelist() FParseErrWhitelist {
+	return c.FParseErrWhitelist
+}
+
+// GetGlobNormFunc implements Commander.
+func (c *Default) GetGlobNormFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
+	return c.globNormFunc
+}
+
+// SetFParseErrWhitelist implements Commander.
+func (c *Default) SetFParseErrWhitelist(fp FParseErrWhitelist) {
+	c.FParseErrWhitelist = fp
+}
+
+// SetGlobNormFunc implements Commander.
+func (c *Default) SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.NormalizedName) {
+	c.globNormFunc = f
+}
+
+// GetIFlags implements Commander.
+func (c *Default) GetIFlags() *flag.FlagSet {
+	return c.iflags
+}
+
+// GetLFlags implements Commander.
+func (c *Default) GetLFlags() *flag.FlagSet {
+	return c.lflags
+}
+
+// GetParentsPFlags implements Commander.
+func (c *Default) GetParentsPFlags() *flag.FlagSet {
+	return c.parentsPflags
+}
+
+// SetIFlags implements Commander.
+func (c *Default) SetIFlags(i *flag.FlagSet) {
+	c.iflags = i
+}
+
+// SetLFlags implements Commander.
+func (c *Default) SetLFlags(l *flag.FlagSet) {
+	c.lflags = l
+}
+
+// SetParentsPFlags implements Commander.
+func (c *Default) SetParentsPFlags(pf *flag.FlagSet) {
+	c.parentsPflags = pf
+}
+
 // Context returns underlying command context. If command was executed
 // with ExecuteContext or the context was set with SetContext, the
 // previously set context will be returned. Otherwise, nil is returned.
@@ -369,15 +418,15 @@ func (c *Default) SetErrPrefix(s string) {
 
 // SetGlobalNormalizationFunc sets a normalization function to all flag sets and also to child commands.
 // The user should not have a cyclic dependency on commands.
-func (c *Default) SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string) flag.NormalizedName) {
-	c.Flags().SetNormalizeFunc(n)
-	c.PersistentFlags().SetNormalizeFunc(n)
-	c.globNormFunc = n
+// func (c *Default) SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string) flag.NormalizedName) {
+// 	c.Flags().SetNormalizeFunc(n)
+// 	c.PersistentFlags().SetNormalizeFunc(n)
+// 	c.globNormFunc = n
 
-	for _, command := range c.commands {
-		command.SetGlobalNormalizationFunc(n)
-	}
-}
+// 	for _, command := range c.commands {
+// 		command.SetGlobalNormalizationFunc(n)
+// 	}
+// }
 
 // OutOrStdout returns output to stdout.
 func (c *Default) OutOrStdout() io.Writer {
@@ -511,7 +560,7 @@ func (c *Default) FlagErrorFunc() (f func(Commander, error) error) {
 	}
 
 	if c.HasParent() {
-		return c.parent.FlagErrorFunc()
+		return FlagErrorFunc(c.parent)
 	}
 	return func(c Commander, err error) error {
 		return err
@@ -626,40 +675,40 @@ func (c *Default) ErrPrefix() string {
 // argsMinusFirstX removes only the first x from args.  Otherwise, commands that look like
 // openshift admin policy add-role-to-user admin my-user, lose the admin argument (arg[4]).
 // Special care needs to be taken not to remove a flag value.
-func (c *Default) argsMinusFirstX(args []string, x string) []string {
-	if len(args) == 0 {
-		return args
-	}
-	c.mergePersistentFlags()
-	flags := c.Flags()
+// func (c *Default) argsMinusFirstX(args []string, x string) []string {
+// 	if len(args) == 0 {
+// 		return args
+// 	}
+// 	c.mergePersistentFlags()
+// 	flags := c.Flags()
 
-Loop:
-	for pos := 0; pos < len(args); pos++ {
-		s := args[pos]
-		switch {
-		case s == "--":
-			// -- means we have reached the end of the parseable args. Break out of the loop now.
-			break Loop
-		case strings.HasPrefix(s, "--") && !strings.Contains(s, "=") && !hasNoOptDefVal(s[2:], flags):
-			fallthrough
-		case strings.HasPrefix(s, "-") && !strings.Contains(s, "=") && len(s) == 2 && !shortHasNoOptDefVal(s[1:], flags):
-			// This is a flag without a default value, and an equal sign is not used. Increment pos in order to skip
-			// over the next arg, because that is the value of this flag.
-			pos++
-			continue
-		case !strings.HasPrefix(s, "-"):
-			// This is not a flag or a flag value. Check to see if it matches what we're looking for, and if so,
-			// return the args, excluding the one at this position.
-			if s == x {
-				ret := make([]string, 0, len(args)-1)
-				ret = append(ret, args[:pos]...)
-				ret = append(ret, args[pos+1:]...)
-				return ret
-			}
-		}
-	}
-	return args
-}
+// Loop:
+// 	for pos := 0; pos < len(args); pos++ {
+// 		s := args[pos]
+// 		switch {
+// 		case s == "--":
+// 			// -- means we have reached the end of the parseable args. Break out of the loop now.
+// 			break Loop
+// 		case strings.HasPrefix(s, "--") && !strings.Contains(s, "=") && !hasNoOptDefVal(s[2:], flags):
+// 			fallthrough
+// 		case strings.HasPrefix(s, "-") && !strings.Contains(s, "=") && len(s) == 2 && !shortHasNoOptDefVal(s[1:], flags):
+// 			// This is a flag without a default value, and an equal sign is not used. Increment pos in order to skip
+// 			// over the next arg, because that is the value of this flag.
+// 			pos++
+// 			continue
+// 		case !strings.HasPrefix(s, "-"):
+// 			// This is not a flag or a flag value. Check to see if it matches what we're looking for, and if so,
+// 			// return the args, excluding the one at this position.
+// 			if s == x {
+// 				ret := make([]string, 0, len(args)-1)
+// 				ret = append(ret, args[:pos]...)
+// 				ret = append(ret, args[pos+1:]...)
+// 				return ret
+// 			}
+// 		}
+// 	}
+// 	return args
+// }
 
 // Find the target command given the args and command tree
 // Meant to be run on the highest node. Only searches down.
@@ -807,9 +856,9 @@ func (c *Default) Base() Commander {
 
 // ArgsLenAtDash will return the length of c.Flags().Args at the moment
 // when a -- was found during args parsing.
-func (c *Default) ArgsLenAtDash() int {
-	return c.Flags().ArgsLenAtDash()
-}
+// func (c *Default) ArgsLenAtDash() int {
+// 	return c.Flags().ArgsLenAtDash()
+// }
 
 // func (c *Default) Execute(a []string) (err error) {
 // 	if c == nil {
@@ -1086,28 +1135,28 @@ func (c *Default) postRun() {
 // }
 
 // ValidateRequiredFlags validates all required flags are present and returns an error otherwise
-func (c *Default) ValidateRequiredFlags() error {
-	if c.DisableFlagParsing {
-		return nil
-	}
+// func (c *Default) ValidateRequiredFlags() error {
+// 	if c.DisableFlagParsing {
+// 		return nil
+// 	}
 
-	flags := c.Flags()
-	missingFlagNames := []string{}
-	flags.VisitAll(func(pflag *flag.Flag) {
-		requiredAnnotation, found := pflag.Annotations[BashCompOneRequiredFlag]
-		if !found {
-			return
-		}
-		if (requiredAnnotation[0] == "true") && !pflag.Changed {
-			missingFlagNames = append(missingFlagNames, pflag.Name)
-		}
-	})
+// 	flags := Flags(c)
+// 	missingFlagNames := []string{}
+// 	flags.VisitAll(func(pflag *flag.Flag) {
+// 		requiredAnnotation, found := pflag.Annotations[BashCompOneRequiredFlag]
+// 		if !found {
+// 			return
+// 		}
+// 		if (requiredAnnotation[0] == "true") && !pflag.Changed {
+// 			missingFlagNames = append(missingFlagNames, pflag.Name)
+// 		}
+// 	})
 
-	if len(missingFlagNames) > 0 {
-		return fmt.Errorf(`required flag(s) "%s" not set`, strings.Join(missingFlagNames, `", "`))
-	}
-	return nil
-}
+// 	if len(missingFlagNames) > 0 {
+// 		return fmt.Errorf(`required flag(s) "%s" not set`, strings.Join(missingFlagNames, `", "`))
+// 	}
+// 	return nil
+// }
 
 // checkCommandGroups checks if a command has been added to a group that does not exists.
 // If so, we panic because it indicates a coding error that should be corrected.
@@ -1222,7 +1271,7 @@ func (c *Default) Add(cmds ...Commander) {
 		}
 		// If global normalization function exists, update all children
 		if c.globNormFunc != nil {
-			x.SetGlobalNormalizationFunc(c.globNormFunc)
+			SetGlobalNormalizationFunc(x, c.globNormFunc)
 		}
 		c.commands = append(c.commands, x)
 		c.commandsAreSorted = false
@@ -1510,243 +1559,9 @@ func (c *Default) GlobalNormalizationFunc() func(f *flag.FlagSet, name string) f
 	return c.globNormFunc
 }
 
-// Flags returns the complete FlagSet that applies
-// to this command (local and persistent declared here and by all parents).
-func (c *Default) Flags() *flag.FlagSet {
-	if c.flags == nil {
-		c.flags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
-		if c.flagErrorBuf == nil {
-			c.flagErrorBuf = new(bytes.Buffer)
-		}
-		c.flags.SetOutput(c.flagErrorBuf)
-	}
-
-	return c.flags
-}
-
-// LocalNonPersistentFlags are flags specific to this command which will NOT persist to subcommands.
-// This function does not modify the flags of the current command, it's purpose is to return the current state.
-func (c *Default) LocalNonPersistentFlags() *flag.FlagSet {
-	persistentFlags := c.PersistentFlags()
-
-	out := flag.NewFlagSet(displayName(c), flag.ContinueOnError)
-	c.LocalFlags().VisitAll(func(f *flag.Flag) {
-		if persistentFlags.Lookup(f.Name) == nil {
-			out.AddFlag(f)
-		}
-	})
-	return out
-}
-
-// LocalFlags returns the local FlagSet specifically set in the current command.
-// This function does not modify the flags of the current command, it's purpose is to return the current state.
-func (c *Default) LocalFlags() *flag.FlagSet {
-	c.mergePersistentFlags()
-
-	if c.lflags == nil {
-		c.lflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
-		if c.flagErrorBuf == nil {
-			c.flagErrorBuf = new(bytes.Buffer)
-		}
-		c.lflags.SetOutput(c.flagErrorBuf)
-	}
-	c.lflags.SortFlags = c.Flags().SortFlags
-	if c.globNormFunc != nil {
-		c.lflags.SetNormalizeFunc(c.globNormFunc)
-	}
-
-	addToLocal := func(f *flag.Flag) {
-		// Add the flag if it is not a parent PFlag, or it shadows a parent PFlag
-		if c.lflags.Lookup(f.Name) == nil && f != c.parentsPflags.Lookup(f.Name) {
-			c.lflags.AddFlag(f)
-		}
-	}
-	c.Flags().VisitAll(addToLocal)
-	c.PersistentFlags().VisitAll(addToLocal)
-	return c.lflags
-}
-
-// InheritedFlags returns all flags which were inherited from parent commands.
-// This function does not modify the flags of the current command, it's purpose is to return the current state.
-func (c *Default) InheritedFlags() *flag.FlagSet {
-	c.mergePersistentFlags()
-
-	if c.iflags == nil {
-		c.iflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
-		if c.flagErrorBuf == nil {
-			c.flagErrorBuf = new(bytes.Buffer)
-		}
-		c.iflags.SetOutput(c.flagErrorBuf)
-	}
-
-	local := c.LocalFlags()
-	if c.globNormFunc != nil {
-		c.iflags.SetNormalizeFunc(c.globNormFunc)
-	}
-
-	c.parentsPflags.VisitAll(func(f *flag.Flag) {
-		if c.iflags.Lookup(f.Name) == nil && local.Lookup(f.Name) == nil {
-			c.iflags.AddFlag(f)
-		}
-	})
-	return c.iflags
-}
-
-// NonInheritedFlags returns all flags which were not inherited from parent commands.
-// This function does not modify the flags of the current command, it's purpose is to return the current state.
-func (c *Default) NonInheritedFlags() *flag.FlagSet {
-	return c.LocalFlags()
-}
-
-// PersistentFlags returns the persistent FlagSet specifically set in the current command.
-func (c *Default) PersistentFlags() *flag.FlagSet {
-	if c.pflags == nil {
-		c.pflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
-		if c.flagErrorBuf == nil {
-			c.flagErrorBuf = new(bytes.Buffer)
-		}
-		c.pflags.SetOutput(c.flagErrorBuf)
-	}
-	return c.pflags
-}
-
-// ResetFlags deletes all flags from command.
-func (c *Default) ResetFlags() {
-	c.flagErrorBuf = new(bytes.Buffer)
-	c.flagErrorBuf.Reset()
-	c.flags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
-	c.flags.SetOutput(c.flagErrorBuf)
-	c.pflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
-	c.pflags.SetOutput(c.flagErrorBuf)
-
-	c.lflags = nil
-	c.iflags = nil
-	c.parentsPflags = nil
-}
-
-// HasFlags checks if the command contains any flags (local plus persistent from the entire structure).
-func (c *Default) HasFlags() bool {
-	return c.Flags().HasFlags()
-}
-
-// HasPersistentFlags checks if the command contains persistent flags.
-func (c *Default) HasPersistentFlags() bool {
-	return c.PersistentFlags().HasFlags()
-}
-
-// HasLocalFlags checks if the command has flags specifically declared locally.
-func (c *Default) HasLocalFlags() bool {
-	return c.LocalFlags().HasFlags()
-}
-
-// HasInheritedFlags checks if the command has flags inherited from its parent command.
-func (c *Default) HasInheritedFlags() bool {
-	return c.InheritedFlags().HasFlags()
-}
-
-// HasAvailableFlags checks if the command contains any flags (local plus persistent from the entire
-// structure) which are not hidden or deprecated.
-func (c *Default) HasAvailableFlags() bool {
-	return c.Flags().HasAvailableFlags()
-}
-
-// HasAvailablePersistentFlags checks if the command contains persistent flags which are not hidden or deprecated.
-func (c *Default) HasAvailablePersistentFlags() bool {
-	return c.PersistentFlags().HasAvailableFlags()
-}
-
-// HasAvailableLocalFlags checks if the command has flags specifically declared locally which are not hidden
-// or deprecated.
-func (c *Default) HasAvailableLocalFlags() bool {
-	return c.LocalFlags().HasAvailableFlags()
-}
-
-// HasAvailableInheritedFlags checks if the command has flags inherited from its parent command which are
-// not hidden or deprecated.
-func (c *Default) HasAvailableInheritedFlags() bool {
-	return c.InheritedFlags().HasAvailableFlags()
-}
-
-// Flag climbs up the command tree looking for matching flag.
-func (c *Default) Flag(name string) (flag *flag.Flag) {
-	flag = c.Flags().Lookup(name)
-
-	if flag == nil {
-		flag = c.persistentFlag(name)
-	}
-
-	return
-}
-
-// Recursively find matching persistent flag.
-func (c *Default) persistentFlag(name string) (flag *flag.Flag) {
-	if c.HasPersistentFlags() {
-		flag = c.PersistentFlags().Lookup(name)
-	}
-
-	if flag == nil {
-		c.updateParentsPflags()
-		flag = c.parentsPflags.Lookup(name)
-	}
-	return
-}
-
-// ParseFlags parses persistent flag tree and local flags.
-func (c *Default) ParseFlags(args []string) error {
-	if c.DisableFlagParsing {
-		return nil
-	}
-
-	if c.flagErrorBuf == nil {
-		c.flagErrorBuf = new(bytes.Buffer)
-	}
-	beforeErrorBufLen := c.flagErrorBuf.Len()
-	c.mergePersistentFlags()
-
-	// do it here after merging all flags and just before parse
-	c.Flags().ParseErrorsWhitelist = flag.ParseErrorsWhitelist(c.FParseErrWhitelist)
-
-	err := c.Flags().Parse(args)
-	// Print warnings if they occurred (e.g. deprecated flag messages).
-	if c.flagErrorBuf.Len()-beforeErrorBufLen > 0 && err == nil {
-		c.Print(c.flagErrorBuf.String())
-	}
-
-	return err
-}
-
 // Parent returns a commands parent command.
 func (c *Default) Parent() Commander {
 	return c.parent
-}
-
-// mergePersistentFlags merges c.PersistentFlags() to c.Flags()
-// and adds missing persistent flags of all parents.
-func (c *Default) mergePersistentFlags() {
-	c.updateParentsPflags()
-	c.Flags().AddFlagSet(c.PersistentFlags())
-	c.Flags().AddFlagSet(c.parentsPflags)
-}
-
-// updateParentsPflags updates c.parentsPflags by adding
-// new persistent flags of all parents.
-// If c.parentsPflags == nil, it makes new.
-func (c *Default) updateParentsPflags() {
-	if c.parentsPflags == nil {
-		c.parentsPflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
-		c.parentsPflags.SetOutput(c.flagErrorBuf)
-		c.parentsPflags.SortFlags = false
-	}
-
-	if c.globNormFunc != nil {
-		c.parentsPflags.SetNormalizeFunc(c.globNormFunc)
-	}
-
-	c.Base().PersistentFlags().AddFlagSet(flag.CommandLine)
-
-	VisitParents(c, func(parent Commander) {
-		c.parentsPflags.AddFlagSet(parent.PersistentFlags())
-	})
 }
 
 //////// new add ////////////////

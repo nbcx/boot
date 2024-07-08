@@ -21,7 +21,7 @@ func (p *b) Run(args []string) error {
 func TestMain(t *testing.T) {
 	var rootCmdArgs []string
 	root := &Root{
-		Use:  "root",
+		// Use:  "root",
 		Args: RangeArgs(0, 2),
 		RunE: func(_ Commander, args []string) error {
 			rootCmdArgs = args
@@ -30,7 +30,7 @@ func TestMain(t *testing.T) {
 		},
 	}
 	aCmd := &Root{Use: "a", Args: NoArgs, RunE: func(cmd Commander, args []string) error { fmt.Println("a...."); return nil }}
-	bCmd := &b{Default: Default{Args: RangeArgs(2, 2)}} // &Root{Use: "b", Args: NoArgs, RunE: emptyRun}
+	bCmd := &b{Default: Default{Args: RangeArgs(0, 2)}} // &Root{Use: "b", Args: NoArgs, RunE: emptyRun}
 	root.Add(aCmd, bCmd)
 
 	// buf := new(bytes.Buffer)

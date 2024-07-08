@@ -96,7 +96,7 @@ func TestBashCompletions(t *testing.T) {
 	assertNoErr(t, rootCmd.MarkFlagFilename("filename", "json", "yaml", "yml"))
 
 	// Persistent filename.
-	rootCmd.PersistentFlags().String("persistent-filename", "", "Enter a filename")
+	PersistentFlags(rootCmd).String("persistent-filename", "", "Enter a filename")
 	assertNoErr(t, MarkPersistentFlagFilename(rootCmd, "persistent-filename"))
 	assertNoErr(t, MarkPersistentFlagRequired(rootCmd, "persistent-filename"))
 

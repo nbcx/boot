@@ -51,7 +51,7 @@ type Commander interface {
 	GetTraverseChildren() bool
 	RemoveCommand(cmds ...Commander)
 	GetDisableFlagParsing() bool
-	LocalNonPersistentFlags() *flag.FlagSet
+
 	GetAliases() []string
 	// UseLine() string
 	GetDisableAutoGenTag() bool
@@ -60,20 +60,41 @@ type Commander interface {
 	GetAnnotations() map[string]string
 
 	// Flags
-	HasFlags() bool
-	HasPersistentFlags() bool
+	// HasFlags() bool
+	// HasPersistentFlags() bool
 	GetFlags() *flag.FlagSet
 	SetFlags(*flag.FlagSet)
-	FlagErrorFunc() (f func(Commander, error) error)
-	Flag(name string) (flag *flag.Flag)
-	GetFlagErrorFunc() func(Commander, error) error
+	GetLFlags() *flag.FlagSet
+	SetLFlags(*flag.FlagSet)
+	GetIFlags() *flag.FlagSet
+	SetIFlags(*flag.FlagSet)
 
+	GetParentsPFlags() *flag.FlagSet
+	SetParentsPFlags(*flag.FlagSet)
+
+	SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.NormalizedName)
+	GetGlobNormFunc() func(f *flag.FlagSet, name string) flag.NormalizedName
+
+	// FParseErrWhitelist flag parse errors to be ignored
+	// FParseErrWhitelist
+	GetFParseErrWhitelist() FParseErrWhitelist
+	SetFParseErrWhitelist(FParseErrWhitelist)
+
+	// FlagErrorFunc() (f func(Commander, error) error)
+	// Flag(name string) (flag *flag.Flag)
+	GetFlagErrorFunc() func(Commander, error) error
+	// InheritedFlags() *flag.FlagSet
+	// NonInheritedFlags() *flag.FlagSet
 	SetFlagErrorBuf(*bytes.Buffer)
 	GetFlagErrorBuf() *bytes.Buffer
+	// LocalNonPersistentFlags() *flag.FlagSet
+	// ParseFlags(args []string) error
+	// ValidateRequiredFlags() error
+	// SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string) flag.NormalizedName)
 
 	// CommandPath() string
 	// Name() string
-	SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string) flag.NormalizedName)
+
 	// IsAvailableCommand() bool
 	IsAdditionalHelpTopicCommand() bool
 	Base() Commander
@@ -99,7 +120,7 @@ type Commander interface {
 	// Traverse(args []string) (Commander, []string, error)
 	// UsageFunc() (f func(Commander) error)
 	OutOrStderr() io.Writer
-	PersistentFlags() *flag.FlagSet
+	// PersistentFlags() *flag.FlagSet
 	CalledAs() string
 	// GenPowerShellCompletion(w io.Writer) error
 	// GenZshCompletionNoDesc(w io.Writer) error
@@ -111,11 +132,8 @@ type Commander interface {
 	SetCompletionCommandGroupID(v string)
 
 	ErrOrStderr() io.Writer
-	ParseFlags(args []string) error
 	GetValidArgsFunction() func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)
 	GetArgAliases() []string
-	InheritedFlags() *flag.FlagSet
-	NonInheritedFlags() *flag.FlagSet
 
 	HasSubCommands() bool
 	HasParent() bool
@@ -144,7 +162,7 @@ type Commander interface {
 	// hasNameOrAliasPrefix(prefix string) bool
 	// findNext(next string) Commander
 	// argsMinusFirstX(args []string, x string) []string
-	mergePersistentFlags()
+	// mergePersistentFlags()
 	// getCompletions(args []string) (Commander, []string, ShellCompDirective, error)
 	// displayName() string
 	getHelpCommandGroupID() string

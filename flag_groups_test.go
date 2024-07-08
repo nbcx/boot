@@ -30,7 +30,7 @@ func TestValidateFlagGroups(t *testing.T) {
 			Flags(c).String(v, "", "")
 		}
 		for _, v := range []string{"e", "f", "g"} {
-			c.PersistentFlags().String(v, "", "")
+			PersistentFlags(c).String(v, "", "")
 		}
 		subC := &Root{
 			Use:  "subcmd",

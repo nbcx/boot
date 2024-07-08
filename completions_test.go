@@ -168,8 +168,8 @@ func TestNoCmdNameCompletionInGo(t *testing.T) {
 		RunE:  emptyRun,
 	}
 	rootCmd.Add(childCmd1)
-	childCmd1.PersistentFlags().StringP("persistent", "p", "", "persistent flag")
-	persistentFlag := childCmd1.PersistentFlags().Lookup("persistent")
+	PersistentFlags(childCmd1).StringP("persistent", "p", "", "persistent flag")
+	persistentFlag := PersistentFlags(childCmd1).Lookup("persistent")
 	Flags(childCmd1).StringP("nonPersistent", "n", "", "non-persistent flag")
 	nonPersistentFlag := Flags(childCmd1).Lookup("nonPersistent")
 
@@ -503,7 +503,7 @@ func TestFlagNameCompletionInGo(t *testing.T) {
 	rootCmd.Add(childCmd)
 
 	Flags(rootCmd).IntP("first", "f", -1, "first flag")
-	rootCmd.PersistentFlags().BoolP("second", "s", false, "second flag")
+	PersistentFlags(rootCmd).BoolP("second", "s", false, "second flag")
 	Flags(childCmd).String("subFlag", "", "sub flag")
 
 	// Test that flag names are not shown if the user has not given the '-' prefix
@@ -594,7 +594,7 @@ func TestFlagNameCompletionInGoWithDesc(t *testing.T) {
 	rootCmd.Add(childCmd)
 
 	Flags(rootCmd).IntP("first", "f", -1, "first flag\nlonger description for flag")
-	rootCmd.PersistentFlags().BoolP("second", "s", false, "second flag")
+	PersistentFlags(rootCmd).BoolP("second", "s", false, "second flag")
 	Flags(childCmd).String("subFlag", "", "sub flag")
 
 	// Test that flag names are not shown if the user has not given the '-' prefix
@@ -827,9 +827,9 @@ func TestRequiredFlagNameCompletionInGo(t *testing.T) {
 	assertNoErr(t, MarkFlagRequired(rootCmd, "requiredFlag"))
 	requiredFlag := Flags(rootCmd).Lookup("requiredFlag")
 
-	rootCmd.PersistentFlags().IntP("requiredPersistent", "p", -1, "required persistent")
+	PersistentFlags(rootCmd).IntP("requiredPersistent", "p", -1, "required persistent")
 	assertNoErr(t, MarkPersistentFlagRequired(rootCmd, "requiredPersistent"))
-	requiredPersistent := rootCmd.PersistentFlags().Lookup("requiredPersistent")
+	requiredPersistent := PersistentFlags(rootCmd).Lookup("requiredPersistent")
 
 	Flags(rootCmd).StringP("release", "R", "", "Release name")
 
@@ -2045,7 +2045,7 @@ func TestFlagCompletionWorksRootCommandAddedAfterFlags(t *testing.T) {
 
 func TestFlagCompletionForPersistentFlagsCalledFromSubCmd(t *testing.T) {
 	rootCmd := &Root{Use: "root", RunE: emptyRun}
-	rootCmd.PersistentFlags().String("string", "", "test string flag")
+	PersistentFlags(rootCmd).String("string", "", "test string flag")
 	_ = rootCmd.RegisterFlagCompletionFunc("string", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"myval"}, ShellCompDirectiveDefault
 	})
@@ -2719,7 +2719,7 @@ func TestCompleteWithDisableFlagParsing(t *testing.T) {
 	}
 	rootCmd.Add(childCmd)
 
-	rootCmd.PersistentFlags().StringP("persistent", "p", "", "persistent flag")
+	PersistentFlags(rootCmd).StringP("persistent", "p", "", "persistent flag")
 	Flags(childCmd).StringP("nonPersistent", "n", "", "non-persistent flag")
 
 	// Test that when DisableFlagParsing==true, ValidArgsFunction is called to complete flag names,
@@ -2854,8 +2854,8 @@ func TestCompletionForGroupedFlags(t *testing.T) {
 		}
 		rootCmd.Add(childCmd)
 
-		rootCmd.PersistentFlags().Int("ingroup1", -1, "ingroup1")
-		rootCmd.PersistentFlags().String("ingroup2", "", "ingroup2")
+		PersistentFlags(rootCmd).Int("ingroup1", -1, "ingroup1")
+		PersistentFlags(rootCmd).String("ingroup2", "", "ingroup2")
 
 		Flags(childCmd).Bool("ingroup3", false, "ingroup3")
 		Flags(childCmd).Bool("nogroup", false, "nogroup")
@@ -2954,8 +2954,8 @@ func TestCompletionForOneRequiredGroupFlags(t *testing.T) {
 		}
 		rootCmd.Add(childCmd)
 
-		rootCmd.PersistentFlags().Int("ingroup1", -1, "ingroup1")
-		rootCmd.PersistentFlags().String("ingroup2", "", "ingroup2")
+		PersistentFlags(rootCmd).Int("ingroup1", -1, "ingroup1")
+		PersistentFlags(rootCmd).String("ingroup2", "", "ingroup2")
 
 		Flags(childCmd).Bool("ingroup3", false, "ingroup3")
 		Flags(childCmd).Bool("nogroup", false, "nogroup")
@@ -3052,8 +3052,8 @@ func TestCompletionForMutuallyExclusiveFlags(t *testing.T) {
 		}
 		rootCmd.Add(childCmd)
 
-		rootCmd.PersistentFlags().IntSlice("ingroup1", []int{1}, "ingroup1")
-		rootCmd.PersistentFlags().String("ingroup2", "", "ingroup2")
+		PersistentFlags(rootCmd).IntSlice("ingroup1", []int{1}, "ingroup1")
+		PersistentFlags(rootCmd).String("ingroup2", "", "ingroup2")
 
 		Flags(childCmd).Bool("ingroup3", false, "ingroup3")
 		Flags(childCmd).Bool("nogroup", false, "nogroup")
@@ -3437,7 +3437,7 @@ func TestGetFlagCompletion(t *testing.T) {
 		return []string{"rootvalue"}, ShellCompDirectiveKeepOrder
 	})
 
-	rootCmd.PersistentFlags().String("persistentflag", "", "persistent flag")
+	PersistentFlags(rootCmd).String("persistentflag", "", "persistent flag")
 	_ = rootCmd.RegisterFlagCompletionFunc("persistentflag", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"persistentvalue"}, ShellCompDirectiveDefault
 	})

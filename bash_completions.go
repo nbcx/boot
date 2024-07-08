@@ -562,8 +562,8 @@ func writeFlags(buf io.StringWriter, cmd Commander) {
 		WriteStringAndCheck(buf, "    flag_parsing_disabled=1\n")
 	}
 
-	localNonPersistentFlags := cmd.LocalNonPersistentFlags()
-	cmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
+	localNonPersistentFlags := LocalNonPersistentFlags(cmd)
+	NonInheritedFlags(cmd).VisitAll(func(flag *pflag.Flag) {
 		if nonCompletableFlag(flag) {
 			return
 		}
@@ -577,7 +577,7 @@ func writeFlags(buf io.StringWriter, cmd Commander) {
 			writeLocalNonPersistentFlag(buf, flag)
 		}
 	})
-	cmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
+	InheritedFlags(cmd).VisitAll(func(flag *pflag.Flag) {
 		if nonCompletableFlag(flag) {
 			return
 		}
@@ -592,7 +592,7 @@ func writeFlags(buf io.StringWriter, cmd Commander) {
 
 func writeRequiredFlag(buf io.StringWriter, cmd Commander) {
 	WriteStringAndCheck(buf, "    must_have_one_flag=()\n")
-	flags := cmd.NonInheritedFlags()
+	flags := NonInheritedFlags(cmd)
 	flags.VisitAll(func(flag *pflag.Flag) {
 		if nonCompletableFlag(flag) {
 			return

@@ -733,7 +733,7 @@ func TestStripFlags(t *testing.T) {
 	}
 
 	c := &Root{Use: "c", RunE: emptyRun}
-	c.PersistentFlags().BoolP("persist", "p", false, "")
+	PersistentFlags(c).BoolP("persist", "p", false, "")
 	Flags(c).IntP("int", "i", -1, "")
 	Flags(c).StringP("str", "s", "", "")
 	Flags(c).BoolP("bool", "b", false, "")
@@ -783,7 +783,7 @@ func TestPersistentFlagsOnSameCommand(t *testing.T) {
 	}
 
 	var flagValue int
-	rootCmd.PersistentFlags().IntVarP(&flagValue, "intf", "i", -1, "")
+	PersistentFlags(rootCmd).IntVarP(&flagValue, "intf", "i", -1, "")
 
 	output, err := executeCommand(rootCmd, "-i7", "one", "two")
 	if output != "" {
@@ -827,15 +827,15 @@ func TestChildFlagShadowsParentPersistentFlag(t *testing.T) {
 	parent := &Root{Use: "parent", RunE: emptyRun}
 	child := &Root{Use: "child", RunE: emptyRun}
 
-	parent.PersistentFlags().Bool("boolf", false, "")
-	parent.PersistentFlags().Int("intf", -1, "")
+	PersistentFlags(parent).Bool("boolf", false, "")
+	PersistentFlags(parent).Int("intf", -1, "")
 	Flags(child).String("strf", "", "")
 	Flags(child).Int("intf", -1, "")
 
 	parent.Add(child)
 
-	childInherited := child.InheritedFlags()
-	childLocal := child.LocalFlags()
+	childInherited := InheritedFlags(child)
+	childLocal := LocalFlags(child)
 
 	if childLocal.Lookup("strf") == nil {
 		t.Error(`LocalFlags expected to contain "strf", got "nil"`)
@@ -867,7 +867,7 @@ func TestPersistentFlagsOnChild(t *testing.T) {
 
 	var parentFlagValue int
 	var childFlagValue int
-	rootCmd.PersistentFlags().IntVarP(&parentFlagValue, "parentf", "p", -1, "")
+	PersistentFlags(rootCmd).IntVarP(&parentFlagValue, "parentf", "p", -1, "")
 	Flags(childCmd).IntVarP(&childFlagValue, "childf", "c", -1, "")
 
 	output, err := executeCommand(rootCmd, "child", "-c7", "-p8", "one", "two")
@@ -910,9 +910,9 @@ func TestRequiredFlags(t *testing.T) {
 
 func TestPersistentRequiredFlags(t *testing.T) {
 	parent := &Root{Use: "parent", RunE: emptyRun}
-	parent.PersistentFlags().String("foo1", "", "")
+	PersistentFlags(parent).String("foo1", "", "")
 	assertNoErr(t, MarkPersistentFlagRequired(parent, "foo1"))
-	parent.PersistentFlags().String("foo2", "", "")
+	PersistentFlags(parent).String("foo2", "", "")
 	assertNoErr(t, MarkPersistentFlagRequired(parent, "foo2"))
 	Flags(parent).String("foo3", "", "")
 
@@ -938,8 +938,8 @@ func TestPersistentRequiredFlagsWithDisableFlagParsing(t *testing.T) {
 	// commands that disable flag parsing
 
 	parent := &Root{Use: "parent", RunE: emptyRun}
-	parent.PersistentFlags().Bool("foo", false, "")
-	flag := parent.PersistentFlags().Lookup("foo")
+	PersistentFlags(parent).Bool("foo", false, "")
+	flag := PersistentFlags(parent).Lookup("foo")
 	assertNoErr(t, MarkPersistentFlagRequired(parent, "foo"))
 
 	child := &Root{Use: "child", RunE: emptyRun}
@@ -967,7 +967,7 @@ func TestPersistentRequiredFlagsWithDisableFlagParsing(t *testing.T) {
 func TestInitHelpFlagMergesFlags(t *testing.T) {
 	usage := "custom flag"
 	rootCmd := &Root{Use: "root"}
-	rootCmd.PersistentFlags().Bool("help", false, "custom flag")
+	PersistentFlags(rootCmd).Bool("help", false, "custom flag")
 	childCmd := &Root{Use: "child"}
 	rootCmd.Add(childCmd)
 
@@ -1008,8 +1008,8 @@ func TestHelpCommandExecutedOnChildWithFlagThatShadowsParentFlag(t *testing.T) {
 	child := &Root{Use: "child", RunE: emptyRun}
 	parent.Add(child)
 
-	parent.PersistentFlags().Bool("foo", false, "parent foo usage")
-	parent.PersistentFlags().Bool("bar", false, "parent bar usage")
+	PersistentFlags(parent).Bool("foo", false, "parent foo usage")
+	PersistentFlags(parent).Bool("bar", false, "parent bar usage")
 	Flags(child).Bool("foo", false, "child foo usage") // This shadows parent's foo flag
 	Flags(child).Bool("baz", false, "child baz usage")
 
@@ -1753,7 +1753,7 @@ func TestGlobalNormFuncPropagation(t *testing.T) {
 	childCmd := &Root{Use: "child", RunE: emptyRun}
 	rootCmd.Add(childCmd)
 
-	rootCmd.SetGlobalNormalizationFunc(normFunc)
+	SetGlobalNormalizationFunc(rootCmd, normFunc)
 	if reflect.ValueOf(normFunc).Pointer() != reflect.ValueOf(rootCmd.GlobalNormalizationFunc()).Pointer() {
 		t.Error("rootCmd seems to have a wrong normalization function")
 	}
@@ -1771,8 +1771,8 @@ func TestNormPassedOnLocal(t *testing.T) {
 
 	c := &Root{}
 	Flags(c).Bool("flagname", true, "this is a dummy flag")
-	c.SetGlobalNormalizationFunc(toUpper)
-	if c.LocalFlags().Lookup("flagname") != c.LocalFlags().Lookup("FLAGNAME") {
+	SetGlobalNormalizationFunc(c, toUpper)
+	if LocalFlags(c).Lookup("flagname") != LocalFlags(c).Lookup("FLAGNAME") {
 		t.Error("Normalization function should be passed on to Local flag set")
 	}
 }
@@ -1784,22 +1784,22 @@ func TestNormPassedOnInherited(t *testing.T) {
 	}
 
 	c := &Root{}
-	c.SetGlobalNormalizationFunc(toUpper)
+	SetGlobalNormalizationFunc(c, toUpper)
 
 	child1 := &Root{}
 	c.Add(child1)
 
-	c.PersistentFlags().Bool("flagname", true, "")
+	PersistentFlags(c).Bool("flagname", true, "")
 
 	child2 := &Root{}
 	c.Add(child2)
 
-	inherited := child1.InheritedFlags()
+	inherited := InheritedFlags(child1)
 	if inherited.Lookup("flagname") == nil || inherited.Lookup("flagname") != inherited.Lookup("FLAGNAME") {
 		t.Error("Normalization function should be passed on to inherited flag set in command added before flag")
 	}
 
-	inherited = child2.InheritedFlags()
+	inherited = InheritedFlags(child2)
 	if inherited.Lookup("flagname") == nil || inherited.Lookup("flagname") != inherited.Lookup("FLAGNAME") {
 		t.Error("Normalization function should be passed on to inherited flag set in command added after flag")
 	}
@@ -1816,10 +1816,10 @@ func TestConsistentNormalizedName(t *testing.T) {
 
 	c := &Root{}
 	Flags(c).Bool("flagname", true, "")
-	c.SetGlobalNormalizationFunc(toUpper)
-	c.SetGlobalNormalizationFunc(n)
+	SetGlobalNormalizationFunc(c, toUpper)
+	SetGlobalNormalizationFunc(c, n)
 
-	if c.LocalFlags().Lookup("flagname") == c.LocalFlags().Lookup("FLAGNAME") {
+	if LocalFlags(c).Lookup("flagname") == LocalFlags(c).Lookup("FLAGNAME") {
 		t.Error("Normalizing flag names should not result in duplicate flags")
 	}
 }
@@ -2196,7 +2196,7 @@ func TestFlagErrorFunc(t *testing.T) {
 
 func TestFlagErrorFuncHelp(t *testing.T) {
 	c := &Root{Use: "c", RunE: emptyRun}
-	c.PersistentFlags().Bool("help", false, "help for c")
+	PersistentFlags(c).Bool("help", false, "help for c")
 	c.SetFlagErrorFunc(func(_ Commander, err error) error {
 		return fmt.Errorf("wrap error: %w", err)
 	})
@@ -2238,7 +2238,7 @@ func TestSortedFlags(t *testing.T) {
 	}
 
 	i := 0
-	c.LocalFlags().VisitAll(func(f *pflag.Flag) {
+	LocalFlags(c).VisitAll(func(f *pflag.Flag) {
 		if i == len(names) {
 			return
 		}
@@ -2258,7 +2258,7 @@ func TestSortedFlags(t *testing.T) {
 func TestMergeCommandLineToFlags(t *testing.T) {
 	pflag.Bool("boolflag", false, "")
 	c := &Root{Use: "c", RunE: emptyRun}
-	c.mergePersistentFlags()
+	mergePersistentFlags(c)
 	if Flags(c).Lookup("boolflag") == nil {
 		t.Fatal("Expecting to have flag from CommandLine in c.Flags()")
 	}
@@ -2767,8 +2767,8 @@ func TestFind(t *testing.T) {
 	root := &Root{
 		Use: "root",
 	}
-	root.PersistentFlags().StringVarP(&foo, "foo", "f", "", "")
-	root.PersistentFlags().StringVarP(&bar, "bar", "b", "something", "")
+	PersistentFlags(root).StringVarP(&foo, "foo", "f", "", "")
+	PersistentFlags(root).StringVarP(&bar, "bar", "b", "something", "")
 
 	child := &Root{
 		Use: "child",
@@ -2873,7 +2873,7 @@ func TestUnknownFlagShouldReturnSameErrorRegardlessOfArgPosition(t *testing.T) {
 		Use:  "root",
 		RunE: emptyRun,
 	}
-	root.PersistentFlags().String("namespace", "", "a string flag")
+	PersistentFlags(root).String("namespace", "", "a string flag")
 
 	c := &Root{
 		Use:  "child",

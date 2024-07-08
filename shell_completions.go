@@ -59,7 +59,7 @@ func (c *Root) MarkFlagCustom(name string, f string) error {
 // implementations to limit completions for the named persistent flag to the
 // specified file extensions.
 func MarkPersistentFlagFilename(c Commander, name string, extensions ...string) error {
-	return MarkFlagFilename(c.PersistentFlags(), name, extensions...)
+	return MarkFlagFilename(PersistentFlags(c), name, extensions...)
 }
 
 // MarkFlagFilename instructs the various shell completion implementations to
@@ -88,7 +88,7 @@ func (c *Root) MarkFlagDirname(name string) error {
 // implementations to limit completions for the named persistent flag to
 // directory names.
 func (c *Root) MarkPersistentFlagDirname(name string) error {
-	return MarkFlagDirname(c.PersistentFlags(), name)
+	return MarkFlagDirname(PersistentFlags(c), name)
 }
 
 // MarkFlagDirname instructs the various shell completion implementations to

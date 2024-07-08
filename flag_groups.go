@@ -31,7 +31,7 @@ const (
 // MarkFlagsRequiredTogether marks the given flags with annotations so that Cobra errors
 // if the command is invoked with a subset (but not all) of the given flags.
 func MarkFlagsRequiredTogether(c Commander, flagNames ...string) {
-	c.mergePersistentFlags()
+	mergePersistentFlags(c)
 	for _, v := range flagNames {
 		f := Flags(c).Lookup(v)
 		if f == nil {
@@ -47,7 +47,7 @@ func MarkFlagsRequiredTogether(c Commander, flagNames ...string) {
 // MarkFlagsOneRequired marks the given flags with annotations so that Cobra errors
 // if the command is invoked without at least one flag from the given set of flags.
 func MarkFlagsOneRequired(c Commander, flagNames ...string) {
-	c.mergePersistentFlags()
+	mergePersistentFlags(c)
 	for _, v := range flagNames {
 		f := Flags(c).Lookup(v)
 		if f == nil {
@@ -63,7 +63,7 @@ func MarkFlagsOneRequired(c Commander, flagNames ...string) {
 // MarkFlagsMutuallyExclusive marks the given flags with annotations so that Cobra errors
 // if the command is invoked with more than one flag from the given set of flags.
 func MarkFlagsMutuallyExclusive(c Commander, flagNames ...string) {
-	c.mergePersistentFlags()
+	mergePersistentFlags(c)
 	for _, v := range flagNames {
 		f := Flags(c).Lookup(v)
 		if f == nil {
