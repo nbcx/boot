@@ -281,7 +281,7 @@ func (c *Root) initCompleteCmd(args []string) {
 	}
 }
 
-func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDirective, error) {
+func getCompletions(c Commander, args []string) (Commander, []string, ShellCompDirective, error) {
 	// The last argument, which is not completely typed by the user,
 	// should not be part of the list of arguments
 	toComplete := args[len(args)-1]
@@ -311,7 +311,7 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 		// Unable to find the real command. E.g., <program> someInvalidCmd <TAB>
 		return c, []string{}, ShellCompDirectiveDefault, fmt.Errorf("unable to find a command for arguments: %v", trimmedArgs)
 	}
-	finalCmd.SetContext(c.ctx)
+	finalCmd.SetContext(c.Context())
 
 	// These flags are normally added when `execute()` is called on `finalCmd`,
 	// however, when doing completion, we don't call `finalCmd.execute()`.
@@ -335,14 +335,14 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 	// the extra added -- is counted as arg.
 	flagCompletion := true
 	_ = finalCmd.ParseFlags(append(finalArgs, "--"))
-	newArgCount := finalCmd.GetFlags().NArg()
+	newArgCount := Flags(finalCmd).NArg()
 
 	// Parse the flags early so we can check if required flags are set
 	if err = finalCmd.ParseFlags(finalArgs); err != nil {
 		return finalCmd, []string{}, ShellCompDirectiveDefault, fmt.Errorf("Error while parsing flags from args %v: %s", finalArgs, err.Error())
 	}
 
-	realArgCount := finalCmd.GetFlags().NArg()
+	realArgCount := Flags(finalCmd).NArg()
 	if newArgCount > realArgCount {
 		// don't do flag completion (see above)
 		flagCompletion = false
@@ -364,7 +364,7 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 	// We only remove the flags from the arguments if DisableFlagParsing is not set.
 	// This is important for commands which have requested to do their own flag completion.
 	if !finalCmd.GetDisableFlagParsing() {
-		finalArgs = finalCmd.GetFlags().Args()
+		finalArgs = Flags(finalCmd).Args()
 	}
 
 	if flag != nil && flagCompletion {
@@ -395,7 +395,7 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 	var directive ShellCompDirective
 
 	// Enforce flag groups before doing flag completions
-	finalCmd.enforceFlagGroupsForCompletion()
+	enforceFlagGroupsForCompletion(finalCmd)
 
 	// Note that we want to perform flagname completion even if finalCmd.DisableFlagParsing==true;
 	// doing this allows for completion of persistent flag names even for commands that disable flag parsing.
@@ -538,11 +538,11 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 }
 
 func helpOrVersionFlagPresent(cmd Commander) bool {
-	if versionFlag := cmd.GetFlags().Lookup("version"); versionFlag != nil &&
+	if versionFlag := Flags(cmd).Lookup("version"); versionFlag != nil &&
 		len(versionFlag.Annotations[FlagSetByCobraAnnotation]) > 0 && versionFlag.Changed {
 		return true
 	}
-	if helpFlag := cmd.GetFlags().Lookup("help"); helpFlag != nil &&
+	if helpFlag := Flags(cmd).Lookup("help"); helpFlag != nil &&
 		len(helpFlag.Annotations[FlagSetByCobraAnnotation]) > 0 && helpFlag.Changed {
 		return true
 	}
@@ -863,7 +863,7 @@ See each sub-command's help for details on how to use the generated script.
 }
 
 func findFlag(cmd Commander, name string) *pflag.Flag {
-	flagSet := cmd.GetFlags()
+	flagSet := Flags(cmd)
 	if len(name) == 1 {
 		// First convert the short flag into a long flag
 		// as the cmd.Flag() search only accepts long flags

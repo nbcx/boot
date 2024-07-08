@@ -152,11 +152,11 @@ func TestGenManSeeAlso(t *testing.T) {
 
 func TestManPrintFlagsHidesShortDeprecated(t *testing.T) {
 	c := &boot.Root{}
-	c.Flags().StringP("foo", "f", "default", "Foo flag")
-	assertNoErr(t, c.Flags().MarkShorthandDeprecated("foo", "don't use it no more"))
+	boot.Flags(c).StringP("foo", "f", "default", "Foo flag")
+	assertNoErr(t, boot.Flags(c).MarkShorthandDeprecated("foo", "don't use it no more"))
 
 	buf := new(bytes.Buffer)
-	manPrintFlags(buf, c.Flags())
+	manPrintFlags(buf, boot.Flags(c))
 
 	got := buf.String()
 	expected := "**--foo**=\"default\"\n\tFoo flag\n\n"

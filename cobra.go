@@ -37,6 +37,9 @@ var templateFuncs = template.FuncMap{
 	"rpad":                    rpad,
 	"gt":                      Gt,
 	"eq":                      Eq,
+	"HasAvailableSubCommands": HasAvailableSubCommands,
+	"UseLine":                 UseLine,
+	"CommandPath":             CommandPath,
 }
 
 var initializers []func()

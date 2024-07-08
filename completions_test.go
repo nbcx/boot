@@ -159,7 +159,7 @@ func TestNoCmdNameCompletionInGo(t *testing.T) {
 		Use:  "root",
 		RunE: emptyRun,
 	}
-	rootCmd.Flags().String("localroot", "", "local root flag")
+	Flags(rootCmd).String("localroot", "", "local root flag")
 
 	childCmd1 := &Root{
 		Use:   "childCmd1",
@@ -170,8 +170,8 @@ func TestNoCmdNameCompletionInGo(t *testing.T) {
 	rootCmd.Add(childCmd1)
 	childCmd1.PersistentFlags().StringP("persistent", "p", "", "persistent flag")
 	persistentFlag := childCmd1.PersistentFlags().Lookup("persistent")
-	childCmd1.Flags().StringP("nonPersistent", "n", "", "non-persistent flag")
-	nonPersistentFlag := childCmd1.Flags().Lookup("nonPersistent")
+	Flags(childCmd1).StringP("nonPersistent", "n", "", "non-persistent flag")
+	nonPersistentFlag := Flags(childCmd1).Lookup("nonPersistent")
 
 	childCmd2 := &Root{
 		Use:  "childCmd2",
@@ -502,9 +502,9 @@ func TestFlagNameCompletionInGo(t *testing.T) {
 	}
 	rootCmd.Add(childCmd)
 
-	rootCmd.Flags().IntP("first", "f", -1, "first flag")
+	Flags(rootCmd).IntP("first", "f", -1, "first flag")
 	rootCmd.PersistentFlags().BoolP("second", "s", false, "second flag")
-	childCmd.Flags().String("subFlag", "", "sub flag")
+	Flags(childCmd).String("subFlag", "", "sub flag")
 
 	// Test that flag names are not shown if the user has not given the '-' prefix
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "")
@@ -593,9 +593,9 @@ func TestFlagNameCompletionInGoWithDesc(t *testing.T) {
 	}
 	rootCmd.Add(childCmd)
 
-	rootCmd.Flags().IntP("first", "f", -1, "first flag\nlonger description for flag")
+	Flags(rootCmd).IntP("first", "f", -1, "first flag\nlonger description for flag")
 	rootCmd.PersistentFlags().BoolP("second", "s", false, "second flag")
-	childCmd.Flags().String("subFlag", "", "sub flag")
+	Flags(childCmd).String("subFlag", "", "sub flag")
 
 	// Test that flag names are not shown if the user has not given the '-' prefix
 	output, err := executeCommand(rootCmd, ShellCompRequestCmd, "")
@@ -683,16 +683,16 @@ func TestFlagNameCompletionRepeat(t *testing.T) {
 	}
 	rootCmd.Add(childCmd)
 
-	rootCmd.Flags().IntP("first", "f", -1, "first flag")
-	firstFlag := rootCmd.Flags().Lookup("first")
-	rootCmd.Flags().BoolP("second", "s", false, "second flag")
-	secondFlag := rootCmd.Flags().Lookup("second")
-	rootCmd.Flags().StringArrayP("array", "a", nil, "array flag")
-	arrayFlag := rootCmd.Flags().Lookup("array")
-	rootCmd.Flags().IntSliceP("slice", "l", nil, "slice flag")
-	sliceFlag := rootCmd.Flags().Lookup("slice")
-	rootCmd.Flags().BoolSliceP("bslice", "b", nil, "bool slice flag")
-	bsliceFlag := rootCmd.Flags().Lookup("bslice")
+	Flags(rootCmd).IntP("first", "f", -1, "first flag")
+	firstFlag := Flags(rootCmd).Lookup("first")
+	Flags(rootCmd).BoolP("second", "s", false, "second flag")
+	secondFlag := Flags(rootCmd).Lookup("second")
+	Flags(rootCmd).StringArrayP("array", "a", nil, "array flag")
+	arrayFlag := Flags(rootCmd).Lookup("array")
+	Flags(rootCmd).IntSliceP("slice", "l", nil, "slice flag")
+	sliceFlag := Flags(rootCmd).Lookup("slice")
+	Flags(rootCmd).BoolSliceP("bslice", "b", nil, "bool slice flag")
+	bsliceFlag := Flags(rootCmd).Lookup("bslice")
 
 	// Test that flag names are not repeated unless they are an array or slice
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "--first", "1", "--")
@@ -823,19 +823,19 @@ func TestRequiredFlagNameCompletionInGo(t *testing.T) {
 	}
 	rootCmd.Add(childCmd)
 
-	rootCmd.Flags().IntP("requiredFlag", "r", -1, "required flag")
-	assertNoErr(t, rootCmd.MarkFlagRequired("requiredFlag"))
-	requiredFlag := rootCmd.Flags().Lookup("requiredFlag")
+	Flags(rootCmd).IntP("requiredFlag", "r", -1, "required flag")
+	assertNoErr(t, MarkFlagRequired(rootCmd, "requiredFlag"))
+	requiredFlag := Flags(rootCmd).Lookup("requiredFlag")
 
 	rootCmd.PersistentFlags().IntP("requiredPersistent", "p", -1, "required persistent")
-	assertNoErr(t, rootCmd.MarkPersistentFlagRequired("requiredPersistent"))
+	assertNoErr(t, MarkPersistentFlagRequired(rootCmd, "requiredPersistent"))
 	requiredPersistent := rootCmd.PersistentFlags().Lookup("requiredPersistent")
 
-	rootCmd.Flags().StringP("release", "R", "", "Release name")
+	Flags(rootCmd).StringP("release", "R", "", "Release name")
 
-	childCmd.Flags().BoolP("subRequired", "s", false, "sub required flag")
-	assertNoErr(t, childCmd.MarkFlagRequired("subRequired"))
-	childCmd.Flags().BoolP("subNotRequired", "n", false, "sub not required flag")
+	Flags(childCmd).BoolP("subRequired", "s", false, "sub required flag")
+	assertNoErr(t, MarkFlagRequired(childCmd, "subRequired"))
+	Flags(childCmd).BoolP("subNotRequired", "n", false, "sub not required flag")
 
 	// Test that a required flag is suggested even without the - prefix
 	output, err := executeCommand(rootCmd, ShellCompNoDescRequestCmd, "")
@@ -1009,20 +1009,20 @@ func TestFlagFileExtFilterCompletionInGo(t *testing.T) {
 	}
 
 	// No extensions.  Should be ignored.
-	rootCmd.Flags().StringP("file", "f", "", "file flag")
+	Flags(rootCmd).StringP("file", "f", "", "file flag")
 	assertNoErr(t, rootCmd.MarkFlagFilename("file"))
 
 	// Single extension
-	rootCmd.Flags().StringP("log", "l", "", "log flag")
+	Flags(rootCmd).StringP("log", "l", "", "log flag")
 	assertNoErr(t, rootCmd.MarkFlagFilename("log", "log"))
 
 	// Multiple extensions
-	rootCmd.Flags().StringP("yaml", "y", "", "yaml flag")
+	Flags(rootCmd).StringP("yaml", "y", "", "yaml flag")
 	assertNoErr(t, rootCmd.MarkFlagFilename("yaml", "yaml", "yml"))
 
 	// Directly using annotation
-	rootCmd.Flags().StringP("text", "t", "", "text flag")
-	assertNoErr(t, rootCmd.Flags().SetAnnotation("text", BashCompFilenameExt, []string{"txt"}))
+	Flags(rootCmd).StringP("text", "t", "", "text flag")
+	assertNoErr(t, Flags(rootCmd).SetAnnotation("text", BashCompFilenameExt, []string{"txt"}))
 
 	// Test that the completion logic returns the proper info for the completion
 	// script to handle the file filtering
@@ -1131,16 +1131,16 @@ func TestFlagDirFilterCompletionInGo(t *testing.T) {
 	}
 
 	// Filter directories
-	rootCmd.Flags().StringP("dir", "d", "", "dir flag")
+	Flags(rootCmd).StringP("dir", "d", "", "dir flag")
 	assertNoErr(t, rootCmd.MarkFlagDirname("dir"))
 
 	// Filter directories within a directory
-	rootCmd.Flags().StringP("subdir", "s", "", "subdir")
-	assertNoErr(t, rootCmd.Flags().SetAnnotation("subdir", BashCompSubdirsInDir, []string{"themes"}))
+	Flags(rootCmd).StringP("subdir", "s", "", "subdir")
+	assertNoErr(t, Flags(rootCmd).SetAnnotation("subdir", BashCompSubdirsInDir, []string{"themes"}))
 
 	// Multiple directory specification get ignored
-	rootCmd.Flags().StringP("manydir", "m", "", "manydir")
-	assertNoErr(t, rootCmd.Flags().SetAnnotation("manydir", BashCompSubdirsInDir, []string{"themes", "colors"}))
+	Flags(rootCmd).StringP("manydir", "m", "", "manydir")
+	assertNoErr(t, Flags(rootCmd).SetAnnotation("manydir", BashCompSubdirsInDir, []string{"themes", "colors"}))
 
 	// Test that the completion logic returns the proper info for the completion
 	// script to handle the directory filtering
@@ -1565,7 +1565,7 @@ func TestCompleteNoDesCmdInZshScript(t *testing.T) {
 	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
-	assertNoErr(t, rootCmd.GenZshCompletionNoDesc(buf))
+	assertNoErr(t, GenZshCompletionNoDesc(rootCmd, buf))
 	output := buf.String()
 
 	check(t, output, ShellCompNoDescRequestCmd)
@@ -1581,7 +1581,7 @@ func TestCompleteCmdInZshScript(t *testing.T) {
 	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
-	assertNoErr(t, rootCmd.GenZshCompletion(buf))
+	assertNoErr(t, GenZshCompletion(rootCmd, buf))
 	output := buf.String()
 
 	check(t, output, ShellCompRequestCmd)
@@ -1593,7 +1593,7 @@ func TestFlagCompletionInGo(t *testing.T) {
 		Use:  "root",
 		RunE: emptyRun,
 	}
-	rootCmd.Flags().IntP("introot", "i", -1, "help message for flag introot")
+	Flags(rootCmd).IntP("introot", "i", -1, "help message for flag introot")
 	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("introot", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		completions := []string{}
 		for _, comp := range []string{"1\tThe first", "2\tThe second", "10\tThe tenth"} {
@@ -1603,7 +1603,7 @@ func TestFlagCompletionInGo(t *testing.T) {
 		}
 		return completions, ShellCompDirectiveDefault
 	}))
-	rootCmd.Flags().String("filename", "", "Enter a filename")
+	Flags(rootCmd).String("filename", "", "Enter a filename")
 	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("filename", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		completions := []string{}
 		for _, comp := range []string{"file.yaml\tYAML format", "myfile.json\tJSON format", "file.xml\tXML format"} {
@@ -1800,8 +1800,8 @@ func TestFlagCompletionWithNotInterspersedArgs(t *testing.T) {
 		ValidArgs: []string{"arg1", "arg2"},
 	}
 	rootCmd.Add(childCmd, childCmd2)
-	childCmd.Flags().Bool("bool", false, "test bool flag")
-	childCmd.Flags().String("string", "", "test string flag")
+	Flags(childCmd).Bool("bool", false, "test bool flag")
+	Flags(childCmd).String("string", "", "test string flag")
 	_ = childCmd.RegisterFlagCompletionFunc("string", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"myval"}, ShellCompDirectiveDefault
 	})
@@ -1856,7 +1856,7 @@ func TestFlagCompletionWithNotInterspersedArgs(t *testing.T) {
 	}
 
 	// set Interspersed to false which means that no flags should be completed after the first arg
-	childCmd.Flags().SetInterspersed(false)
+	Flags(childCmd).SetInterspersed(false)
 
 	// Test that no flags are completed after the first arg
 	output, err = executeCommand(rootCmd, ShellCompRequestCmd, "child", "arg", "--")
@@ -2017,8 +2017,8 @@ func TestFlagCompletionWorksRootCommandAddedAfterFlags(t *testing.T) {
 			return []string{"--validarg", "test"}, ShellCompDirectiveDefault
 		},
 	}
-	childCmd.Flags().Bool("bool", false, "test bool flag")
-	childCmd.Flags().String("string", "", "test string flag")
+	Flags(childCmd).Bool("bool", false, "test bool flag")
+	Flags(childCmd).String("string", "", "test string flag")
 	_ = childCmd.RegisterFlagCompletionFunc("string", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"myval"}, ShellCompDirectiveDefault
 	})
@@ -2057,7 +2057,7 @@ func TestFlagCompletionForPersistentFlagsCalledFromSubCmd(t *testing.T) {
 			return []string{"--validarg", "test"}, ShellCompDirectiveDefault
 		},
 	}
-	childCmd.Flags().Bool("bool", false, "test bool flag")
+	Flags(childCmd).Bool("bool", false, "test bool flag")
 	rootCmd.Add(childCmd)
 
 	// Test that persistent flag completion works for the subcmd
@@ -2090,7 +2090,7 @@ func TestFlagCompletionConcurrentRegistration(t *testing.T) {
 	const maxFlags = 50
 	for i := 1; i < maxFlags; i += 2 {
 		flagName := fmt.Sprintf("flag%d", i)
-		rootCmd.Flags().String(flagName, "", fmt.Sprintf("test %s flag on root", flagName))
+		Flags(rootCmd).String(flagName, "", fmt.Sprintf("test %s flag on root", flagName))
 	}
 
 	childCmd := &Root{
@@ -2099,7 +2099,7 @@ func TestFlagCompletionConcurrentRegistration(t *testing.T) {
 	}
 	for i := 2; i <= maxFlags; i += 2 {
 		flagName := fmt.Sprintf("flag%d", i)
-		childCmd.Flags().String(flagName, "", fmt.Sprintf("test %s flag on child", flagName))
+		Flags(childCmd).String(flagName, "", fmt.Sprintf("test %s flag on child", flagName))
 	}
 
 	rootCmd.Add(childCmd)
@@ -2156,7 +2156,7 @@ func TestFlagCompletionInGoWithDesc(t *testing.T) {
 		Use:  "root",
 		RunE: emptyRun,
 	}
-	rootCmd.Flags().IntP("introot", "i", -1, "help message for flag introot")
+	Flags(rootCmd).IntP("introot", "i", -1, "help message for flag introot")
 	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("introot", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		completions := []string{}
 		for _, comp := range []string{"1\tThe first", "2\tThe second", "10\tThe tenth"} {
@@ -2166,7 +2166,7 @@ func TestFlagCompletionInGoWithDesc(t *testing.T) {
 		}
 		return completions, ShellCompDirectiveDefault
 	}))
-	rootCmd.Flags().String("filename", "", "Enter a filename")
+	Flags(rootCmd).String("filename", "", "Enter a filename")
 	assertNoErr(t, rootCmd.RegisterFlagCompletionFunc("filename", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		completions := []string{}
 		for _, comp := range []string{"file.yaml\tYAML format", "myfile.json\tJSON format", "file.xml\tXML format"} {
@@ -2505,7 +2505,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 		if compCmd, _, err = Find(rootCmd, []string{compCmdName, shell}); err != nil {
 			t.Errorf("Unexpected error: %v", err)
 		}
-		if flag := compCmd.GetFlags().Lookup(compCmdNoDescFlagName); flag == nil {
+		if flag := Flags(compCmd).Lookup(compCmdNoDescFlagName); flag == nil {
 			t.Errorf("Missing --%s flag for %s shell", compCmdNoDescFlagName, shell)
 		}
 	}
@@ -2519,7 +2519,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 		if compCmd, _, err = Find(rootCmd, []string{compCmdName, shell}); err != nil {
 			t.Errorf("Unexpected error: %v", err)
 		}
-		if flag := compCmd.GetFlags().Lookup(compCmdNoDescFlagName); flag != nil {
+		if flag := Flags(compCmd).Lookup(compCmdNoDescFlagName); flag != nil {
 			t.Errorf("Unexpected --%s flag for %s shell", compCmdNoDescFlagName, shell)
 		}
 	}
@@ -2535,7 +2535,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 		if compCmd, _, err = Find(rootCmd, []string{compCmdName, shell}); err != nil {
 			t.Errorf("Unexpected error: %v", err)
 		}
-		if flag := compCmd.GetFlags().Lookup(compCmdNoDescFlagName); flag != nil {
+		if flag := Flags(compCmd).Lookup(compCmdNoDescFlagName); flag != nil {
 			t.Errorf("Unexpected --%s flag for %s shell", compCmdNoDescFlagName, shell)
 		}
 	}
@@ -2617,7 +2617,7 @@ func TestMultipleShorthandFlagCompletion(t *testing.T) {
 		ValidArgs: []string{"foo", "bar"},
 		RunE:      emptyRun,
 	}
-	f := rootCmd.Flags()
+	f := Flags(rootCmd)
 	f.BoolP("short", "s", false, "short flag 1")
 	f.BoolP("short2", "d", false, "short flag 2")
 	f.StringP("short3", "f", "", "short flag 3")
@@ -2720,7 +2720,7 @@ func TestCompleteWithDisableFlagParsing(t *testing.T) {
 	rootCmd.Add(childCmd)
 
 	rootCmd.PersistentFlags().StringP("persistent", "p", "", "persistent flag")
-	childCmd.Flags().StringP("nonPersistent", "n", "", "non-persistent flag")
+	Flags(childCmd).StringP("nonPersistent", "n", "", "non-persistent flag")
 
 	// Test that when DisableFlagParsing==true, ValidArgsFunction is called to complete flag names,
 	// after Cobra tried to complete the flags it knows about.
@@ -2857,8 +2857,8 @@ func TestCompletionForGroupedFlags(t *testing.T) {
 		rootCmd.PersistentFlags().Int("ingroup1", -1, "ingroup1")
 		rootCmd.PersistentFlags().String("ingroup2", "", "ingroup2")
 
-		childCmd.Flags().Bool("ingroup3", false, "ingroup3")
-		childCmd.Flags().Bool("nogroup", false, "nogroup")
+		Flags(childCmd).Bool("ingroup3", false, "ingroup3")
+		Flags(childCmd).Bool("nogroup", false, "nogroup")
 
 		// Add flags to a group
 		MarkFlagsRequiredTogether(childCmd, "ingroup1", "ingroup2", "ingroup3")
@@ -2957,8 +2957,8 @@ func TestCompletionForOneRequiredGroupFlags(t *testing.T) {
 		rootCmd.PersistentFlags().Int("ingroup1", -1, "ingroup1")
 		rootCmd.PersistentFlags().String("ingroup2", "", "ingroup2")
 
-		childCmd.Flags().Bool("ingroup3", false, "ingroup3")
-		childCmd.Flags().Bool("nogroup", false, "nogroup")
+		Flags(childCmd).Bool("ingroup3", false, "ingroup3")
+		Flags(childCmd).Bool("nogroup", false, "nogroup")
 
 		// Add flags to a group
 		MarkFlagsOneRequired(childCmd, "ingroup1", "ingroup2", "ingroup3")
@@ -3055,8 +3055,8 @@ func TestCompletionForMutuallyExclusiveFlags(t *testing.T) {
 		rootCmd.PersistentFlags().IntSlice("ingroup1", []int{1}, "ingroup1")
 		rootCmd.PersistentFlags().String("ingroup2", "", "ingroup2")
 
-		childCmd.Flags().Bool("ingroup3", false, "ingroup3")
-		childCmd.Flags().Bool("nogroup", false, "nogroup")
+		Flags(childCmd).Bool("ingroup3", false, "ingroup3")
+		Flags(childCmd).Bool("nogroup", false, "nogroup")
 
 		// Add flags to a group
 		MarkFlagsMutuallyExclusive(childCmd, "ingroup1", "ingroup2", "ingroup3")
@@ -3183,19 +3183,19 @@ func TestCompletionCobraFlags(t *testing.T) {
 
 		rootCmd.Add(childCmd, childCmd2, childCmd3, childCmd4, childCmd5)
 
-		_ = childCmd.Flags().Bool("bool", false, "A bool flag")
-		_ = childCmd.MarkFlagRequired("bool")
+		_ = Flags(childCmd).Bool("bool", false, "A bool flag")
+		_ = MarkFlagRequired(childCmd, "bool")
 
 		// Have a command that adds its own help and version flag
-		_ = childCmd2.Flags().BoolP("help", "h", false, "My own help")
-		_ = childCmd2.Flags().BoolP("version", "v", false, "My own version")
+		_ = Flags(childCmd2).BoolP("help", "h", false, "My own help")
+		_ = Flags(childCmd2).BoolP("version", "v", false, "My own version")
 
 		// Have a command that only adds its own -v flag
-		_ = childCmd3.Flags().BoolP("verbose", "v", false, "Not a version flag")
+		_ = Flags(childCmd3).BoolP("verbose", "v", false, "Not a version flag")
 
 		// Have a command that DisablesFlagParsing but that also adds its own help and version flags
-		_ = childCmd5.Flags().BoolP("help", "h", false, "My own help")
-		_ = childCmd5.Flags().BoolP("version", "v", false, "My own version")
+		_ = Flags(childCmd5).BoolP("help", "h", false, "My own help")
+		_ = Flags(childCmd5).BoolP("version", "v", false, "My own version")
 
 		return rootCmd
 	}
@@ -3432,7 +3432,7 @@ Completion ended with directive: ShellCompDirectiveNoFileComp
 func TestGetFlagCompletion(t *testing.T) {
 	rootCmd := &Root{Use: "root", RunE: emptyRun}
 
-	rootCmd.Flags().String("rootflag", "", "root flag")
+	Flags(rootCmd).String("rootflag", "", "root flag")
 	_ = rootCmd.RegisterFlagCompletionFunc("rootflag", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"rootvalue"}, ShellCompDirectiveKeepOrder
 	})
@@ -3444,7 +3444,7 @@ func TestGetFlagCompletion(t *testing.T) {
 
 	childCmd := &Root{Use: "child", RunE: emptyRun}
 
-	childCmd.Flags().String("childflag", "", "child flag")
+	Flags(childCmd).String("childflag", "", "child flag")
 	_ = childCmd.RegisterFlagCompletionFunc("childflag", func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 		return []string{"childvalue"}, ShellCompDirectiveNoFileComp | ShellCompDirectiveNoSpace
 	})

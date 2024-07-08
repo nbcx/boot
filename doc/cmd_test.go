@@ -29,16 +29,16 @@ func init() {
 
 	echoCmd.PersistentFlags().StringP("strone", "s", "one", "help message for flag strone")
 	echoCmd.PersistentFlags().BoolP("persistentbool", "p", false, "help message for flag persistentbool")
-	echoCmd.Flags().IntP("intone", "i", 123, "help message for flag intone")
-	echoCmd.Flags().BoolP("boolone", "b", true, "help message for flag boolone")
+	boot.Flags(echoCmd).IntP("intone", "i", 123, "help message for flag intone")
+	boot.Flags(echoCmd).BoolP("boolone", "b", true, "help message for flag boolone")
 
 	timesCmd.PersistentFlags().StringP("strtwo", "t", "2", "help message for child flag strtwo")
-	timesCmd.Flags().IntP("inttwo", "j", 234, "help message for flag inttwo")
-	timesCmd.Flags().BoolP("booltwo", "c", false, "help message for flag booltwo")
+	boot.Flags(timesCmd).IntP("inttwo", "j", 234, "help message for flag inttwo")
+	boot.Flags(timesCmd).BoolP("booltwo", "c", false, "help message for flag booltwo")
 
 	printCmd.PersistentFlags().StringP("strthree", "s", "three", "help message for flag strthree")
-	printCmd.Flags().IntP("intthree", "i", 345, "help message for flag intthree")
-	printCmd.Flags().BoolP("boolthree", "b", true, "help message for flag boolthree")
+	boot.Flags(printCmd).IntP("intthree", "i", 345, "help message for flag intthree")
+	boot.Flags(printCmd).BoolP("boolthree", "b", true, "help message for flag boolthree")
 
 	echoCmd.Add(timesCmd, echoSubCmd, deprecatedCmd)
 	rootCmd.Add(printCmd, echoCmd, dummyCmd)

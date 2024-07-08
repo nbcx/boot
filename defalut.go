@@ -262,61 +262,6 @@ type Default struct {
 	SuggestionsMinimumDistance int
 }
 
-// GenBashCompletionV2 implements Commander.
-func (c *Default) GenBashCompletionV2(w io.Writer, includeDesc bool) error {
-	panic("unimplemented")
-}
-
-// GenFishCompletion implements Commander.
-func (c *Default) GenFishCompletion(w io.Writer, includeDesc bool) error {
-	panic("unimplemented")
-}
-
-// GenPowerShellCompletion implements Commander.
-func (c *Default) GenPowerShellCompletion(w io.Writer) error {
-	panic("unimplemented")
-}
-
-// GenPowerShellCompletionWithDesc implements Commander.
-func (c *Default) GenPowerShellCompletionWithDesc(w io.Writer) error {
-	panic("unimplemented")
-}
-
-// GenZshCompletion implements Commander.
-func (c *Default) GenZshCompletion(w io.Writer) error {
-	panic("unimplemented")
-}
-
-// GenZshCompletionNoDesc implements Commander.
-func (c *Default) GenZshCompletionNoDesc(w io.Writer) error {
-	panic("unimplemented")
-}
-
-// MarkFlagsMutuallyExclusive implements Commander.
-func (c *Default) MarkFlagsMutuallyExclusive(flagNames ...string) {
-	panic("unimplemented")
-}
-
-// MarkFlagsOneRequired implements Commander.
-func (c *Default) MarkFlagsOneRequired(flagNames ...string) {
-	panic("unimplemented")
-}
-
-// MarkFlagsRequiredTogether implements Commander.
-func (c *Default) MarkFlagsRequiredTogether(flagNames ...string) {
-	panic("unimplemented")
-}
-
-// enforceFlagGroupsForCompletion implements Commander.
-func (c *Default) enforceFlagGroupsForCompletion() {
-	panic("unimplemented")
-}
-
-// getCompletions implements Commander.
-func (c *Default) getCompletions(args []string) (Commander, []string, ShellCompDirective, error) {
-	panic("unimplemented")
-}
-
 // Context returns underlying command context. If command was executed
 // with ExecuteContext or the context was set with SetContext, the
 // previously set context will be returned. Otherwise, nil is returned.
@@ -486,76 +431,76 @@ func (c *Default) getIn(def io.Reader) io.Reader {
 
 // UsageFunc returns either the function set by SetUsageFunc for this command
 // or a parent, or it returns a default usage function.
-func (c *Default) UsageFunc() (f func(Commander) error) {
-	if c.usageFunc != nil {
-		return c.usageFunc
-	}
-	if c.HasParent() {
-		return c.Parent().UsageFunc()
-	}
-	return func(c Commander) error {
-		c.mergePersistentFlags()
-		err := tmpl(c.OutOrStderr(), c.UsageTemplate(), c)
-		if err != nil {
-			c.PrintErrLn(err)
-		}
-		return err
-	}
-}
+// func (c *Default) UsageFunc() (f func(Commander) error) {
+// 	if c.usageFunc != nil {
+// 		return c.usageFunc
+// 	}
+// 	if c.HasParent() {
+// 		return c.Parent().UsageFunc()
+// 	}
+// 	return func(c Commander) error {
+// 		c.mergePersistentFlags()
+// 		err := tmpl(c.OutOrStderr(), c.UsageTemplate(), c)
+// 		if err != nil {
+// 			c.PrintErrLn(err)
+// 		}
+// 		return err
+// 	}
+// }
 
 // Usage puts out the usage for the command.
 // Used when a user provides invalid input.
 // Can be defined by user by overriding UsageFunc.
-func (c *Default) Usage() error {
-	return c.UsageFunc()(c)
-}
+// func (c *Default) Usage() error {
+// 	return c.UsageFunc()(c)
+// }
 
 // HelpFunc returns either the function set by SetHelpFunc for this command
 // or a parent, or it returns a function with default help behavior.
-func (c *Default) HelpFunc() func(Commander, []string) {
-	if c.helpFunc != nil {
-		return c.helpFunc
-	}
-	if c.HasParent() {
-		return c.Parent().HelpFunc()
-	}
-	return func(c Commander, a []string) {
-		c.mergePersistentFlags()
-		// The help should be sent to stdout
-		// See https://github.com/spf13/cobra/issues/1002
-		err := tmpl(c.OutOrStdout(), c.HelpTemplate(), c)
-		if err != nil {
-			c.PrintErrLn(err)
-		}
-	}
-}
+// func (c *Default) HelpFunc() func(Commander, []string) {
+// 	if c.helpFunc != nil {
+// 		return c.helpFunc
+// 	}
+// 	if c.HasParent() {
+// 		return c.Parent().HelpFunc()
+// 	}
+// 	return func(c Commander, a []string) {
+// 		c.mergePersistentFlags()
+// 		// The help should be sent to stdout
+// 		// See https://github.com/spf13/cobra/issues/1002
+// 		err := tmpl(c.OutOrStdout(), c.HelpTemplate(), c)
+// 		if err != nil {
+// 			c.PrintErrLn(err)
+// 		}
+// 	}
+// }
 
-// Help puts out the help for the command.
-// Used when a user calls help [command].
-// Can be defined by user by overriding HelpFunc.
-func (c *Default) Help() error {
-	c.HelpFunc()(c, []string{})
-	return nil
-}
+// // Help puts out the help for the command.
+// // Used when a user calls help [command].
+// // Can be defined by user by overriding HelpFunc.
+// func (c *Default) Help() error {
+// 	c.HelpFunc()(c, []string{})
+// 	return nil
+// }
 
 // UsageString returns usage string.
-func (c *Default) UsageString() string {
-	// Storing normal writers
-	tmpOutput := c.outWriter
-	tmpErr := c.errWriter
+// func (c *Default) UsageString() string {
+// 	// Storing normal writers
+// 	tmpOutput := c.outWriter
+// 	tmpErr := c.errWriter
 
-	bb := new(bytes.Buffer)
-	c.outWriter = bb
-	c.errWriter = bb
+// 	bb := new(bytes.Buffer)
+// 	c.outWriter = bb
+// 	c.errWriter = bb
 
-	CheckErr(c.Usage())
+// 	CheckErr(c.Usage())
 
-	// Setting things back to normal
-	c.outWriter = tmpOutput
-	c.errWriter = tmpErr
+// 	// Setting things back to normal
+// 	c.outWriter = tmpOutput
+// 	c.errWriter = tmpErr
 
-	return bb.String()
-}
+// 	return bb.String()
+// }
 
 // FlagErrorFunc returns either the function set by SetFlagErrorFunc for this
 // command or a parent, or it returns a function which returns the original
@@ -598,72 +543,73 @@ func (c *Default) NamePadding() int {
 }
 
 // UsageTemplate returns usage template for the command.
-func (c *Default) UsageTemplate() string {
-	if c.usageTemplate != "" {
-		return c.usageTemplate
-	}
+// func (c *Default) UsageTemplate() string {
+// 	if c.usageTemplate != "" {
+// 		return c.usageTemplate
+// 	}
 
-	if c.HasParent() {
-		return c.parent.UsageTemplate()
-	}
-	return `Usage:{{if .Runnable}}
-  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
-  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+// 	if c.HasParent() {
+// 		return c.parent.UsageTemplate()
+// 	}
+// 	return `Usage:{{if .Runnable}}`
+// 	// 	return `Usage:{{if .Runnable}}
+// 	//   {{. | UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+// 	//   {{. | CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
-Aliases:
-  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+// 	// Aliases:
+// 	//   {{.NameAndAliases}}{{end}}{{if .HasExample}}
 
-Examples:
-{{.Example}}{{end}}{{if .HasAvailableSubCommands}}{{$cmds := .Commands}}{{if eq (len .Groups) 0}}
+// 	// Examples:
+// 	// {{.Example}}{{end}}{{if .HasAvailableSubCommands}}{{$cmds := .Commands}}{{if eq (len .Groups) 0}}
 
-Available Commands:{{range $cmds}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{else}}{{range $group := .Groups}}
+// 	// Available Commands:{{range $cmds}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+// 	//   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{else}}{{range $group := .Groups}}
 
-{{.Title}}{{range $cmds}}{{if (and (eq .GroupID $group.ID) (or .IsAvailableCommand (eq .Name "help")))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if not .AllChildCommandsHaveGroup}}
+// 	// {{.Title}}{{range $cmds}}{{if (and (eq .GroupID $group.ID) (or .IsAvailableCommand (eq .Name "help")))}}
+// 	//   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if not .AllChildCommandsHaveGroup}}
 
-Additional Commands:{{range $cmds}}{{if (and (eq .GroupID "") (or .IsAvailableCommand (eq .Name "help")))}}
-  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+// 	// Additional Commands:{{range $cmds}}{{if (and (eq .GroupID "") (or .IsAvailableCommand (eq .Name "help")))}}
+// 	//   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
 
-Flags:
-{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+// 	// Flags:
+// 	// {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
 
-Global Flags:
-{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+// 	// Global Flags:
+// 	// {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
 
-Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
-  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+// 	// Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+// 	//   {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
 
-Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
-`
-}
+// 	// Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
+// 	// `
+// }
 
-// HelpTemplate return help template for the command.
-func (c *Default) HelpTemplate() string {
-	if c.helpTemplate != "" {
-		return c.helpTemplate
-	}
+// // HelpTemplate return help template for the command.
+// func (c *Default) HelpTemplate() string {
+// 	if c.helpTemplate != "" {
+// 		return c.helpTemplate
+// 	}
 
-	if c.HasParent() {
-		return c.parent.HelpTemplate()
-	}
-	return `{{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}
+// 	if c.HasParent() {
+// 		return c.parent.HelpTemplate()
+// 	}
+// 	return `{{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}
 
-{{end}}{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}`
-}
+// {{end}}{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}`
+// }
 
 // VersionTemplate return version template for the command.
-func (c *Default) VersionTemplate() string {
-	if c.versionTemplate != "" {
-		return c.versionTemplate
-	}
+// func (c *Default) VersionTemplate() string {
+// 	if c.versionTemplate != "" {
+// 		return c.versionTemplate
+// 	}
 
-	if c.HasParent() {
-		return c.parent.VersionTemplate()
-	}
-	return `{{with .Name}}{{printf "%s " .}}{{end}}{{printf "version %s" .Version}}
-`
-}
+// 	if c.HasParent() {
+// 		return c.parent.VersionTemplate()
+// 	}
+// 	return `{{with .Name}}{{printf "%s " .}}{{end}}{{printf "version %s" .Version}}
+// `
+// }
 
 // ErrPrefix return error message prefix for the command
 func (c *Default) ErrPrefix() string {
@@ -1829,6 +1775,10 @@ func (p *Default) GetFlags() *flag.FlagSet {
 	return p.pflags
 }
 
+func (p *Default) SetFlags(f *flag.FlagSet) {
+	p.pflags = f
+}
+
 func (p *Default) GetHelpCommand() Commander {
 	return p.helpCommand
 }
@@ -1998,6 +1948,14 @@ func (p *Default) GetCompletionOptions() *CompletionOptions {
 
 func (p *Default) GetCompletionCommandGroupID() string {
 	return p.completionCommandGroupID
+}
+
+func (p *Default) SetFlagErrorBuf(b *bytes.Buffer) {
+	p.flagErrorBuf = b
+}
+
+func (p *Default) GetFlagErrorBuf() *bytes.Buffer {
+	return p.flagErrorBuf
 }
 
 // func (p *Default) SetCompletionCommandGroupID(v string) {

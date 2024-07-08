@@ -1,6 +1,7 @@
 package boot
 
 import (
+	"bytes"
 	"context"
 	"io"
 
@@ -14,7 +15,6 @@ type Commander interface {
 	GetUse() string
 	GetGroupID() string
 	SetGroupID(groupID string)
-	GetFlags() *flag.FlagSet
 	GetHelpCommand() Commander
 	GetShort() string
 
@@ -31,7 +31,6 @@ type Commander interface {
 	// run
 	GetPersistentPreRunE() func(cmd Commander, args []string) error
 	GetPersistentPreRun() func(cmd Commander, args []string)
-
 	Run(args []string) error // Typically the actual work function. Most commands will only implement this.
 	PreRun(args []string) error
 	PostRun(args []string) error
@@ -45,11 +44,10 @@ type Commander interface {
 	GetCommandsMaxUseLen() int
 	GetCommandsMaxCommandPathLen() int
 	GetCommandsMaxNameLen() int
-	GetFlagErrorFunc() func(Commander, error) error
 	OutOrStdout() io.Writer
-	GenPowerShellCompletionWithDesc(w io.Writer) error
-	GenFishCompletion(w io.Writer, includeDesc bool) error
-	GenBashCompletionV2(w io.Writer, includeDesc bool) error
+	// GenPowerShellCompletionWithDesc(w io.Writer) error
+	// GenFishCompletion(w io.Writer, includeDesc bool) error
+	// GenBashCompletionV2(w io.Writer, includeDesc bool) error
 	GetTraverseChildren() bool
 	RemoveCommand(cmds ...Commander)
 	GetDisableFlagParsing() bool
@@ -61,42 +59,51 @@ type Commander interface {
 	GetVersion() string
 	GetAnnotations() map[string]string
 
+	// Flags
+	HasFlags() bool
+	HasPersistentFlags() bool
+	GetFlags() *flag.FlagSet
+	SetFlags(*flag.FlagSet)
+	FlagErrorFunc() (f func(Commander, error) error)
+	Flag(name string) (flag *flag.Flag)
+	GetFlagErrorFunc() func(Commander, error) error
+
+	SetFlagErrorBuf(*bytes.Buffer)
+	GetFlagErrorBuf() *bytes.Buffer
+
 	// CommandPath() string
 	// Name() string
 	SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string) flag.NormalizedName)
 	// IsAvailableCommand() bool
-	HasFlags() bool
-	HasPersistentFlags() bool
 	IsAdditionalHelpTopicCommand() bool
 	Base() Commander
-	Usage() error
+	// Usage() error
 	// Find(args []string) (Commander, []string, error)
 	Commands() []Commander
 	// CheckCommandGroups()
 	// InitDefaultHelpFlag()
 	// InitDefaultVersionFlag()
-	Help() error
+	// Help() error
 	// ExecuteC() (cmd Commander, err error)
-	HelpFunc() func(Commander, []string)
-	UsageString() string
+	// HelpFunc() func(Commander, []string)
+	// UsageString() string
 	// Execute(a []string) (err error)
 	// VisitParents(fn func(Commander))
 	GetSuggestFor() []string
 	HasAlias(s string) bool
 
-	VersionTemplate() string
-	HelpTemplate() string
-	UsageTemplate() string
+	// VersionTemplate() string
+	// HelpTemplate() string
+	// UsageTemplate() string
 
-	FlagErrorFunc() (f func(Commander, error) error)
 	// Traverse(args []string) (Commander, []string, error)
-	UsageFunc() (f func(Commander) error)
+	// UsageFunc() (f func(Commander) error)
 	OutOrStderr() io.Writer
 	PersistentFlags() *flag.FlagSet
 	CalledAs() string
-	GenPowerShellCompletion(w io.Writer) error
-	GenZshCompletionNoDesc(w io.Writer) error
-	GenZshCompletion(w io.Writer) error
+	// GenPowerShellCompletion(w io.Writer) error
+	// GenZshCompletionNoDesc(w io.Writer) error
+	// GenZshCompletion(w io.Writer) error
 	GetSuggestionsMinimumDistance() int
 	Add(cmds ...Commander)
 	GetCompletionOptions() *CompletionOptions
@@ -110,7 +117,6 @@ type Commander interface {
 	InheritedFlags() *flag.FlagSet
 	NonInheritedFlags() *flag.FlagSet
 
-	Flag(name string) (flag *flag.Flag)
 	HasSubCommands() bool
 	HasParent() bool
 
@@ -130,16 +136,16 @@ type Commander interface {
 	// GetUse() string
 	GetCommandGroups() []*Group
 
-	enforceFlagGroupsForCompletion()
+	// enforceFlagGroupsForCompletion()
 	// findSuggestions(arg string) string
 	getOut(def io.Writer) io.Writer
 	getErr(def io.Writer) io.Writer
 	getIn(def io.Reader) io.Reader
 	// hasNameOrAliasPrefix(prefix string) bool
 	// findNext(next string) Commander
-	argsMinusFirstX(args []string, x string) []string
+	// argsMinusFirstX(args []string, x string) []string
 	mergePersistentFlags()
-	getCompletions(args []string) (Commander, []string, ShellCompDirective, error)
+	// getCompletions(args []string) (Commander, []string, ShellCompDirective, error)
 	// displayName() string
 	getHelpCommandGroupID() string
 	GetDisableSuggestions() bool
@@ -175,6 +181,9 @@ func (p *Root) SetGroupID(groupID string) {
 
 func (p *Root) GetFlags() *flag.FlagSet {
 	return p.pflags
+}
+func (p *Root) SetFlags(f *flag.FlagSet) {
+	p.pflags = f
 }
 
 func (p *Root) GetHelpCommand() Commander {
@@ -342,6 +351,14 @@ func (p *Root) GetCompletionOptions() *CompletionOptions {
 
 func (p *Root) GetCompletionCommandGroupID() string {
 	return p.completionCommandGroupID
+}
+
+func (p *Root) SetFlagErrorBuf(b *bytes.Buffer) {
+	p.flagErrorBuf = b
+}
+
+func (p *Root) GetFlagErrorBuf() *bytes.Buffer {
+	return p.flagErrorBuf
 }
 
 // SuggestFor []string
