@@ -114,7 +114,7 @@ type Commander interface {
 	HasSubCommands() bool
 	HasParent() bool
 
-	SetArgs(a []string)
+	// SetArgs(a []string)
 	SetErr(newErr io.Writer)
 	SetOut(newOut io.Writer)
 	SetOutput(output io.Writer)

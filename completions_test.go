@@ -2433,7 +2433,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 	}
 
 	// Test that no completion command is created if there are not other sub-commands
-	assertNoErr(t, rootCmd.ExecuteX())
+	assertNoErr(t, rootCmd.Execute())
 	for _, cmd := range rootCmd.commands {
 		if name(cmd) == compCmdName {
 			t.Errorf("Should not have a 'completion' command when there are no other sub-commands of root")
@@ -2449,7 +2449,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	// Test that a completion command is created if there are other sub-commands
 	found := false
-	assertNoErr(t, rootCmd.ExecuteX())
+	assertNoErr(t, rootCmd.Execute())
 	for _, cmd := range rootCmd.commands {
 		if name(cmd) == compCmdName {
 			found = true
@@ -2464,7 +2464,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	// Test that the default completion command can be disabled
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
-	assertNoErr(t, rootCmd.ExecuteX())
+	assertNoErr(t, rootCmd.Execute())
 	for _, cmd := range rootCmd.commands {
 		if name(cmd) == compCmdName {
 			t.Errorf("Should not have a 'completion' command when the feature is disabled")
@@ -2500,7 +2500,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	var compCmd Commander
 	// Test that the --no-descriptions flag is present on all shells
-	assertNoErr(t, rootCmd.ExecuteX())
+	assertNoErr(t, rootCmd.Execute())
 	for _, shell := range []string{"bash", "fish", "powershell", "zsh"} {
 		if compCmd, _, err = Find(rootCmd, []string{compCmdName, shell}); err != nil {
 			t.Errorf("Unexpected error: %v", err)
@@ -2514,7 +2514,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	// Test that the '--no-descriptions' flag can be disabled
 	rootCmd.CompletionOptions.DisableNoDescFlag = true
-	assertNoErr(t, rootCmd.ExecuteX())
+	assertNoErr(t, rootCmd.Execute())
 	for _, shell := range []string{"fish", "zsh", "bash", "powershell"} {
 		if compCmd, _, err = Find(rootCmd, []string{compCmdName, shell}); err != nil {
 			t.Errorf("Unexpected error: %v", err)
@@ -2530,7 +2530,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	// Test that the '--no-descriptions' flag is disabled when descriptions are disabled
 	rootCmd.CompletionOptions.DisableDescriptions = true
-	assertNoErr(t, rootCmd.ExecuteX())
+	assertNoErr(t, rootCmd.Execute())
 	for _, shell := range []string{"fish", "zsh", "bash", "powershell"} {
 		if compCmd, _, err = Find(rootCmd, []string{compCmdName, shell}); err != nil {
 			t.Errorf("Unexpected error: %v", err)
@@ -2546,7 +2546,7 @@ func TestDefaultCompletionCmd(t *testing.T) {
 
 	// Test that the 'completion' command can be hidden
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
-	assertNoErr(t, rootCmd.ExecuteX())
+	assertNoErr(t, rootCmd.Execute())
 	compCmd, _, err = Find(rootCmd, []string{compCmdName})
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)

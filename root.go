@@ -279,7 +279,7 @@ func (c *Root) SetContext(ctx context.Context) {
 
 // SetArgs sets arguments for the command. It is set to os.Args[1:] by default, if desired, can be overridden
 // particularly useful when testing.
-func (c *Root) SetArgs(a []string) {
+func (c *Root) SetArgs(a ...string) {
 	c.args = a
 }
 
@@ -1048,13 +1048,13 @@ func (c *Root) postRun() {
 // functions.
 // func (c *Root) ExecuteContext(ctx context.Context) error {
 // 	c.ctx = ctx
-// 	return c.ExecuteX()
+// 	return c.Execute()
 // }
 
 // Execute uses the args (os.Args[1:] by default)
 // and run through the command tree finding appropriate matches
 // for commands and then corresponding flags.
-func (c *Root) ExecuteX() error { // todo: 原Execute
+func (c *Root) Execute() error { // todo: 原Execute
 	_, err := c.ExecuteC()
 	return err
 }

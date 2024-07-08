@@ -182,8 +182,8 @@ func TestValidateFlagGroups(t *testing.T) {
 			for _, flagGroup := range tc.subCmdFlagGroupsExclusive {
 				MarkFlagsMutuallyExclusive(sub, strings.Split(flagGroup, " ")...)
 			}
-			c.SetArgs(tc.args)
-			err := c.ExecuteX()
+			c.SetArgs(tc.args...)
+			err := c.Execute()
 			switch {
 			case err == nil && len(tc.expectErr) > 0:
 				t.Errorf("Expected error %q but got nil", tc.expectErr)

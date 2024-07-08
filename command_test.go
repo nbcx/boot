@@ -38,11 +38,11 @@ func executeCommandWithContext(ctx context.Context, root *Root, args ...string) 
 	buf := new(bytes.Buffer)
 	root.SetOut(buf)
 	root.SetErr(buf)
-	root.SetArgs(args)
+	root.SetArgs(args...)
 
 	root.SetContext(ctx)
 	// err = root.ExecuteContext(ctx)
-	err = root.ExecuteX()
+	err = root.Execute()
 	return buf.String(), err
 }
 
@@ -50,7 +50,7 @@ func executeCommandC(root *Root, args ...string) (c Commander, output string, er
 	buf := new(bytes.Buffer)
 	root.SetOut(buf)
 	root.SetErr(buf)
-	root.SetArgs(args)
+	root.SetArgs(args...)
 
 	c, err = root.ExecuteC()
 
@@ -61,7 +61,7 @@ func executeCommandWithContextC(ctx context.Context, root *Root, args ...string)
 	buf := new(bytes.Buffer)
 	root.SetOut(buf)
 	root.SetErr(buf)
-	root.SetArgs(args)
+	root.SetArgs(args...)
 
 	root.SetContext(ctx)
 	c, err = root.ExecuteC()
@@ -2154,7 +2154,7 @@ func TestCommandPrintRedirection(t *testing.T) {
 	root.SetErr(errBuff)
 	root.SetOut(outBuff)
 
-	if err := root.ExecuteX(); err != nil {
+	if err := root.Execute(); err != nil {
 		t.Error(err)
 	}
 
@@ -2418,13 +2418,13 @@ func (tc *calledAsTestcase) test(t *testing.T) {
 
 	parent.Add(child1)
 	parent.Add(child2)
-	parent.SetArgs(tc.args)
+	parent.SetArgs(tc.args...)
 
 	output := new(bytes.Buffer)
 	parent.SetOut(output)
 	parent.SetErr(output)
 
-	_ = parent.ExecuteX()
+	_ = parent.Execute()
 
 	if called == nil {
 		if tc.call != "" {
@@ -2586,7 +2586,7 @@ func TestSetContext(t *testing.T) {
 
 	ctx := context.WithValue(context.Background(), key{}, val)
 	root.SetContext(ctx)
-	err := root.ExecuteX()
+	err := root.Execute()
 	if err != nil {
 		t.Error(err)
 	}
@@ -2614,7 +2614,7 @@ func TestSetContextPreRun(t *testing.T) {
 			return nil
 		},
 	}
-	err := root.ExecuteX()
+	err := root.Execute()
 	if err != nil {
 		t.Error(err)
 	}
@@ -2636,7 +2636,7 @@ func TestSetContextPreRunOverwrite(t *testing.T) {
 	}
 	ctx := context.WithValue(context.Background(), key{}, val)
 	root.SetContext(ctx)
-	err := root.ExecuteX()
+	err := root.Execute()
 	// err := root.ExecuteContext(context.Background())
 	if err != nil {
 		t.Error(err)
@@ -2668,8 +2668,8 @@ func TestSetContextPersistentPreRun(t *testing.T) {
 		},
 	}
 	root.Add(child)
-	root.SetArgs([]string{"child"})
-	err := root.ExecuteX()
+	root.SetArgs("child")
+	err := root.Execute()
 	if err != nil {
 		t.Error(err)
 	}

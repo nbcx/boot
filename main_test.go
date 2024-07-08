@@ -23,7 +23,12 @@ func TestMain(t *testing.T) {
 	root := &Root{
 		Use: "root",
 		// Args: ExactArgs(2),
-		RunE: func(_ Commander, args []string) error { rootCmdArgs = args; return nil },
+		RunE: func(_ Commander, args []string) error {
+			rootCmdArgs = args
+
+			fmt.Println("root >>", args)
+			return nil
+		},
 	}
 	aCmd := &Root{Use: "a", Args: NoArgs, RunE: func(cmd Commander, args []string) error { fmt.Println("a...."); return nil }}
 	bCmd := &b{} // &Root{Use: "b", Args: NoArgs, RunE: emptyRun}
@@ -32,9 +37,10 @@ func TestMain(t *testing.T) {
 	// buf := new(bytes.Buffer)
 	// root.SetOut(buf)
 	// root.SetErr(buf)
-	root.SetArgs([]string{"b", "jj"})
+	// root.SetArgs([]string{"b", "jj"})
+	root.SetArgs("one", "two")
 
-	err := root.ExecuteX()
+	err := root.Execute()
 	if err != nil {
 		fmt.Println("execute x", err, rootCmdArgs)
 	}
