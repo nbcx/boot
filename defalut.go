@@ -19,9 +19,6 @@ package boot
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"io"
-	"os"
 	"sort"
 
 	flag "github.com/spf13/pflag"
@@ -157,8 +154,10 @@ type Default struct {
 	args []string
 	// flagErrorBuf contains all error messages from pflag.
 	flagErrorBuf *bytes.Buffer
+
 	// flags is full set of flags.
 	flags *flag.FlagSet
+
 	// pflags contains persistent flags.
 	pflags *flag.FlagSet
 	// lflags contains local flags.
@@ -198,13 +197,6 @@ type Default struct {
 
 	// errPrefix is the error message prefix defined by user.
 	errPrefix string
-
-	// inReader is a reader defined by the user that replaces stdin
-	inReader io.Reader
-	// outWriter is a writer defined by the user that replaces stdout
-	outWriter io.Writer
-	// errWriter is a writer defined by the user that replaces stderr
-	errWriter io.Writer
 
 	// FParseErrWhitelist flag parse errors to be ignored
 	FParseErrWhitelist FParseErrWhitelist
@@ -281,6 +273,11 @@ func (c *Default) SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.Norm
 	c.globNormFunc = f
 }
 
+// GetPFlags implements Commander.
+func (c *Default) GetPFlags() *flag.FlagSet {
+	return c.pflags
+}
+
 // GetIFlags implements Commander.
 func (c *Default) GetIFlags() *flag.FlagSet {
 	return c.iflags
@@ -304,6 +301,11 @@ func (c *Default) SetIFlags(i *flag.FlagSet) {
 // SetLFlags implements Commander.
 func (c *Default) SetLFlags(l *flag.FlagSet) {
 	c.lflags = l
+}
+
+// SetPFlags implements Commander.
+func (c *Default) SetPFlags(l *flag.FlagSet) {
+	c.pflags = l
 }
 
 // SetParentsPFlags implements Commander.
@@ -332,32 +334,6 @@ func (c *Default) SetContext(ctx context.Context) {
 // particularly useful when testing.
 func (c *Default) SetArgs(a []string) {
 	c.args = a
-}
-
-// SetOutput sets the destination for usage and error messages.
-// If output is nil, os.Stderr is used.
-// Deprecated: Use SetOut and/or SetErr instead
-func (c *Default) SetOutput(output io.Writer) {
-	c.outWriter = output
-	c.errWriter = output
-}
-
-// SetOut sets the destination for usage messages.
-// If newOut is nil, os.Stdout is used.
-func (c *Default) SetOut(newOut io.Writer) {
-	c.outWriter = newOut
-}
-
-// SetErr sets the destination for error messages.
-// If newErr is nil, os.Stderr is used.
-func (c *Default) SetErr(newErr io.Writer) {
-	c.errWriter = newErr
-}
-
-// SetIn sets the source for input data
-// If newIn is nil, os.Stdin is used.
-func (c *Default) SetIn(newIn io.Reader) {
-	c.inReader = newIn
 }
 
 // SetUsageFunc sets usage function. Usage can be defined by application.
@@ -427,56 +403,6 @@ func (c *Default) SetErrPrefix(s string) {
 // 		command.SetGlobalNormalizationFunc(n)
 // 	}
 // }
-
-// OutOrStdout returns output to stdout.
-func (c *Default) OutOrStdout() io.Writer {
-	return c.getOut(os.Stdout)
-}
-
-// OutOrStderr returns output to stderr
-func (c *Default) OutOrStderr() io.Writer {
-	return c.getOut(os.Stderr)
-}
-
-// ErrOrStderr returns output to stderr
-func (c *Default) ErrOrStderr() io.Writer {
-	return c.getErr(os.Stderr)
-}
-
-// InOrStdin returns input to stdin
-func (c *Default) InOrStdin() io.Reader {
-	return c.getIn(os.Stdin)
-}
-
-func (c *Default) getOut(def io.Writer) io.Writer {
-	if c.outWriter != nil {
-		return c.outWriter
-	}
-	if c.HasParent() {
-		return c.parent.getOut(def)
-	}
-	return def
-}
-
-func (c *Default) getErr(def io.Writer) io.Writer {
-	if c.errWriter != nil {
-		return c.errWriter
-	}
-	if c.HasParent() {
-		return c.parent.getErr(def)
-	}
-	return def
-}
-
-func (c *Default) getIn(def io.Reader) io.Reader {
-	if c.inReader != nil {
-		return c.inReader
-	}
-	if c.HasParent() {
-		return c.parent.getIn(def)
-	}
-	return def
-}
 
 // FlagErrorFunc returns either the function set by SetFlagErrorFunc for this
 // command or a parent, or it returns a function which returns the original
@@ -632,71 +558,6 @@ func (c *Default) AddGroup(groups ...*Group) {
 	c.commandgroups = append(c.commandgroups, groups...)
 }
 
-// RemoveCommand removes one or more commands from a parent command.
-func (c *Default) RemoveCommand(cmds ...Commander) {
-	commands := []Commander{}
-main:
-	for _, command := range c.commands {
-		for _, cmd := range cmds {
-			if command == cmd {
-				// command.parent = nil
-				command.SetParent(nil)
-				continue main
-			}
-		}
-		commands = append(commands, command)
-	}
-	c.commands = commands
-	// recompute all lengths
-	c.commandsMaxUseLen = 0
-	c.commandsMaxCommandPathLen = 0
-	c.commandsMaxNameLen = 0
-	for _, command := range c.commands {
-		usageLen := len(command.GetUse())
-		if usageLen > c.commandsMaxUseLen {
-			c.commandsMaxUseLen = usageLen
-		}
-		commandPathLen := len(CommandPath(command))
-		if commandPathLen > c.commandsMaxCommandPathLen {
-			c.commandsMaxCommandPathLen = commandPathLen
-		}
-		nameLen := len(name(command))
-		if nameLen > c.commandsMaxNameLen {
-			c.commandsMaxNameLen = nameLen
-		}
-	}
-}
-
-// Print is a convenience method to Print to the defined output, fallback to Stderr if not set.
-func (c *Default) Print(i ...interface{}) {
-	fmt.Fprint(c.OutOrStderr(), i...)
-}
-
-// Println is a convenience method to Println to the defined output, fallback to Stderr if not set.
-func (c *Default) Println(i ...interface{}) {
-	c.Print(fmt.Sprintln(i...))
-}
-
-// Printf is a convenience method to Printf to the defined output, fallback to Stderr if not set.
-func (c *Default) Printf(format string, i ...interface{}) {
-	c.Print(fmt.Sprintf(format, i...))
-}
-
-// PrintErr is a convenience method to Print to the defined Err output, fallback to Stderr if not set.
-func (c *Default) PrintErr(i ...interface{}) {
-	fmt.Fprint(c.ErrOrStderr(), i...)
-}
-
-// PrintErrLn is a convenience method to Println to the defined Err output, fallback to Stderr if not set.
-func (c *Default) PrintErrLn(i ...interface{}) {
-	c.PrintErr(fmt.Sprintln(i...))
-}
-
-// PrintErrF is a convenience method to Printf to the defined Err output, fallback to Stderr if not set.
-func (c *Default) PrintErrF(format string, i ...interface{}) {
-	c.PrintErr(fmt.Sprintf(format, i...))
-}
-
 // DebugFlags used to determine which flags have been assigned to which commands
 // and which persist.
 func (c *Default) DebugFlags() {
@@ -808,11 +669,11 @@ func (p *Default) SetGroupID(groupID string) {
 }
 
 func (p *Default) GetFlags() *flag.FlagSet {
-	return p.pflags
+	return p.flags
 }
 
 func (p *Default) SetFlags(f *flag.FlagSet) {
-	p.pflags = f
+	p.flags = f
 }
 
 func (p *Default) GetHelpCommand() Commander {

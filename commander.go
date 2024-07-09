@@ -3,7 +3,6 @@ package boot
 import (
 	"bytes"
 	"context"
-	"io"
 
 	flag "github.com/spf13/pflag"
 )
@@ -43,7 +42,6 @@ type Commander interface {
 	GetCommandsMaxUseLen() int
 	GetCommandsMaxCommandPathLen() int
 	GetCommandsMaxNameLen() int
-	OutOrStdout() io.Writer
 	GetTraverseChildren() bool
 	GetDisableFlagParsing() bool
 
@@ -64,7 +62,6 @@ type Commander interface {
 	GetCompletionCommandGroupID() string
 	SetCompletionCommandGroupID(v string)
 
-	ErrOrStderr() io.Writer
 	GetValidArgsFunction() func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)
 	GetArgAliases() []string
 
@@ -72,10 +69,15 @@ type Commander interface {
 	HasParent() bool
 
 	Runnable() bool
+	// GetUse() string
+	GetCommandGroups() []*Group
+	getHelpCommandGroupID() string
 
 	// Flags
 	GetFlags() *flag.FlagSet
 	SetFlags(*flag.FlagSet)
+	GetPFlags() *flag.FlagSet
+	SetPFlags(*flag.FlagSet)
 	GetLFlags() *flag.FlagSet
 	SetLFlags(*flag.FlagSet)
 	GetIFlags() *flag.FlagSet
@@ -94,26 +96,23 @@ type Commander interface {
 	GetSuggestFor() []string
 	HasAlias(s string) bool
 
-	// GetUse() string
-	GetCommandGroups() []*Group
+	// io
+	// getOut(def io.Writer) io.Writer
+	// getErr(def io.Writer) io.Writer
+	// getIn(def io.Reader) io.Reader
 
-	getOut(def io.Writer) io.Writer
-	getErr(def io.Writer) io.Writer
-	getIn(def io.Reader) io.Reader
-	getHelpCommandGroupID() string
-
-	OutOrStderr() io.Writer
-
-	// SetArgs(a []string)
-	SetErr(newErr io.Writer)
-	SetOut(newOut io.Writer)
-	SetOutput(output io.Writer)
-	Print(i ...interface{})
-	Println(i ...interface{})
-	Printf(format string, i ...interface{})
-	PrintErr(i ...interface{})
-	PrintErrLn(i ...interface{})
-	PrintErrF(format string, i ...interface{})
+	// OutOrStderr() io.Writer
+	// SetErr(newErr io.Writer)
+	// SetOut(newOut io.Writer)
+	// SetOutput(output io.Writer)
+	// Print(i ...interface{})
+	// Println(i ...interface{})
+	// Printf(format string, i ...interface{})
+	// PrintErr(i ...interface{})
+	// PrintErrLn(i ...interface{})
+	// PrintErrF(format string, i ...interface{})
+	// ErrOrStderr() io.Writer
+	// OutOrStdout() io.Writer
 }
 
 func (p *Root) GetParent() Commander {
@@ -137,10 +136,10 @@ func (p *Root) SetGroupID(groupID string) {
 }
 
 func (p *Root) GetFlags() *flag.FlagSet {
-	return p.pflags
+	return p.flags
 }
 func (p *Root) SetFlags(f *flag.FlagSet) {
-	p.pflags = f
+	p.flags = f
 }
 
 func (p *Root) GetHelpCommand() Commander {

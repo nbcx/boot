@@ -36,8 +36,9 @@ func TestMain(t *testing.T) {
 	// buf := new(bytes.Buffer)
 	// root.SetOut(buf)
 	// root.SetErr(buf)
-	root.SetArgs("b", "jj", "cc")
+	// root.SetArgs("b", "jj", "cc")
 	// root.SetArgs("one", "two")
+	root.SetArgs("b", "--help")
 
 	err := root.Execute()
 	if err != nil {

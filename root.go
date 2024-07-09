@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -198,13 +197,6 @@ type Root struct {
 	// errPrefix is the error message prefix defined by user.
 	errPrefix string
 
-	// inReader is a reader defined by the user that replaces stdin
-	inReader io.Reader
-	// outWriter is a writer defined by the user that replaces stdout
-	outWriter io.Writer
-	// errWriter is a writer defined by the user that replaces stderr
-	errWriter io.Writer
-
 	// FParseErrWhitelist flag parse errors to be ignored
 	FParseErrWhitelist FParseErrWhitelist
 
@@ -290,6 +282,11 @@ func (c *Root) GetLFlags() *flag.FlagSet {
 	return c.lflags
 }
 
+// GetPFlags implements Commander.
+func (c *Root) GetPFlags() *flag.FlagSet {
+	return c.pflags
+}
+
 // GetParentsPFlags implements Commander.
 func (c *Root) GetParentsPFlags() *flag.FlagSet {
 	return c.parentsPflags
@@ -304,6 +301,11 @@ func (c *Root) SetIFlags(i *flag.FlagSet) {
 // SetLFlags implements Commander.
 func (c *Root) SetLFlags(l *flag.FlagSet) {
 	c.lflags = l
+}
+
+// SetPFlags implements Commander.
+func (c *Root) SetPFlags(l *flag.FlagSet) {
+	c.pflags = l
 }
 
 // SetParentsPFlags implements Commander.
@@ -332,40 +334,6 @@ func (c *Root) SetContext(ctx context.Context) {
 // particularly useful when testing.
 func (c *Root) SetArgs(a ...string) {
 	c.args = a
-}
-
-// SetOutput sets the destination for usage and error messages.
-// If output is nil, os.Stderr is used.
-// Deprecated: Use SetOut and/or SetErr instead
-func (c *Root) SetOutput(output io.Writer) {
-	c.outWriter = output
-	c.errWriter = output
-}
-
-// SetOut sets the destination for usage messages.
-// If newOut is nil, os.Stdout is used.
-func (c *Root) SetOut(newOut io.Writer) {
-	c.outWriter = newOut
-}
-
-func (c *Root) GetOut() io.Writer {
-	return c.outWriter
-}
-
-// SetErr sets the destination for error messages.
-// If newErr is nil, os.Stderr is used.
-func (c *Root) SetErr(newErr io.Writer) {
-	c.errWriter = newErr
-}
-
-// SetIn sets the source for input data
-// If newIn is nil, os.Stdin is used.
-func (c *Root) SetIn(newIn io.Reader) {
-	c.inReader = newIn
-}
-
-func (c *Root) GetIn() io.Reader {
-	return c.inReader
 }
 
 // SetUsageFunc sets usage function. Usage can be defined by application.
@@ -436,56 +404,6 @@ func SetGlobalNormalizationFunc(c Commander, n func(f *flag.FlagSet, name string
 	}
 }
 
-// OutOrStdout returns output to stdout.
-func (c *Root) OutOrStdout() io.Writer {
-	return c.getOut(os.Stdout)
-}
-
-// OutOrStderr returns output to stderr
-func (c *Root) OutOrStderr() io.Writer {
-	return c.getOut(os.Stderr)
-}
-
-// ErrOrStderr returns output to stderr
-func (c *Root) ErrOrStderr() io.Writer {
-	return c.getErr(os.Stderr)
-}
-
-// InOrStdin returns input to stdin
-func (c *Root) InOrStdin() io.Reader {
-	return c.getIn(os.Stdin)
-}
-
-func (c *Root) getOut(def io.Writer) io.Writer {
-	if c.outWriter != nil {
-		return c.outWriter
-	}
-	if c.HasParent() {
-		return c.parent.getOut(def)
-	}
-	return def
-}
-
-func (c *Root) getErr(def io.Writer) io.Writer {
-	if c.errWriter != nil {
-		return c.errWriter
-	}
-	if c.HasParent() {
-		return c.parent.getErr(def)
-	}
-	return def
-}
-
-func (c *Root) getIn(def io.Reader) io.Reader {
-	if c.inReader != nil {
-		return c.inReader
-	}
-	if c.HasParent() {
-		return c.parent.getIn(def)
-	}
-	return def
-}
-
 // Usage puts out the usage for the command.
 // Used when a user provides invalid input.
 // Can be defined by user by overriding UsageFunc.
@@ -493,9 +411,9 @@ func Usage(c Commander) error {
 	// return c.UsageFunc()(c)
 
 	mergePersistentFlags(c)
-	err := tmpl(c.OutOrStderr(), UsageTemplate(c), c)
+	err := tmpl(log.OutOrStderr(), UsageTemplate(c), c)
 	if err != nil {
-		c.PrintErrLn(err)
+		log.PrintErrLn(err)
 	}
 	return err
 }
@@ -513,9 +431,9 @@ func HelpFunc(c Commander) func(Commander, []string) {
 		mergePersistentFlags(c)
 		// The help should be sent to stdout
 		// See https://github.com/spf13/cobra/issues/1002
-		err := tmpl(c.OutOrStdout(), HelpTemplate(c), c)
+		err := tmpl(log.OutOrStdout(), HelpTemplate(c), c)
 		if err != nil {
-			c.PrintErrLn(err)
+			log.PrintErrLn(err)
 		}
 	}
 }
@@ -645,11 +563,11 @@ func HelpTemplate(c Commander) string {
 	// 	if c.HasParent() {
 	// 		return c.parent.HelpTemplate()
 	// 	}
-	// 	return `{{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}
+	return `{{with (or .GetLong .GetShort)}}{{. | trimTrailingWhitespaces}}
 
-	// {{end}}{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}`
+	{{end}}{{if or .Runnable .HasSubCommands}}{{ . | usageString}}{{end}}`
 	// todo: HelpTemplate
-	return "HelpTemplate"
+	// return "HelpTemplate\n"
 }
 
 // VersionTemplate return version template for the command.
@@ -936,7 +854,7 @@ func Execute(c Commander, a []string) (err error) {
 	}
 
 	if len(c.GetDeprecated()) > 0 {
-		c.Printf("Command %q is deprecated, %s\n", name(c), c.GetDeprecated())
+		log.Printf("Command %q is deprecated, %s\n", name(c), c.GetDeprecated())
 	}
 
 	// initialize help and version flag at the last point possible to allow for user
@@ -955,7 +873,7 @@ func Execute(c Commander, a []string) (err error) {
 	if err != nil {
 		// should be impossible to get here as we always declare a help
 		// flag in InitDefaultHelpFlag()
-		c.Println("\"help\" flag declared as non-bool. Please correct your code")
+		log.Println("\"help\" flag declared as non-bool. Please correct your code")
 		return err
 	}
 
@@ -967,13 +885,13 @@ func Execute(c Commander, a []string) (err error) {
 	if c.GetVersion() != "" {
 		versionVal, err := Flags(c).GetBool("version")
 		if err != nil {
-			c.Println("\"version\" flag declared as non-bool. Please correct your code")
+			log.Println("\"version\" flag declared as non-bool. Please correct your code")
 			return err
 		}
 		if versionVal {
-			err := tmpl(c.OutOrStdout(), VersionTemplate(c), c)
+			err := tmpl(log.OutOrStdout(), VersionTemplate(c), c)
 			if err != nil {
-				c.Println(err)
+				log.Println(err)
 			}
 			return err
 		}
@@ -1128,8 +1046,8 @@ func (c *Root) ExecuteC() (cmd Commander, err error) {
 			dc = c
 		}
 		if !dc.GetSilenceErrors() {
-			dc.PrintErrLn(c.ErrPrefix(), err.Error())
-			dc.PrintErrF("Run '%v --help' for usage.\n", CommandPath(c))
+			log.PrintErrLn(c.ErrPrefix(), err.Error())
+			log.PrintErrF("Run '%v --help' for usage.\n", CommandPath(c))
 		}
 		return dc, err
 	}
@@ -1157,13 +1075,13 @@ func (c *Root) ExecuteC() (cmd Commander, err error) {
 		// If root command has SilenceErrors flagged,
 		// all subcommands should respect it
 		if !cmd.GetSilenceErrors() && !c.GetSilenceErrors() {
-			c.PrintErrLn(cmd.ErrPrefix(), err.Error())
+			log.PrintErrLn(cmd.ErrPrefix(), err.Error())
 		}
 
 		// If root command has SilenceUsage flagged,
 		// all subcommands should respect it
 		if !cmd.GetSilenceUsage() && !c.GetSilenceUsage() {
-			c.Println(UsageString(cmd))
+			log.Println(UsageString(cmd))
 		}
 	}
 	return cmd, err
@@ -1411,25 +1329,6 @@ main:
 		commands = append(commands, command)
 	}
 	c.ResetAdd(commands...)
-	// c.commands = commands
-	// // recompute all lengths
-	// c.commandsMaxUseLen = 0
-	// c.commandsMaxCommandPathLen = 0
-	// c.commandsMaxNameLen = 0
-	// for _, command := range c.commands {
-	// 	usageLen := len(command.GetUse())
-	// 	if usageLen > c.commandsMaxUseLen {
-	// 		c.commandsMaxUseLen = usageLen
-	// 	}
-	// 	commandPathLen := len(CommandPath(command))
-	// 	if commandPathLen > c.commandsMaxCommandPathLen {
-	// 		c.commandsMaxCommandPathLen = commandPathLen
-	// 	}
-	// 	nameLen := len(name(command))
-	// 	if nameLen > c.commandsMaxNameLen {
-	// 		c.commandsMaxNameLen = nameLen
-	// 	}
-	// }
 }
 
 func (c *Root) ResetAdd(cmds ...Commander) {
@@ -1452,36 +1351,6 @@ func (c *Root) ResetAdd(cmds ...Commander) {
 			c.commandsMaxNameLen = nameLen
 		}
 	}
-}
-
-// Print is a convenience method to Print to the defined output, fallback to Stderr if not set.
-func (c *Root) Print(i ...interface{}) {
-	fmt.Fprint(c.OutOrStderr(), i...)
-}
-
-// Println is a convenience method to Println to the defined output, fallback to Stderr if not set.
-func (c *Root) Println(i ...interface{}) {
-	c.Print(fmt.Sprintln(i...))
-}
-
-// Printf is a convenience method to Printf to the defined output, fallback to Stderr if not set.
-func (c *Root) Printf(format string, i ...interface{}) {
-	c.Print(fmt.Sprintf(format, i...))
-}
-
-// PrintErr is a convenience method to Print to the defined Err output, fallback to Stderr if not set.
-func (c *Root) PrintErr(i ...interface{}) {
-	fmt.Fprint(c.ErrOrStderr(), i...)
-}
-
-// PrintErrLn is a convenience method to Println to the defined Err output, fallback to Stderr if not set.
-func (c *Root) PrintErrLn(i ...interface{}) {
-	c.PrintErr(fmt.Sprintln(i...))
-}
-
-// PrintErrF is a convenience method to Printf to the defined Err output, fallback to Stderr if not set.
-func (c *Root) PrintErrF(format string, i ...interface{}) {
-	c.PrintErr(fmt.Sprintf(format, i...))
 }
 
 // CommandPath returns the full path to this command.
@@ -1807,19 +1676,20 @@ func NonInheritedFlags(c Commander) *flag.FlagSet {
 
 // PersistentFlags returns the persistent FlagSet specifically set in the current command.
 func PersistentFlags(c Commander) *flag.FlagSet {
-	if c.GetFlags() == nil {
-		c.SetFlags(flag.NewFlagSet(displayName(c), flag.ContinueOnError))
+	if c.GetPFlags() == nil {
+		c.SetPFlags(flag.NewFlagSet(displayName(c), flag.ContinueOnError))
 		// c.pflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
 		if c.GetFlagErrorBuf() == nil {
 			// if c.flagErrorBuf == nil {
 			// c.flagErrorBuf = new(bytes.Buffer)
 			c.SetFlagErrorBuf(new(bytes.Buffer))
 		}
-		c.GetFlags().SetOutput(c.GetFlagErrorBuf())
+		c.GetPFlags().SetOutput(c.GetFlagErrorBuf())
 	}
-	return c.GetFlags()
+	return c.GetPFlags()
 }
 
+// todo: 业务调用
 // ResetFlags deletes all flags from command.
 func (c *Root) ResetFlags() {
 	c.flagErrorBuf = new(bytes.Buffer)
@@ -1920,7 +1790,7 @@ func ParseFlags(c Commander, args []string) error {
 	err := Flags(c).Parse(args)
 	// Print warnings if they occurred (e.g. deprecated flag messages).
 	if c.GetFlagErrorBuf().Len()-beforeErrorBufLen > 0 && err == nil {
-		c.Print(c.GetFlagErrorBuf().String())
+		log.Print(c.GetFlagErrorBuf().String())
 	}
 
 	return err

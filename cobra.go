@@ -40,6 +40,7 @@ var templateFuncs = template.FuncMap{
 	"HasAvailableSubCommands": HasAvailableSubCommands,
 	"UseLine":                 UseLine,
 	"CommandPath":             CommandPath,
+	"usageString":             UsageString,
 }
 
 var initializers []func()

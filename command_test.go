@@ -36,8 +36,8 @@ func executeCommand(root *Root, args ...string) (output string, err error) {
 
 func executeCommandWithContext(ctx context.Context, root *Root, args ...string) (output string, err error) {
 	buf := new(bytes.Buffer)
-	root.SetOut(buf)
-	root.SetErr(buf)
+	log.SetOut(buf)
+	log.SetErr(buf)
 	root.SetArgs(args...)
 
 	root.SetContext(ctx)
@@ -48,8 +48,8 @@ func executeCommandWithContext(ctx context.Context, root *Root, args ...string) 
 
 func executeCommandC(root *Root, args ...string) (c Commander, output string, err error) {
 	buf := new(bytes.Buffer)
-	root.SetOut(buf)
-	root.SetErr(buf)
+	log.SetOut(buf)
+	log.SetErr(buf)
 	root.SetArgs(args...)
 
 	c, err = root.ExecuteC()
@@ -59,8 +59,8 @@ func executeCommandC(root *Root, args ...string) (c Commander, output string, er
 
 func executeCommandWithContextC(ctx context.Context, root *Root, args ...string) (c Commander, output string, err error) {
 	buf := new(bytes.Buffer)
-	root.SetOut(buf)
-	root.SetErr(buf)
+	log.SetOut(buf)
+	log.SetErr(buf)
 	root.SetArgs(args...)
 
 	root.SetContext(ctx)
@@ -1046,7 +1046,7 @@ func TestSetHelpCommand(t *testing.T) {
 		Long: `Help provides help for any command in the application.
 	Simply type ` + name(c) + ` help [path to command] for full details.`,
 		RunE: func(c Commander, _ []string) error {
-			c.Print(expected)
+			log.Print(expected)
 			return nil
 		},
 	})
@@ -2088,33 +2088,33 @@ func TestWrongGroupForCompletion(t *testing.T) {
 }
 
 func TestSetOutput(t *testing.T) {
-	c := &Root{}
-	c.SetOutput(nil)
-	if out := c.OutOrStdout(); out != os.Stdout {
+	// c := &Root{}
+	log.SetOutput(nil)
+	if out := log.OutOrStdout(); out != os.Stdout {
 		t.Errorf("Expected setting output to nil to revert back to stdout")
 	}
 }
 
 func TestSetOut(t *testing.T) {
-	c := &Root{}
-	c.SetOut(nil)
-	if out := c.OutOrStdout(); out != os.Stdout {
+	// c := &Root{}
+	log.SetOut(nil)
+	if out := log.OutOrStdout(); out != os.Stdout {
 		t.Errorf("Expected setting output to nil to revert back to stdout")
 	}
 }
 
 func TestSetErr(t *testing.T) {
-	c := &Root{}
-	c.SetErr(nil)
-	if out := c.ErrOrStderr(); out != os.Stderr {
+	// c := &Root{}
+	log.SetErr(nil)
+	if out := log.ErrOrStderr(); out != os.Stderr {
 		t.Errorf("Expected setting error to nil to revert back to stderr")
 	}
 }
 
 func TestSetIn(t *testing.T) {
-	c := &Root{}
-	c.SetIn(nil)
-	if out := c.InOrStdin(); out != os.Stdin {
+	// c := &Root{}
+	log.SetIn(nil)
+	if out := log.InOrStdin(); out != os.Stdin {
 		t.Errorf("Expected setting input to nil to revert back to stdin")
 	}
 }
@@ -2123,9 +2123,9 @@ func TestUsageStringRedirected(t *testing.T) {
 	c := &Root{}
 
 	c.usageFunc = func(cmd Commander) error {
-		cmd.Print("[stdout1]")
-		cmd.PrintErr("[stderr2]")
-		cmd.Print("[stdout3]")
+		log.Print("[stdout1]")
+		log.PrintErr("[stderr2]")
+		log.Print("[stdout3]")
 		return nil
 	}
 
@@ -2140,19 +2140,19 @@ func TestCommandPrintRedirection(t *testing.T) {
 	root := &Root{
 		RunE: func(cmd Commander, args []string) error {
 
-			cmd.PrintErr("PrintErr")
-			cmd.PrintErrLn("PrintErr", "line")
-			cmd.PrintErrF("PrintEr%s", "r")
+			log.PrintErr("PrintErr")
+			log.PrintErrLn("PrintErr", "line")
+			log.PrintErrF("PrintEr%s", "r")
 
-			cmd.Print("Print")
-			cmd.Println("Print", "line")
-			cmd.Printf("Prin%s", "t")
+			log.Print("Print")
+			log.Println("Print", "line")
+			log.Printf("Prin%s", "t")
 			return nil
 		},
 	}
 
-	root.SetErr(errBuff)
-	root.SetOut(outBuff)
+	log.SetErr(errBuff)
+	log.SetOut(outBuff)
 
 	if err := root.Execute(); err != nil {
 		t.Error(err)
@@ -2421,8 +2421,8 @@ func (tc *calledAsTestcase) test(t *testing.T) {
 	parent.SetArgs(tc.args...)
 
 	output := new(bytes.Buffer)
-	parent.SetOut(output)
-	parent.SetErr(output)
+	log.SetOut(output)
+	log.SetErr(output)
 
 	_ = parent.Execute()
 

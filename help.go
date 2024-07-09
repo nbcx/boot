@@ -30,7 +30,7 @@ func (cmd *CompleteCmd) Run(args []string) error {
 		}
 	}
 	noActiveHelp := GetActiveHelpConfig(finalCmd) == activeHelpGlobalDisable
-	out := finalCmd.OutOrStdout()
+	out := log.OutOrStdout()
 	for _, comp := range completions {
 		if noActiveHelp && strings.HasPrefix(comp, activeHelpMarker) {
 			// Remove all activeHelp entries if it's disabled.
@@ -65,7 +65,7 @@ func (cmd *CompleteCmd) Run(args []string) error {
 
 	// Print some helpful info to stderr for the user to understand.
 	// Output from stderr must be ignored by the completion script.
-	fmt.Fprintf(finalCmd.ErrOrStderr(), "Completion ended with directive: %s\n", directive.string())
+	fmt.Fprintf(log.ErrOrStderr(), "Completion ended with directive: %s\n", directive.string())
 	return nil
 }
 
@@ -74,7 +74,7 @@ type BashCompleteCmd struct {
 }
 
 func (cmd *BashCompleteCmd) Run(args []string) error {
-	return GenBashCompletionV2(Base(cmd), cmd.OutOrStdout(), !cmd.CompletionOptions.DisableDescriptions)
+	return GenBashCompletionV2(Base(cmd), log.OutOrStdout(), !cmd.CompletionOptions.DisableDescriptions)
 }
 func (cmd *BashCompleteCmd) GetUse() string {
 	return "bash"
@@ -156,7 +156,7 @@ You will need to start a new shell for this setup to take effect.
 }
 
 func (p *ZshCompleteCmd) Run(args []string) error {
-	out := Base(p).OutOrStdout()
+	out := log.OutOrStdout()
 	if p.noDesc {
 		return GenZshCompletionNoDesc(Base(p), out)
 	}
@@ -173,7 +173,7 @@ func (p *FishCompleteCmd) GetUse() string {
 }
 
 func (p *FishCompleteCmd) Run(args []string) error {
-	out := Base(p).OutOrStdout()
+	out := log.OutOrStdout()
 	return GenFishCompletion(Base(p), out, !p.noDesc)
 }
 
@@ -206,7 +206,7 @@ type PowershellCompleteCmd struct {
 }
 
 func (cmd *PowershellCompleteCmd) Run(args []string) error {
-	out := Base(cmd).OutOrStdout()
+	out := log.OutOrStdout()
 	if cmd.noDesc {
 		return GenPowerShellCompletion(Base(cmd), out)
 	}
@@ -242,7 +242,7 @@ type HelpCmd struct {
 func (p *HelpCmd) Run(args []string) error {
 	cmd, _, e := Find(Base(p), args)
 	if cmd == nil || e != nil {
-		cmd.Printf("Unknown help topic %#q\n", args)
+		log.Printf("Unknown help topic %#q\n", args)
 		CheckErr(Usage(Base(cmd)))
 	} else {
 		InitDefaultHelpFlag(cmd)    // make possible 'help' flag to be shown
