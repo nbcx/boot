@@ -277,7 +277,7 @@ func (c *Root) initCompleteCmd(args []string) {
 		// for example, having this command would cause problems to a
 		// cobra program that only consists of the root command, since this
 		// command would cause the root command to suddenly have a subcommand.
-		c.RemoveCommand(completeCmd)
+		RemoveCommand(c, completeCmd)
 	}
 }
 
@@ -292,17 +292,17 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 	var err error
 	// Find the real command for which completion must be performed
 	// check if we need to traverse here to parse local flags on parent commands
-	if c.Base().GetTraverseChildren() {
-		finalCmd, finalArgs, err = Traverse(c.Base(), trimmedArgs)
+	if Base(c).GetTraverseChildren() {
+		finalCmd, finalArgs, err = Traverse(Base(c), trimmedArgs)
 	} else {
 		// For Root commands that don't specify any value for their Args fields, when we call
 		// Find(), if those Root commands don't have any sub-commands, they will accept arguments.
 		// However, because we have added the __complete sub-command in the current code path, the
 		// call to Find() -> legacyArgs() will return an error if there are any arguments.
 		// To avoid this, we first remove the __complete command to get back to having no sub-commands.
-		rootCmd := c.Base()
+		rootCmd := Base(c)
 		if len(rootCmd.Commands()) == 1 {
-			rootCmd.RemoveCommand(c)
+			RemoveCommand(rootCmd, c)
 		}
 
 		finalCmd, finalArgs, err = Find(rootCmd, trimmedArgs)
@@ -455,7 +455,7 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 			foundLocalNonPersistentFlag := false
 			// If TraverseChildren is true on the root command we don't check for
 			// local flags because we can use a local flag on a parent command
-			if !finalCmd.Base().GetTraverseChildren() {
+			if !Base(finalCmd).GetTraverseChildren() {
 				// Check if there are any local, non-persistent flags on the command-line
 				localNonPersistentFlags := LocalNonPersistentFlags(finalCmd)
 				NonInheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
@@ -718,7 +718,7 @@ func InitDefaultCompletionCmd(c Commander) {
 		Short: "Generate the autocompletion script for the specified shell",
 		Long: fmt.Sprintf(`Generate the autocompletion script for %[1]s for the specified shell.
 See each sub-command's help for details on how to use the generated script.
-`, name(c.Base())),
+`, name(Base(c))),
 		Args:              NoArgs,
 		ValidArgsFunction: NoFileCompletions,
 		Hidden:            completionOptions.HiddenDefaultCmd,
@@ -948,7 +948,7 @@ func configEnvVar(name, suffix string) string {
 // If the value is empty or not set, the value of the environment variable
 // COBRA_<SUFFIX> is returned instead.
 func getEnvConfig(cmd Commander, suffix string) string {
-	v := os.Getenv(configEnvVar(name(cmd.Base()), suffix))
+	v := os.Getenv(configEnvVar(name(Base(cmd)), suffix))
 	if v == "" {
 		v = os.Getenv(configEnvVar(configEnvVarGlobalPrefix, suffix))
 	}

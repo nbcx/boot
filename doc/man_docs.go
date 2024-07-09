@@ -51,7 +51,7 @@ func GenManTreeFromOpts(cmd boot.Commander, opts GenManTreeOptions) error {
 		header = &GenManHeader{}
 	}
 	for _, c := range cmd.Commands() {
-		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || boot.IsAdditionalHelpTopicCommand(c) {
 			continue
 		}
 		if err := GenManTreeFromOpts(c, opts); err != nil {
@@ -231,7 +231,7 @@ func genMan(cmd boot.Commander, header *GenManHeader) []byte {
 		children := cmd.Commands()
 		sort.Sort(byName(children))
 		for _, c := range children {
-			if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
+			if !boot.IsAvailableCommand(c) || boot.IsAdditionalHelpTopicCommand(c) {
 				continue
 			}
 			seealso := fmt.Sprintf("**%s-%s(%s)**", dashCommandName, boot.ParseName(c), header.Section)

@@ -1529,7 +1529,7 @@ func TestRemoveCommand(t *testing.T) {
 	rootCmd := &Root{Use: "root", Args: NoArgs, RunE: emptyRun}
 	childCmd := &Root{Use: "child", RunE: emptyRun}
 	rootCmd.Add(childCmd)
-	rootCmd.RemoveCommand(childCmd)
+	RemoveCommand(rootCmd, childCmd)
 
 	_, err := executeCommand(rootCmd, "child")
 	if err == nil {
@@ -1555,7 +1555,7 @@ func TestReplaceCommandWithRemove(t *testing.T) {
 		},
 	}
 	rootCmd.Add(child1Cmd)
-	rootCmd.RemoveCommand(child1Cmd)
+	RemoveCommand(rootCmd, child1Cmd)
 	rootCmd.Add(child2Cmd)
 
 	output, err := executeCommand(rootCmd, "child")

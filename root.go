@@ -406,7 +406,7 @@ func (c *Root) SetHelpCommandGroupID(groupID string) {
 // SetCompletionCommandGroupID sets the group id of the completion command.
 func (c *Root) SetCompletionCommandGroupID(groupID string) {
 	// completionCommandGroupID is used if no completion command is defined by the user
-	c.Base().SetCompletionCommandGroupID(groupID)
+	Base(c).SetCompletionCommandGroupID(groupID)
 }
 
 // SetHelpTemplate sets help template to be used. Application can use it to set custom template.
@@ -485,25 +485,6 @@ func (c *Root) getIn(def io.Reader) io.Reader {
 	}
 	return def
 }
-
-// UsageFunc returns either the function set by SetUsageFunc for this command
-// or a parent, or it returns a default usage function.
-// func UsageFunc(c Commander) (f func(Commander) error) {
-// 	if c.usageFunc != nil {
-// 		return c.usageFunc
-// 	}
-// 	if c.HasParent() {
-// 		return UsageFunc(c.Parent())
-// 	}
-// 	return func(c Commander) error {
-// 		c.mergePersistentFlags()
-// 		err := tmpl(c.OutOrStderr(), UsageTemplate(c), c)
-// 		if err != nil {
-// 			c.PrintErrLn(err)
-// 		}
-// 		return err
-// 	}
-// }
 
 // Usage puts out the usage for the command.
 // Used when a user provides invalid input.
@@ -829,9 +810,9 @@ func findSuggestions(c Commander, arg string) string {
 	if c.GetDisableSuggestions() {
 		return ""
 	}
-	if c.GetSuggestionsMinimumDistance() <= 0 {
-		c.SetSuggestionsMinimumDistance(2)
-	}
+	// if c.GetSuggestionsMinimumDistance() <= 0 {
+	// 	c.SetSuggestionsMinimumDistance(2)
+	// }
 	var sb strings.Builder
 	if suggestions := SuggestionsFor(c, arg); len(suggestions) > 0 {
 		sb.WriteString("\n\nDid you mean this?\n")
@@ -935,10 +916,10 @@ func VisitParents(c Commander, fn func(Commander)) {
 	}
 }
 
-// Root finds root command.
-func (c *Root) Base() Commander {
+// Base finds root command.
+func Base(c Commander) Commander {
 	if c.HasParent() {
-		return c.Parent().Base()
+		return Base(c.Parent())
 	}
 	return c
 }
@@ -1044,13 +1025,6 @@ func Execute(c Commander, a []string) (err error) {
 		}
 	}
 
-	// if c.PreRunE != nil {
-	// 	if err := c.PreRunE(c, argWoFlags); err != nil {
-	// 		return err
-	// 	}
-	// } else if c.PreRun != nil {
-	// 	c.PreRun(c, argWoFlags)
-	// }
 	if err := c.PreRun(argWoFlags); err != nil {
 		return err
 	}
@@ -1062,24 +1036,10 @@ func Execute(c Commander, a []string) (err error) {
 		return err
 	}
 
-	// if c.RunE != nil {
-	// 	if err := c.RunE(c, argWoFlags); err != nil {
-	// 		return err
-	// 	}
-	// } else {
-	// 	c.Run(c, argWoFlags)
-	// }
 	if err := c.Run(argWoFlags); err != nil {
 		return err
 	}
 
-	// if c.PostRunE != nil {
-	// 	if err := c.PostRunE(c, argWoFlags); err != nil {
-	// 		return err
-	// 	}
-	// } else if c.PostRun != nil {
-	// 	c.PostRun(c, argWoFlags)
-	// }
 	if err := c.PostRun(argWoFlags); err != nil {
 		return err
 	}
@@ -1115,14 +1075,6 @@ func (c *Root) postRun() {
 	}
 }
 
-// ExecuteContext is the same as Execute(), but sets the ctx on the command.
-// Retrieve ctx by calling cmd.Context() inside your *Run lifecycle or ValidArgs
-// functions.
-// func (c *Root) ExecuteContext(ctx context.Context) error {
-// 	c.ctx = ctx
-// 	return c.Execute()
-// }
-
 // Execute uses the args (os.Args[1:] by default)
 // and run through the command tree finding appropriate matches
 // for commands and then corresponding flags.
@@ -1131,27 +1083,11 @@ func (c *Root) Execute() error { // todo: 原Execute
 	return err
 }
 
-// ExecuteContextC is the same as ExecuteC(), but sets the ctx on the command.
-// Retrieve ctx by calling cmd.Context() inside your *Run lifecycle or ValidArgs
-// functions.
-// func (c *Root) ExecuteContextC(ctx context.Context) (Commander, error) {
-// 	c.ctx = ctx
-// 	return c.ExecuteC()
-// }
-
 // ExecuteC executes the command.
 func (c *Root) ExecuteC() (cmd Commander, err error) {
 	if c.ctx == nil {
 		c.ctx = context.Background()
 	}
-
-	// Regardless of what command execute is called on, run on Root only
-	// if c.HasParent() {
-	// 	fmt.Println("hello>>>>>>>>>>>>>>")
-	// 	// return c.Base().ExecuteC()
-	// } else {
-	// 	fmt.Println("hello2>>>>>>>>>>>>>>")
-	// }
 
 	// windows hook
 	if preExecHookFn != nil {
@@ -1461,10 +1397,10 @@ func (c *Root) AddGroup(groups ...*Group) {
 }
 
 // RemoveCommand removes one or more commands from a parent command.
-func (c *Root) RemoveCommand(cmds ...Commander) {
+func RemoveCommand(c Commander, cmds ...Commander) {
 	commands := []Commander{}
 main:
-	for _, command := range c.commands {
+	for _, command := range c.GetCommands() {
 		for _, cmd := range cmds {
 			if command == cmd {
 				// command.parent = nil
@@ -1474,7 +1410,30 @@ main:
 		}
 		commands = append(commands, command)
 	}
-	c.commands = commands
+	c.ResetAdd(commands...)
+	// c.commands = commands
+	// // recompute all lengths
+	// c.commandsMaxUseLen = 0
+	// c.commandsMaxCommandPathLen = 0
+	// c.commandsMaxNameLen = 0
+	// for _, command := range c.commands {
+	// 	usageLen := len(command.GetUse())
+	// 	if usageLen > c.commandsMaxUseLen {
+	// 		c.commandsMaxUseLen = usageLen
+	// 	}
+	// 	commandPathLen := len(CommandPath(command))
+	// 	if commandPathLen > c.commandsMaxCommandPathLen {
+	// 		c.commandsMaxCommandPathLen = commandPathLen
+	// 	}
+	// 	nameLen := len(name(command))
+	// 	if nameLen > c.commandsMaxNameLen {
+	// 		c.commandsMaxNameLen = nameLen
+	// 	}
+	// }
+}
+
+func (c *Root) ResetAdd(cmds ...Commander) {
+	c.commands = cmds
 	// recompute all lengths
 	c.commandsMaxUseLen = 0
 	c.commandsMaxCommandPathLen = 0
@@ -1546,7 +1505,7 @@ func UseLine(c Commander) string {
 	var useLine string
 	use := strings.Replace(c.GetUse(), name(c), displayName(c), 1)
 	if c.HasParent() {
-		useLine = CommandPath(c.Base()) + " " + use
+		useLine = CommandPath(Base(c)) + " " + use
 	} else {
 		useLine = use
 	}
@@ -1694,15 +1653,15 @@ func IsAvailableCommand(c Commander) bool {
 // fact that it is NOT runnable/hidden/deprecated, and has no sub commands that
 // are runnable/hidden/deprecated.
 // Concrete example: https://github.com/spf13/cobra/issues/393#issuecomment-282741924.
-func (c *Root) IsAdditionalHelpTopicCommand() bool {
+func IsAdditionalHelpTopicCommand(c Commander) bool {
 	// if a command is runnable, deprecated, or hidden it is not a 'help' command
-	if c.Runnable() || len(c.Deprecated) != 0 || c.Hidden {
+	if c.Runnable() || len(c.GetDeprecated()) != 0 || c.GetHidden() {
 		return false
 	}
 
 	// if any non-help sub commands are found, the command is not a 'help' command
-	for _, sub := range c.commands {
-		if !sub.IsAdditionalHelpTopicCommand() {
+	for _, sub := range c.GetCommands() {
+		if !IsAdditionalHelpTopicCommand(sub) {
 			return false
 		}
 	}
@@ -1714,10 +1673,10 @@ func (c *Root) IsAdditionalHelpTopicCommand() bool {
 // HasHelpSubCommands determines if a command has any available 'help' sub commands
 // that need to be shown in the usage/help default template under 'additional help
 // topics'.
-func (c *Root) HasHelpSubCommands() bool {
+func HasHelpSubCommands(c Commander) bool {
 	// return true on the first found available 'help' sub command
-	for _, sub := range c.commands {
-		if sub.IsAdditionalHelpTopicCommand() {
+	for _, sub := range c.GetCommands() {
+		if IsAdditionalHelpTopicCommand(sub) {
 			return true
 		}
 	}
@@ -1995,7 +1954,7 @@ func updateParentsPflags(c Commander) {
 		c.GetParentsPFlags().SetNormalizeFunc(c.GetGlobNormFunc())
 	}
 
-	PersistentFlags(c.Base()).AddFlagSet(flag.CommandLine)
+	PersistentFlags(Base(c)).AddFlagSet(flag.CommandLine)
 
 	VisitParents(c, func(parent Commander) {
 		c.GetParentsPFlags().AddFlagSet(PersistentFlags(parent))

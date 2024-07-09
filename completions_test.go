@@ -2419,7 +2419,7 @@ func removeCompCmd(rootCmd *Root) {
 	// Remove completion command for the next test
 	for _, cmd := range rootCmd.commands {
 		if name(cmd) == compCmdName {
-			rootCmd.RemoveCommand(cmd)
+			RemoveCommand(rootCmd, cmd)
 			return
 		}
 	}

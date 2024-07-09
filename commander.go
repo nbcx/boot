@@ -10,8 +10,7 @@ import (
 
 type Commander interface {
 	SetParent(Commander)
-	GetParent() Commander
-	Parent() Commander // note: 同上，后续移除
+	Parent() Commander
 	GetUse() string
 	GetGroupID() string
 	SetGroupID(groupID string)
@@ -36,7 +35,7 @@ type Commander interface {
 	PostRun(args []string) error
 
 	Context() context.Context
-	SetContext(ctx context.Context) // note: 同上，后续移除
+	SetContext(ctx context.Context)
 	GetPersistentPostRunE() func(cmd Commander, args []string) error
 	GetPersistentPostRun() func(cmd Commander, args []string)
 	ErrPrefix() string
@@ -45,88 +44,22 @@ type Commander interface {
 	GetCommandsMaxCommandPathLen() int
 	GetCommandsMaxNameLen() int
 	OutOrStdout() io.Writer
-	// GenPowerShellCompletionWithDesc(w io.Writer) error
-	// GenFishCompletion(w io.Writer, includeDesc bool) error
-	// GenBashCompletionV2(w io.Writer, includeDesc bool) error
 	GetTraverseChildren() bool
-	RemoveCommand(cmds ...Commander)
 	GetDisableFlagParsing() bool
 
 	GetAliases() []string
-	// UseLine() string
 	GetDisableAutoGenTag() bool
 	SetDisableAutoGenTag(d bool)
 	GetVersion() string
 	GetAnnotations() map[string]string
+	GetDisableSuggestions() bool
+	GetSuggestionsMinimumDistance() int
+	GetDeprecated() string
 
-	// Flags
-	// HasFlags() bool
-	// HasPersistentFlags() bool
-	GetFlags() *flag.FlagSet
-	SetFlags(*flag.FlagSet)
-	GetLFlags() *flag.FlagSet
-	SetLFlags(*flag.FlagSet)
-	GetIFlags() *flag.FlagSet
-	SetIFlags(*flag.FlagSet)
-
-	GetParentsPFlags() *flag.FlagSet
-	SetParentsPFlags(*flag.FlagSet)
-
-	SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.NormalizedName)
-	GetGlobNormFunc() func(f *flag.FlagSet, name string) flag.NormalizedName
-
-	// FParseErrWhitelist flag parse errors to be ignored
-	// FParseErrWhitelist
-	GetFParseErrWhitelist() FParseErrWhitelist
-	SetFParseErrWhitelist(FParseErrWhitelist)
-
-	// FlagErrorFunc() (f func(Commander, error) error)
-	// Flag(name string) (flag *flag.Flag)
-	GetFlagErrorFunc() func(Commander, error) error
-	// InheritedFlags() *flag.FlagSet
-	// NonInheritedFlags() *flag.FlagSet
-	SetFlagErrorBuf(*bytes.Buffer)
-	GetFlagErrorBuf() *bytes.Buffer
-	// LocalNonPersistentFlags() *flag.FlagSet
-	// ParseFlags(args []string) error
-	// ValidateRequiredFlags() error
-	// SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string) flag.NormalizedName)
-
-	// CommandPath() string
-	// Name() string
-
-	// IsAvailableCommand() bool
-	IsAdditionalHelpTopicCommand() bool
-	Base() Commander
-	// Usage() error
-	// Find(args []string) (Commander, []string, error)
-	Commands() []Commander
-	// CheckCommandGroups()
-	// InitDefaultHelpFlag()
-	// InitDefaultVersionFlag()
-	// Help() error
-	// ExecuteC() (cmd Commander, err error)
-	// HelpFunc() func(Commander, []string)
-	// UsageString() string
-	// Execute(a []string) (err error)
-	// VisitParents(fn func(Commander))
-	GetSuggestFor() []string
-	HasAlias(s string) bool
-
-	// VersionTemplate() string
-	// HelpTemplate() string
-	// UsageTemplate() string
-
-	// Traverse(args []string) (Commander, []string, error)
-	// UsageFunc() (f func(Commander) error)
-	OutOrStderr() io.Writer
 	// PersistentFlags() *flag.FlagSet
 	CalledAs() string
-	// GenPowerShellCompletion(w io.Writer) error
-	// GenZshCompletionNoDesc(w io.Writer) error
-	// GenZshCompletion(w io.Writer) error
-	GetSuggestionsMinimumDistance() int
 	Add(cmds ...Commander)
+	ResetAdd(cmds ...Commander)
 	GetCompletionOptions() *CompletionOptions
 	GetCompletionCommandGroupID() string
 	SetCompletionCommandGroupID(v string)
@@ -138,37 +71,43 @@ type Commander interface {
 	HasSubCommands() bool
 	HasParent() bool
 
+	Runnable() bool
+
+	// Flags
+	GetFlags() *flag.FlagSet
+	SetFlags(*flag.FlagSet)
+	GetLFlags() *flag.FlagSet
+	SetLFlags(*flag.FlagSet)
+	GetIFlags() *flag.FlagSet
+	SetIFlags(*flag.FlagSet)
+	GetParentsPFlags() *flag.FlagSet
+	SetParentsPFlags(*flag.FlagSet)
+	SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.NormalizedName)
+	GetGlobNormFunc() func(f *flag.FlagSet, name string) flag.NormalizedName
+	GetDisableFlagsInUseLine() bool
+	GetFParseErrWhitelist() FParseErrWhitelist
+	SetFParseErrWhitelist(FParseErrWhitelist)
+	GetFlagErrorFunc() func(Commander, error) error
+	SetFlagErrorBuf(*bytes.Buffer)
+	GetFlagErrorBuf() *bytes.Buffer
+	Commands() []Commander
+	GetSuggestFor() []string
+	HasAlias(s string) bool
+
+	// GetUse() string
+	GetCommandGroups() []*Group
+
+	getOut(def io.Writer) io.Writer
+	getErr(def io.Writer) io.Writer
+	getIn(def io.Reader) io.Reader
+	getHelpCommandGroupID() string
+
+	OutOrStderr() io.Writer
+
 	// SetArgs(a []string)
 	SetErr(newErr io.Writer)
 	SetOut(newOut io.Writer)
 	SetOutput(output io.Writer)
-	// ExecuteContextC(ctx context.Context) (Commander, error)
-	// MarkFlagsRequiredTogether(flagNames ...string)
-	// MarkFlagsOneRequired(flagNames ...string)
-	// MarkFlagsMutuallyExclusive(flagNames ...string)
-	// InitDefaultHelpCmd()
-	Runnable() bool
-	// ValidateArgs(args []string) error
-	GetDeprecated() string
-	GetDisableFlagsInUseLine() bool
-	// GetUse() string
-	GetCommandGroups() []*Group
-
-	// enforceFlagGroupsForCompletion()
-	// findSuggestions(arg string) string
-	getOut(def io.Writer) io.Writer
-	getErr(def io.Writer) io.Writer
-	getIn(def io.Reader) io.Reader
-	// hasNameOrAliasPrefix(prefix string) bool
-	// findNext(next string) Commander
-	// argsMinusFirstX(args []string, x string) []string
-	// mergePersistentFlags()
-	// getCompletions(args []string) (Commander, []string, ShellCompDirective, error)
-	// displayName() string
-	getHelpCommandGroupID() string
-	GetDisableSuggestions() bool
-	SetSuggestionsMinimumDistance(v int)
-
 	Print(i ...interface{})
 	Println(i ...interface{})
 	Printf(format string, i ...interface{})
@@ -356,11 +295,7 @@ func (p *Root) GetDisableSuggestions() bool {
 }
 
 func (p *Root) GetSuggestionsMinimumDistance() int {
-	return p.SuggestionsMinimumDistance
-}
-
-func (p *Root) SetSuggestionsMinimumDistance(v int) {
-	p.SuggestionsMinimumDistance = v
+	return 2
 }
 
 func (p *Root) GetCompletionOptions() *CompletionOptions {

@@ -47,7 +47,7 @@ func AppendActiveHelp(compArray []string, activeHelpStr string) []string {
 func GetActiveHelpConfig(cmd Commander) string {
 	activeHelpCfg := os.Getenv(activeHelpGlobalEnvVar)
 	if activeHelpCfg != activeHelpGlobalDisable {
-		activeHelpCfg = os.Getenv(activeHelpEnvVar(name(cmd.Base())))
+		activeHelpCfg = os.Getenv(activeHelpEnvVar(name(Base(cmd))))
 	}
 	return activeHelpCfg
 }

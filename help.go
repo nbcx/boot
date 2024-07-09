@@ -69,29 +69,12 @@ func (cmd *CompleteCmd) Run(args []string) error {
 	return nil
 }
 
-// func Test() {
-// 	completeCmd := &Root{
-// 		Use:                   fmt.Sprintf("%s [command-line]", ShellCompRequestCmd),
-// 		Aliases:               []string{ShellCompNoDescRequestCmd},
-// 		DisableFlagsInUseLine: true,
-// 		Hidden:                true,
-// 		DisableFlagParsing:    true,
-// 		Args:                  MinimumNArgs(1),
-// 		Short:                 "Request shell completion choices for the specified command-line",
-// 		Long: fmt.Sprintf("%[2]s is a special command that is used by the shell completion logic\n%[1]s",
-// 			"to request completion choices for the specified command-line.", ShellCompRequestCmd),
-// 		Run: func(cmd Commander, args []string) {
-
-// 		},
-// 	}
-// }
-
 type BashCompleteCmd struct {
 	Default
 }
 
 func (cmd *BashCompleteCmd) Run(args []string) error {
-	return GenBashCompletionV2(cmd.Base(), cmd.OutOrStdout(), !cmd.CompletionOptions.DisableDescriptions)
+	return GenBashCompletionV2(Base(cmd), cmd.OutOrStdout(), !cmd.CompletionOptions.DisableDescriptions)
 }
 func (cmd *BashCompleteCmd) GetUse() string {
 	return "bash"
@@ -134,7 +117,7 @@ type ZshCompleteCmd struct {
 	noDesc bool
 }
 
-func (cmd *ZshCompleteCmd) GetUse() string {
+func (p *ZshCompleteCmd) GetUse() string {
 	return "zsh"
 }
 
@@ -164,7 +147,7 @@ To load completions for every new session, execute once:
 	%[1]s completion zsh > $(brew --prefix)/share/zsh/site-functions/_%[1]s
 
 You will need to start a new shell for this setup to take effect.
-`, name(cmd.Base())),
+`, name(Base(cmd))),
 			Args:              NoArgs,
 			ValidArgsFunction: NoFileCompletions,
 		},
@@ -173,11 +156,11 @@ You will need to start a new shell for this setup to take effect.
 }
 
 func (p *ZshCompleteCmd) Run(args []string) error {
-	out := p.Base().OutOrStdout()
+	out := Base(p).OutOrStdout()
 	if p.noDesc {
-		return GenZshCompletionNoDesc(p.Base(), out)
+		return GenZshCompletionNoDesc(Base(p), out)
 	}
-	return GenZshCompletion(p.Base(), out)
+	return GenZshCompletion(Base(p), out)
 }
 
 type FishCompleteCmd struct {
@@ -185,13 +168,13 @@ type FishCompleteCmd struct {
 	noDesc bool
 }
 
-func (cmd *FishCompleteCmd) GetUse() string {
+func (p *FishCompleteCmd) GetUse() string {
 	return "fish"
 }
 
 func (p *FishCompleteCmd) Run(args []string) error {
-	out := p.Base().OutOrStdout()
-	return GenFishCompletion(p.Base(), out, !p.noDesc)
+	out := Base(p).OutOrStdout()
+	return GenFishCompletion(Base(p), out, !p.noDesc)
 }
 
 func NewFishCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *FishCompleteCmd {
@@ -209,7 +192,7 @@ To load completions for every new session, execute once:
 	%[1]s completion fish > ~/.config/fish/completions/%[1]s.fish
 
 You will need to start a new shell for this setup to take effect.
-`, name(cmd.Base())),
+`, name(Base(cmd))),
 			Args:              NoArgs,
 			ValidArgsFunction: NoFileCompletions,
 		},
@@ -223,11 +206,11 @@ type PowershellCompleteCmd struct {
 }
 
 func (cmd *PowershellCompleteCmd) Run(args []string) error {
-	out := cmd.Base().OutOrStdout()
+	out := Base(cmd).OutOrStdout()
 	if cmd.noDesc {
-		return GenPowerShellCompletion(cmd.Base(), out)
+		return GenPowerShellCompletion(Base(cmd), out)
 	}
-	return GenPowerShellCompletionWithDesc(cmd.Base(), out)
+	return GenPowerShellCompletionWithDesc(Base(cmd), out)
 }
 func (cmd *PowershellCompleteCmd) GetUse() string {
 	return "powershell"
@@ -244,7 +227,7 @@ To load completions in your current shell session:
 
 To load completions for every new session, add the output of the above command
 to your powershell profile.
-`, name(cmd.Base())),
+`, name(Base(cmd))),
 			Args:              NoArgs,
 			ValidArgsFunction: NoFileCompletions,
 		},
@@ -257,10 +240,10 @@ type HelpCmd struct {
 }
 
 func (p *HelpCmd) Run(args []string) error {
-	cmd, _, e := Find(p.Base(), args)
+	cmd, _, e := Find(Base(p), args)
 	if cmd == nil || e != nil {
 		cmd.Printf("Unknown help topic %#q\n", args)
-		CheckErr(Usage(cmd.Base()))
+		CheckErr(Usage(Base(cmd)))
 	} else {
 		InitDefaultHelpFlag(cmd)    // make possible 'help' flag to be shown
 		InitDefaultVersionFlag(cmd) // make possible 'version' flag to be shown
@@ -282,13 +265,13 @@ func NewHelpCmd(cmd Commander) *HelpCmd {
 Simply type ` + displayName(cmd) + ` help [path to command] for full details.`,
 			ValidArgsFunction: func(c Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				var completions []string
-				cmd, _, e := Find(c.Base(), args)
+				cmd, _, e := Find(Base(c), args)
 				if e != nil {
 					return nil, ShellCompDirectiveNoFileComp
 				}
 				if cmd == nil {
 					// Root help command.
-					cmd = c.Base()
+					cmd = Base(c)
 				}
 				for _, subCmd := range cmd.Commands() {
 					if IsAvailableCommand(subCmd) || subCmd == cmd.GetHelpCommand() {

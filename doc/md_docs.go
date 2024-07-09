@@ -100,7 +100,7 @@ func GenMarkdownCustom(cmd boot.Commander, w io.Writer, linkHandler func(string)
 		sort.Sort(byName(children))
 
 		for _, child := range children {
-			if !boot.IsAvailableCommand(child) || child.IsAdditionalHelpTopicCommand() {
+			if !boot.IsAvailableCommand(child) || boot.IsAdditionalHelpTopicCommand(child) {
 				continue
 			}
 			cname := name + " " + boot.ParseName(child)
@@ -133,7 +133,7 @@ func GenMarkdownTree(cmd boot.Commander, dir string) error {
 // with custom filePrepender and linkHandler.
 func GenMarkdownTreeCustom(cmd boot.Commander, dir string, filePrepender, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
-		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || boot.IsAdditionalHelpTopicCommand(c) {
 			continue
 		}
 		if err := GenMarkdownTreeCustom(c, dir, filePrepender, linkHandler); err != nil {
