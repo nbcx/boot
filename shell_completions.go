@@ -22,7 +22,7 @@ import (
 // prioritize the named flag when performing completion,
 // and causes your command to report an error if invoked without the flag.
 func MarkFlagRequired(c Commander, name string) error {
-	return markFlagRequired(c, Flags(c), name)
+	return markFlagRequired(Flags(c), name)
 }
 
 // MarkPersistentFlagRequired instructs the various shell completion implementations to
@@ -35,7 +35,7 @@ func MarkPersistentFlagRequired(c Commander, name string) error {
 // MarkFlagRequired instructs the various shell completion implementations to
 // prioritize the named flag when performing completion,
 // and causes your command to report an error if invoked without the flag.
-func markFlagRequired(c Commander, flags *pflag.FlagSet, name string) error {
+func markFlagRequired(flags *pflag.FlagSet, name string) error {
 	return flags.SetAnnotation(name, BashCompOneRequiredFlag, []string{"true"})
 }
 

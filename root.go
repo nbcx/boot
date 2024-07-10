@@ -420,50 +420,17 @@ func Usage(c Commander) error {
 
 // HelpFunc returns either the function set by SetHelpFunc for this command
 // or a parent, or it returns a function with default help behavior.
-func HelpFunc(c Commander) func(Commander, []string) {
-	// if c.helpFunc != nil {
-	// 	return c.helpFunc
-	// }
-	// if c.HasParent() {
-	// 	return c.Parent().HelpFunc()
-	// }
-	return func(c Commander, a []string) {
-		mergePersistentFlags(c)
-		// The help should be sent to stdout
-		// See https://github.com/spf13/cobra/issues/1002
-		err := tmpl(log.OutOrStdout(), HelpTemplate(c), c)
-		if err != nil {
-			log.PrintErrLn(err)
-		}
+func HelpFunc(c Commander, a []string) {
+	mergePersistentFlags(c)
+	// The help should be sent to stdout
+	// See https://github.com/spf13/cobra/issues/1002
+	err := tmpl(log.OutOrStdout(), HelpTemplate(c), c)
+	if err != nil {
+		fmt.Println(">>>>>", err)
+		log.PrintErrLn(err)
 	}
-}
 
-// Help puts out the help for the command.
-// Used when a user calls help [command].
-// Can be defined by user by overriding HelpFunc.
-func Help(c Commander) error {
-	HelpFunc(c)(c, []string{})
-	return nil
-}
-
-// UsageString returns usage string.
-func UsageString(c Commander) string {
-	// Storing normal writers
-	// tmpOutput := c.outWriter
-	// tmpErr := c.errWriter
-
-	// bb := new(bytes.Buffer)
-	// c.outWriter = bb
-	// c.errWriter = bb
-
-	// CheckErr(c.Usage())
-
-	// // Setting things back to normal
-	// c.outWriter = tmpOutput
-	// c.errWriter = tmpErr
-
-	// return bb.String()
-	return fmt.Sprintf("UsageString: %v", c.GetUse())
+	// log.Print(HelpTemplate(c))
 }
 
 // FlagErrorFunc returns either the function set by SetFlagErrorFunc for this
@@ -495,79 +462,21 @@ func (c *Root) UsagePadding() int {
 var minCommandPathPadding = 11
 
 // CommandPathPadding return padding for the command path.
-func (c *Root) CommandPathPadding() int {
-	if c.parent == nil || minCommandPathPadding > c.parent.GetCommandsMaxCommandPathLen() {
+func CommandPathPadding(c Commander) int {
+	if c.Parent() == nil || minCommandPathPadding > c.Parent().GetCommandsMaxCommandPathLen() {
 		return minCommandPathPadding
 	}
-	return c.parent.GetCommandsMaxCommandPathLen()
+	return c.Parent().GetCommandsMaxCommandPathLen()
 }
 
 var minNamePadding = 11
 
 // NamePadding returns padding for the name.
-func (c *Root) NamePadding() int {
-	if c.parent == nil || minNamePadding > c.parent.GetCommandsMaxNameLen() {
+func NamePadding(c Commander) int {
+	if c.Parent() == nil || minNamePadding > c.Parent().GetCommandsMaxNameLen() {
 		return minNamePadding
 	}
-	return c.parent.GetCommandsMaxNameLen()
-}
-
-// UsageTemplate returns usage template for the command.
-func UsageTemplate(c Commander) string {
-	// if c.usageTemplate != "" {
-	// 	return c.usageTemplate
-	// }
-
-	// if c.HasParent() {
-	// 	return c.parent.UsageTemplate()
-	// }
-	return `Usage:....`
-	// 	return `Usage:{{if .Runnable}}
-	//   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
-	//   {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
-
-	// Aliases:
-	//   {{.NameAndAliases}}{{end}}{{if .HasExample}}
-
-	// Examples:
-	// {{.Example}}{{end}}{{if .HasAvailableSubCommands}}{{$cmds := .Commands}}{{if eq (len .Groups) 0}}
-
-	// Available Commands:{{range $cmds}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-	//   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{else}}{{range $group := .Groups}}
-
-	// {{.Title}}{{range $cmds}}{{if (and (eq .GroupID $group.ID) (or .IsAvailableCommand (eq .Name "help")))}}
-	//   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if not .AllChildCommandsHaveGroup}}
-
-	// Additional Commands:{{range $cmds}}{{if (and (eq .GroupID "") (or .IsAvailableCommand (eq .Name "help")))}}
-	//   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
-
-	// Flags:
-	// {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
-
-	// Global Flags:
-	// {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
-
-	// Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
-	//   {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
-
-	// Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
-	// `
-}
-
-// HelpTemplate return help template for the command.
-func HelpTemplate(c Commander) string {
-	// 	if c.helpTemplate != "" {
-	// 		return c.helpTemplate
-	// 	}
-
-	// 	if c.HasParent() {
-	// 		return c.parent.HelpTemplate()
-	// 	}
-	return `{{with (or .GetLong .GetShort)}}{{. | trimTrailingWhitespaces}}
-
-	{{end}}{{if or .Runnable .HasSubCommands}}{{ . | usageString}}{{end}}`
-	// todo: HelpTemplate
-	// return "HelpTemplate\n"
+	return c.Parent().GetCommandsMaxNameLen()
 }
 
 // VersionTemplate return version template for the command.
@@ -1068,7 +977,7 @@ func (c *Root) ExecuteC() (cmd Commander, err error) {
 		// Always show help if requested, even if SilenceErrors is in
 		// effect
 		if errors.Is(err, flag.ErrHelp) {
-			HelpFunc(cmd)(cmd, args)
+			HelpFunc(cmd, args)
 			return cmd, nil
 		}
 
@@ -1290,9 +1199,9 @@ func (c *Root) Groups() []*Group {
 }
 
 // AllChildCommandsHaveGroup returns if all subcommands are assigned to a group
-func (c *Root) AllChildCommandsHaveGroup() bool {
-	for _, sub := range c.commands {
-		if (IsAvailableCommand(sub) || sub == c.helpCommand) && sub.GetGroupID() == "" {
+func AllChildCommandsHaveGroup(c Commander) bool {
+	for _, sub := range c.GetCommands() {
+		if (IsAvailableCommand(sub) || sub == c.GetHelpCommand()) && sub.GetGroupID() == "" {
 			return false
 		}
 	}
@@ -1374,7 +1283,7 @@ func UseLine(c Commander) string {
 	var useLine string
 	use := strings.Replace(c.GetUse(), name(c), displayName(c), 1)
 	if c.HasParent() {
-		useLine = CommandPath(Base(c)) + " " + use
+		useLine = CommandPath(c.Parent()) + " " + use
 	} else {
 		useLine = use
 	}
@@ -1737,7 +1646,7 @@ func HasAvailablePersistentFlags(c Commander) bool {
 
 // HasAvailableLocalFlags checks if the command has flags specifically declared locally which are not hidden
 // or deprecated.
-func (c *Root) HasAvailableLocalFlags() bool {
+func HasAvailableLocalFlags(c Commander) bool {
 	return LocalFlags(c).HasAvailableFlags()
 }
 

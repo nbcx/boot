@@ -226,9 +226,9 @@ func TestExecuteContextC(t *testing.T) {
 
 	rootCmd := &Root{Use: "root", RunE: ctxRunE, PreRunE: ctxRunE}
 	childCmd := &Root{Use: "child", RunE: ctxRunE, PreRunE: ctxRunE}
-	granchildCmd := &Root{Use: "grandchild", RunE: ctxRunE, PreRunE: ctxRunE}
+	granChildCmd := &Root{Use: "grandchild", RunE: ctxRunE, PreRunE: ctxRunE}
 
-	childCmd.Add(granchildCmd)
+	childCmd.Add(granChildCmd)
 	rootCmd.Add(childCmd)
 
 	if _, _, err := executeCommandWithContextC(ctx, rootCmd, ""); err != nil {

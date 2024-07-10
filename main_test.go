@@ -21,7 +21,7 @@ func (p *b) Run(args []string) error {
 func TestMain(t *testing.T) {
 	var rootCmdArgs []string
 	root := &Root{
-		// Use:  "root",
+		Use:  "root",
 		Args: RangeArgs(0, 2),
 		RunE: func(_ Commander, args []string) error {
 			rootCmdArgs = args
@@ -38,7 +38,8 @@ func TestMain(t *testing.T) {
 	// root.SetErr(buf)
 	// root.SetArgs("b", "jj", "cc")
 	// root.SetArgs("one", "two")
-	root.SetArgs("b", "--help")
+	root.SetArgs("--help")
+	// root.SetArgs("b", "--help")
 
 	err := root.Execute()
 	if err != nil {

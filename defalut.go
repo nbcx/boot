@@ -148,7 +148,7 @@ type Default struct {
 	PersistentPostRunE func(cmd Commander, args []string) error
 
 	// groups for subcommands
-	commandgroups []*Group
+	commandGroups []*Group
 
 	// args is actual args parsed from flags.
 	args []string
@@ -158,24 +158,24 @@ type Default struct {
 	// flags is full set of flags.
 	flags *flag.FlagSet
 
-	// pflags contains persistent flags.
-	pflags *flag.FlagSet
-	// lflags contains local flags.
+	// pFlags contains persistent flags.
+	pFlags *flag.FlagSet
+	// lFlags contains local flags.
 	// This field does not represent internal state, it's used as a cache to optimise LocalFlags function call
-	lflags *flag.FlagSet
-	// iflags contains inherited flags.
+	lFlags *flag.FlagSet
+	// iFlags contains inherited flags.
 	// This field does not represent internal state, it's used as a cache to optimise InheritedFlags function call
-	iflags *flag.FlagSet
-	// parentsPflags is all persistent flags of cmd's parents.
-	parentsPflags *flag.FlagSet
+	iFlags *flag.FlagSet
+	// parentsPFlags is all persistent flags of cmd's parents.
+	parentsPFlags *flag.FlagSet
 	// globNormFunc is the global normalization function
 	// that we can use on every pflag set and children commands
 	globNormFunc func(f *flag.FlagSet, name string) flag.NormalizedName
 
 	// usageFunc is usage func defined by user.
-	usageFunc func(Commander) error
+	// usageFunc func(Commander) error
 	// usageTemplate is usage template defined by user.
-	usageTemplate string
+	// usageTemplate string
 	// flagErrorFunc is func defined by user and it's called when the parsing of
 	// flags returns an error.
 	flagErrorFunc func(Commander, error) error
@@ -275,42 +275,42 @@ func (c *Default) SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.Norm
 
 // GetPFlags implements Commander.
 func (c *Default) GetPFlags() *flag.FlagSet {
-	return c.pflags
+	return c.pFlags
 }
 
 // GetIFlags implements Commander.
 func (c *Default) GetIFlags() *flag.FlagSet {
-	return c.iflags
+	return c.iFlags
 }
 
 // GetLFlags implements Commander.
 func (c *Default) GetLFlags() *flag.FlagSet {
-	return c.lflags
+	return c.lFlags
 }
 
 // GetParentsPFlags implements Commander.
 func (c *Default) GetParentsPFlags() *flag.FlagSet {
-	return c.parentsPflags
+	return c.parentsPFlags
 }
 
 // SetIFlags implements Commander.
 func (c *Default) SetIFlags(i *flag.FlagSet) {
-	c.iflags = i
+	c.iFlags = i
 }
 
 // SetLFlags implements Commander.
 func (c *Default) SetLFlags(l *flag.FlagSet) {
-	c.lflags = l
+	c.lFlags = l
 }
 
 // SetPFlags implements Commander.
 func (c *Default) SetPFlags(l *flag.FlagSet) {
-	c.pflags = l
+	c.pFlags = l
 }
 
 // SetParentsPFlags implements Commander.
 func (c *Default) SetParentsPFlags(pf *flag.FlagSet) {
-	c.parentsPflags = pf
+	c.parentsPFlags = pf
 }
 
 // Context returns underlying command context. If command was executed
@@ -337,14 +337,14 @@ func (c *Default) SetArgs(a []string) {
 }
 
 // SetUsageFunc sets usage function. Usage can be defined by application.
-func (c *Default) SetUsageFunc(f func(Commander) error) {
-	c.usageFunc = f
-}
+// func (c *Default) SetUsageFunc(f func(Commander) error) {
+// 	c.usageFunc = f
+// }
 
 // SetUsageTemplate sets usage template. Can be defined by Application.
-func (c *Default) SetUsageTemplate(s string) {
-	c.usageTemplate = s
-}
+// func (c *Default) SetUsageTemplate(s string) {
+// 	c.usageTemplate = s
+// }
 
 // SetFlagErrorFunc sets a function to generate an error when flag parsing
 // fails.
@@ -353,9 +353,9 @@ func (c *Default) SetFlagErrorFunc(f func(Commander, error) error) {
 }
 
 // SetHelpFunc sets help function. Can be defined by Application.
-func (c *Default) SetHelpFunc(f func(Commander, []string)) {
-	c.helpFunc = f
-}
+// func (c *Default) SetHelpFunc(f func(Commander, []string)) {
+// 	c.helpFunc = f
+// }
 
 // SetHelpCommand sets help command.
 func (c *Default) SetHelpCommand(cmd Commander) {
@@ -436,14 +436,6 @@ func (c *Default) CommandPathPadding() int {
 	return c.parent.GetCommandsMaxCommandPathLen()
 }
 
-// NamePadding returns padding for the name.
-func (c *Default) NamePadding() int {
-	if c.parent == nil || minNamePadding > c.parent.GetCommandsMaxNameLen() {
-		return minNamePadding
-	}
-	return c.parent.GetCommandsMaxNameLen()
-}
-
 // ErrPrefix return error message prefix for the command
 func (c *Default) ErrPrefix() string {
 	if c.errPrefix != "" {
@@ -456,24 +448,12 @@ func (c *Default) ErrPrefix() string {
 	return "Error:"
 }
 
-func (c *Default) preRun() {
-	for _, x := range initializers {
-		x()
-	}
-}
-
-func (c *Default) postRun() {
-	for _, x := range finalizers {
-		x()
-	}
-}
-
 // ResetCommands delete parent, subcommand and help command from c.
 func (c *Default) ResetCommands() {
 	c.parent = nil
 	c.commands = nil
 	c.helpCommand = nil
-	c.parentsPflags = nil
+	c.parentsPFlags = nil
 }
 
 // Commands returns a sorted slice of child commands.
@@ -540,12 +520,12 @@ func (c *Default) ResetAdd(cmds ...Commander) {
 
 // Groups returns a slice of child command groups.
 func (c *Default) Groups() []*Group {
-	return c.commandgroups
+	return c.commandGroups
 }
 
 // ContainsGroup return if groupID exists in the list of command groups.
 func (c *Default) ContainsGroup(groupID string) bool {
-	for _, x := range c.commandgroups {
+	for _, x := range c.commandGroups {
 		if x.ID == groupID {
 			return true
 		}
@@ -555,7 +535,7 @@ func (c *Default) ContainsGroup(groupID string) bool {
 
 // AddGroup adds one or more command groups to this parent command.
 func (c *Default) AddGroup(groups ...*Group) {
-	c.commandgroups = append(c.commandgroups, groups...)
+	c.commandGroups = append(c.commandGroups, groups...)
 }
 
 // DebugFlags used to determine which flags have been assigned to which commands
@@ -652,9 +632,9 @@ func (c *Default) Parent() Commander {
 
 //////// new add ////////////////
 
-func (p *Default) GetParent() Commander {
-	return p.parent
-}
+// func (p *Default) GetParent() Commander {
+// 	return p.parent
+// }
 
 func (p *Default) SetParent(c Commander) {
 	p.parent = c
@@ -817,7 +797,7 @@ func (p *Default) GetDisableFlagsInUseLine() bool {
 }
 
 func (p *Default) GetUse() string {
-	return ""
+	return "b" // todo: wait b
 }
 
 func (p *Default) GetAnnotations() map[string]string {
@@ -825,7 +805,7 @@ func (p *Default) GetAnnotations() map[string]string {
 }
 
 func (p *Default) GetCommandGroups() []*Group {
-	return p.commandgroups
+	return p.commandGroups
 }
 
 func (p *Default) GetDisableSuggestions() bool {
@@ -854,4 +834,38 @@ func (p *Default) SetFlagErrorBuf(b *bytes.Buffer) {
 
 func (p *Default) GetFlagErrorBuf() *bytes.Buffer {
 	return p.flagErrorBuf
+}
+
+// UsageString returns usage string.
+func (c *Default) UsageString() string {
+	// Storing normal writers
+	tmpOutput := log.outWriter
+	tmpErr := log.errWriter
+
+	bb := new(bytes.Buffer)
+	log.outWriter = bb
+	log.errWriter = bb
+
+	// usageFunc := func(c Commander) error {
+	// 	mergePersistentFlags(c)
+	// 	err := tmpl(log.OutOrStderr(), UsageTemplate(c), c)
+	// 	if err != nil {
+	// 		log.PrintErrLn(err)
+	// 	}
+	// 	return err
+	// }
+	mergePersistentFlags(c)
+	err := tmpl(log.OutOrStderr(), UsageTemplate(c), c)
+	if err != nil {
+		log.PrintErrLn(err)
+	}
+	// return err
+	CheckErr(err)
+
+	// Setting things back to normal
+	log.outWriter = tmpOutput
+	log.errWriter = tmpErr
+
+	return bb.String()
+	// return fmt.Sprintf("UsageString: %v", c.GetUse())
 }

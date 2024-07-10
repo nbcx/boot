@@ -8,14 +8,10 @@ import (
 )
 
 type Commander interface {
-	SetParent(Commander)
-	Parent() Commander
+	// 参数
 	GetUse() string
-	GetGroupID() string
-	SetGroupID(groupID string)
 	GetHelpCommand() Commander
 	GetShort() string
-
 	GetSilenceErrors() bool
 	GetCommandCalledAs() *CommandCalledAs
 	GetSilenceUsage() bool
@@ -25,6 +21,14 @@ type Commander interface {
 	GetLong() string
 	GetExample() string
 	GetCommands() []Commander
+
+	// 层级关系
+	SetParent(Commander)
+	Parent() Commander
+	HasSubCommands() bool
+	HasParent() bool
+	GetGroupID() string
+	SetGroupID(groupID string)
 
 	// run
 	GetPersistentPreRunE() func(cmd Commander, args []string) error
@@ -65,11 +69,7 @@ type Commander interface {
 	GetValidArgsFunction() func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)
 	GetArgAliases() []string
 
-	HasSubCommands() bool
-	HasParent() bool
-
 	Runnable() bool
-	// GetUse() string
 	GetCommandGroups() []*Group
 	getHelpCommandGroupID() string
 
@@ -95,6 +95,8 @@ type Commander interface {
 	Commands() []Commander
 	GetSuggestFor() []string
 	HasAlias(s string) bool
+
+	// UsageString() string
 
 	// io
 	// getOut(def io.Writer) io.Writer

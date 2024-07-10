@@ -30,17 +30,31 @@ import (
 )
 
 var templateFuncs = template.FuncMap{
-	"trim":                    strings.TrimSpace,
-	"trimRightSpace":          trimRightSpace,
-	"trimTrailingWhitespaces": trimRightSpace,
-	"appendIfNotPresent":      appendIfNotPresent,
-	"rpad":                    rpad,
-	"gt":                      Gt,
-	"eq":                      Eq,
-	"HasAvailableSubCommands": HasAvailableSubCommands,
-	"UseLine":                 UseLine,
-	"CommandPath":             CommandPath,
-	"usageString":             UsageString,
+	"trim":                       strings.TrimSpace,
+	"trimRightSpace":             trimRightSpace,
+	"trimTrailingWhitespaces":    trimRightSpace,
+	"appendIfNotPresent":         appendIfNotPresent,
+	"rpad":                       rpad,
+	"gt":                         Gt,
+	"eq":                         Eq,
+	"HasAvailableSubCommands":    HasAvailableSubCommands,
+	"UseLine":                    UseLine,
+	"CommandPath":                CommandPath,
+	"IsAvailableCommand":         IsAvailableCommand,
+	"Name":                       name,
+	"AllChildCommandsHaveGroup":  AllChildCommandsHaveGroup,
+	"HasAvailableLocalFlags":     HasAvailableLocalFlags,
+	"HasAvailableInheritedFlags": HasAvailableInheritedFlags,
+	"HasHelpSubCommands":         HasHelpSubCommands,
+	"CommandPathPadding":         CommandPathPadding,
+	"LocalFlagUsages":            LocalFlagUsages,
+	"InheritedFlags":             InheritedFlags,
+	"NamePadding":                NamePadding,
+	// "UsageString":                UsageString,
+}
+
+func LocalFlagUsages(c Commander) string {
+	return LocalFlags(c).FlagUsages()
 }
 
 var initializers []func()
@@ -182,8 +196,7 @@ func rpad(s string, padding int) string {
 
 // tmpl executes the given template text on data, writing the result to w.
 func tmpl(w io.Writer, text string, data interface{}) error {
-	t := template.New("top")
-	t.Funcs(templateFuncs)
+	t := template.New("top").Funcs(templateFuncs)
 	template.Must(t.Parse(text))
 	return t.Execute(w, data)
 }
