@@ -28,7 +28,7 @@ import (
 )
 
 func printOptionsReST(buf *bytes.Buffer, cmd boot.Commander, name string) error {
-	flags := cmd.NonInheritedFlags()
+	flags := boot.NonInheritedFlags(cmd)
 	flags.SetOutput(buf)
 	if flags.HasAvailableFlags() {
 		buf.WriteString("Options\n")
@@ -37,7 +37,7 @@ func printOptionsReST(buf *bytes.Buffer, cmd boot.Commander, name string) error 
 		buf.WriteString("\n")
 	}
 
-	parentFlags := cmd.InheritedFlags()
+	parentFlags := boot.InheritedFlags(cmd)
 	parentFlags.SetOutput(buf)
 	if parentFlags.HasAvailableFlags() {
 		buf.WriteString("Options inherited from parent commands\n")
@@ -114,7 +114,7 @@ func GenReSTCustom(cmd boot.Commander, w io.Writer, linkHandler func(string, str
 		sort.Sort(byName(children))
 
 		for _, child := range children {
-			if !boot.IsAvailableCommand(child) || child.IsAdditionalHelpTopicCommand() {
+			if !boot.IsAvailableCommand(child) || boot.IsAdditionalHelpTopicCommand(child) {
 				continue
 			}
 			cname := name + " " + boot.ParseName(child)
@@ -145,7 +145,7 @@ func GenReSTTree(cmd boot.Commander, dir string) error {
 // with custom filePrepender and linkHandler.
 func GenReSTTreeCustom(cmd boot.Commander, dir string, filePrepender func(string) string, linkHandler func(string, string) string) error {
 	for _, c := range cmd.Commands() {
-		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || boot.IsAdditionalHelpTopicCommand(c) {
 			continue
 		}
 		if err := GenReSTTreeCustom(c, dir, filePrepender, linkHandler); err != nil {

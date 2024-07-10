@@ -24,7 +24,7 @@ func TestBashCompletionV2WithActiveHelp(t *testing.T) {
 	c := &Root{Use: "c", RunE: emptyRun}
 
 	buf := new(bytes.Buffer)
-	assertNoErr(t, c.GenBashCompletionV2(buf, true))
+	assertNoErr(t, GenBashCompletionV2(c, buf, true))
 	output := buf.String()
 
 	// check that active help is not being disabled

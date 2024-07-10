@@ -30,7 +30,7 @@ import (
 const markdownExtension = ".md"
 
 func printOptions(buf *bytes.Buffer, cmd boot.Commander, name string) error {
-	flags := cmd.NonInheritedFlags()
+	flags := boot.NonInheritedFlags(cmd)
 	flags.SetOutput(buf)
 	if flags.HasAvailableFlags() {
 		buf.WriteString("### Options\n\n```\n")
@@ -38,7 +38,7 @@ func printOptions(buf *bytes.Buffer, cmd boot.Commander, name string) error {
 		buf.WriteString("```\n\n")
 	}
 
-	parentFlags := cmd.InheritedFlags()
+	parentFlags := boot.InheritedFlags(cmd)
 	parentFlags.SetOutput(buf)
 	if parentFlags.HasAvailableFlags() {
 		buf.WriteString("### Options inherited from parent commands\n\n```\n")
@@ -100,7 +100,7 @@ func GenMarkdownCustom(cmd boot.Commander, w io.Writer, linkHandler func(string)
 		sort.Sort(byName(children))
 
 		for _, child := range children {
-			if !boot.IsAvailableCommand(child) || child.IsAdditionalHelpTopicCommand() {
+			if !boot.IsAvailableCommand(child) || boot.IsAdditionalHelpTopicCommand(child) {
 				continue
 			}
 			cname := name + " " + boot.ParseName(child)
@@ -133,7 +133,7 @@ func GenMarkdownTree(cmd boot.Commander, dir string) error {
 // with custom filePrepender and linkHandler.
 func GenMarkdownTreeCustom(cmd boot.Commander, dir string, filePrepender, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
-		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || boot.IsAdditionalHelpTopicCommand(c) {
 			continue
 		}
 		if err := GenMarkdownTreeCustom(c, dir, filePrepender, linkHandler); err != nil {

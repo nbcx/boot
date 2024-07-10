@@ -1,270 +1,24 @@
 package boot
 
 import (
+	"bytes"
 	"fmt"
-	"strconv"
 	"strings"
 )
-
-type CompleteCmd struct {
-	Default
-}
-
-func (cmd *CompleteCmd) GetUse() string {
-	return fmt.Sprintf("%s [command-line]", ShellCompRequestCmd)
-}
-
-func (cmd *CompleteCmd) Run(args []string) error {
-	finalCmd, completions, directive, err := cmd.getCompletions(args)
-	if err != nil {
-		CompErrorln(err.Error())
-		// Keep going for multiple reasons:
-		// 1- There could be some valid completions even though there was an error
-		// 2- Even without completions, we need to print the directive
-	}
-
-	noDescriptions := cmd.CalledAs() == ShellCompNoDescRequestCmd
-	if !noDescriptions {
-		if doDescriptions, err := strconv.ParseBool(getEnvConfig(cmd, configEnvVarSuffixDescriptions)); err == nil {
-			noDescriptions = !doDescriptions
-		}
-	}
-	noActiveHelp := GetActiveHelpConfig(finalCmd) == activeHelpGlobalDisable
-	out := finalCmd.OutOrStdout()
-	for _, comp := range completions {
-		if noActiveHelp && strings.HasPrefix(comp, activeHelpMarker) {
-			// Remove all activeHelp entries if it's disabled.
-			continue
-		}
-		if noDescriptions {
-			// Remove any description that may be included following a tab character.
-			comp = strings.SplitN(comp, "\t", 2)[0]
-		}
-
-		// Make sure we only write the first line to the output.
-		// This is needed if a description contains a linebreak.
-		// Otherwise the shell scripts will interpret the other lines as new flags
-		// and could therefore provide a wrong completion.
-		comp = strings.SplitN(comp, "\n", 2)[0]
-
-		// Finally trim the completion.  This is especially important to get rid
-		// of a trailing tab when there are no description following it.
-		// For example, a sub-command without a description should not be completed
-		// with a tab at the end (or else zsh will show a -- following it
-		// although there is no description).
-		comp = strings.TrimSpace(comp)
-
-		// Print each possible completion to the output for the completion script to consume.
-		fmt.Fprintln(out, comp)
-	}
-
-	// As the last printout, print the completion directive for the completion script to parse.
-	// The directive integer must be that last character following a single colon (:).
-	// The completion script expects :<directive>
-	fmt.Fprintf(out, ":%d\n", directive)
-
-	// Print some helpful info to stderr for the user to understand.
-	// Output from stderr must be ignored by the completion script.
-	fmt.Fprintf(finalCmd.ErrOrStderr(), "Completion ended with directive: %s\n", directive.string())
-	return nil
-}
-
-// func Test() {
-// 	completeCmd := &Root{
-// 		Use:                   fmt.Sprintf("%s [command-line]", ShellCompRequestCmd),
-// 		Aliases:               []string{ShellCompNoDescRequestCmd},
-// 		DisableFlagsInUseLine: true,
-// 		Hidden:                true,
-// 		DisableFlagParsing:    true,
-// 		Args:                  MinimumNArgs(1),
-// 		Short:                 "Request shell completion choices for the specified command-line",
-// 		Long: fmt.Sprintf("%[2]s is a special command that is used by the shell completion logic\n%[1]s",
-// 			"to request completion choices for the specified command-line.", ShellCompRequestCmd),
-// 		Run: func(cmd Commander, args []string) {
-
-// 		},
-// 	}
-// }
-
-type BashCompleteCmd struct {
-	Default
-}
-
-func (cmd *BashCompleteCmd) Run(args []string) error {
-	return cmd.Default.Base().GenBashCompletionV2(cmd.OutOrStdout(), !cmd.CompletionOptions.DisableDescriptions)
-}
-func (cmd *BashCompleteCmd) GetUse() string {
-	return "bash"
-}
-
-func NewBashCompleteCmd(cmd Commander, shortDesc string) *BashCompleteCmd {
-	return &BashCompleteCmd{
-		Default{
-			Short: fmt.Sprintf(shortDesc, "bash"),
-			Long: fmt.Sprintf(`Generate the autocompletion script for the bash shell.
-
-This script depends on the 'bash-completion' package.
-If it is not installed already, you can install it via your OS's package manager.
-
-To load completions in your current shell session:
-
-	source <(%[1]s completion bash)
-
-To load completions for every new session, execute once:
-
-#### Linux:
-
-	%[1]s completion bash > /etc/bash_completion.d/%[1]s
-
-#### macOS:
-
-	%[1]s completion bash > $(brew --prefix)/etc/bash_completion.d/%[1]s
-
-You will need to start a new shell for this setup to take effect.
-`, name(cmd)),
-			Args:                  NoArgs,
-			DisableFlagsInUseLine: true,
-			ValidArgsFunction:     NoFileCompletions,
-		},
-	}
-}
-
-type ZshCompleteCmd struct {
-	Default
-	noDesc bool
-}
-
-func (cmd *ZshCompleteCmd) GetUse() string {
-	return "zsh"
-}
-
-func NewZshCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *ZshCompleteCmd {
-	return &ZshCompleteCmd{
-		Default: Default{
-			Short: fmt.Sprintf(shortDesc, "zsh"),
-			Long: fmt.Sprintf(`Generate the autocompletion script for the zsh shell.
-
-If shell completion is not already enabled in your environment you will need
-to enable it.  You can execute the following once:
-
-	echo "autoload -U compinit; compinit" >> ~/.zshrc
-
-To load completions in your current shell session:
-
-	source <(%[1]s completion zsh)
-
-To load completions for every new session, execute once:
-
-#### Linux:
-
-	%[1]s completion zsh > "${fpath[1]}/_%[1]s"
-
-#### macOS:
-
-	%[1]s completion zsh > $(brew --prefix)/share/zsh/site-functions/_%[1]s
-
-You will need to start a new shell for this setup to take effect.
-`, name(cmd.Base())),
-			Args:              NoArgs,
-			ValidArgsFunction: NoFileCompletions,
-		},
-		noDesc: noDesc,
-	}
-}
-
-func (p *ZshCompleteCmd) Run(args []string) error {
-	out := p.Base().OutOrStdout()
-	if p.noDesc {
-		return p.Base().GenZshCompletionNoDesc(out)
-	}
-	return p.Base().GenZshCompletion(out)
-}
-
-type FishCompleteCmd struct {
-	Default
-	noDesc bool
-}
-
-func (cmd *FishCompleteCmd) GetUse() string {
-	return "fish"
-}
-
-func (p *FishCompleteCmd) Run(args []string) error {
-	out := p.Base().OutOrStdout()
-	return p.Base().GenFishCompletion(out, !p.noDesc)
-}
-
-func NewFishCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *FishCompleteCmd {
-	return &FishCompleteCmd{
-		Default: Default{
-			Short: fmt.Sprintf(shortDesc, "fish"),
-			Long: fmt.Sprintf(`Generate the autocompletion script for the fish shell.
-
-To load completions in your current shell session:
-
-	%[1]s completion fish | source
-
-To load completions for every new session, execute once:
-
-	%[1]s completion fish > ~/.config/fish/completions/%[1]s.fish
-
-You will need to start a new shell for this setup to take effect.
-`, name(cmd.Base())),
-			Args:              NoArgs,
-			ValidArgsFunction: NoFileCompletions,
-		},
-		noDesc: noDesc,
-	}
-}
-
-type PowershellCompleteCmd struct {
-	Default
-	noDesc bool
-}
-
-func (cmd *PowershellCompleteCmd) Run(args []string) error {
-	out := cmd.Base().OutOrStdout()
-	if cmd.noDesc {
-		return cmd.Base().GenPowerShellCompletion(out)
-	}
-	return cmd.Base().GenPowerShellCompletionWithDesc(out)
-}
-func (cmd *PowershellCompleteCmd) GetUse() string {
-	return "powershell"
-}
-func NewPowershellCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *PowershellCompleteCmd {
-	return &PowershellCompleteCmd{
-		Default: Default{
-			Short: fmt.Sprintf(shortDesc, "powershell"),
-			Long: fmt.Sprintf(`Generate the autocompletion script for powershell.
-
-To load completions in your current shell session:
-
-	%[1]s completion powershell | Out-String | Invoke-Expression
-
-To load completions for every new session, add the output of the above command
-to your powershell profile.
-`, name(cmd.Base())),
-			Args:              NoArgs,
-			ValidArgsFunction: NoFileCompletions,
-		},
-		noDesc: noDesc,
-	}
-}
 
 type HelpCmd struct {
 	Default
 }
 
 func (p *HelpCmd) Run(args []string) error {
-	cmd, _, e := Find(p.Base(), args)
+	cmd, _, e := Find(Base(p), args)
 	if cmd == nil || e != nil {
-		cmd.Printf("Unknown help topic %#q\n", args)
-		CheckErr(cmd.Base().Usage())
+		log.Printf("Unknown help topic %#q\n", args)
+		CheckErr(Usage(Base(cmd)))
 	} else {
 		InitDefaultHelpFlag(cmd)    // make possible 'help' flag to be shown
 		InitDefaultVersionFlag(cmd) // make possible 'version' flag to be shown
-		CheckErr(cmd.Help())
+		CheckErr(Help(cmd))
 	}
 
 	return nil
@@ -282,13 +36,13 @@ func NewHelpCmd(cmd Commander) *HelpCmd {
 Simply type ` + displayName(cmd) + ` help [path to command] for full details.`,
 			ValidArgsFunction: func(c Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				var completions []string
-				cmd, _, e := Find(c.Base(), args)
+				cmd, _, e := Find(Base(c), args)
 				if e != nil {
 					return nil, ShellCompDirectiveNoFileComp
 				}
 				if cmd == nil {
 					// Root help command.
-					cmd = c.Base()
+					cmd = Base(c)
 				}
 				for _, subCmd := range cmd.Commands() {
 					if IsAvailableCommand(subCmd) || subCmd == cmd.GetHelpCommand() {
@@ -302,4 +56,128 @@ Simply type ` + displayName(cmd) + ` help [path to command] for full details.`,
 			GroupID: cmd.getHelpCommandGroupID(),
 		},
 	}
+}
+
+// UsageTemplate returns usage template for the command.
+func UsageTemplate(c Commander) string {
+	// if c.usageTemplate != "" {
+	// 	return c.usageTemplate
+	// }
+	// if c.HasParent() {
+	// 	return UsageTemplate(c.Parent())
+	// }
+	return `Usage:{{if .Runnable}}
+  {{. | UseLine}}{{end}}{{if . | HasAvailableSubCommands}}
+  {{. | CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+
+Aliases:
+  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+Examples:
+{{.Example}}{{end}}{{if . | HasAvailableSubCommands}}{{$cmds := .GetCommands}}{{if eq (len .Groups) 0}}
+
+Available Commands:{{range $cmds}}{{if (or (. | IsAvailableCommand) (eq . | Name "help"))}}
+  {{rpad (. | Name) (. | NamePadding) }} {{.Short}}{{end}}{{end}}{{else}}{{range $group := .Groups}}
+
+{{.Title}}{{range $cmds}}{{if (and (eq .GroupID $group.ID) (or (. | IsAvailableCommand) (eq . | Name "help")))}}
+  {{rpad (. | Name) (. | NamePadding) }} {{.Short}}{{end}}{{end}}{{end}}{{if not . | AllChildCommandsHaveGroup}}
+
+Additional Commands:{{range $cmds}}{{if (and (eq .GroupID "") (or (. | IsAvailableCommand) (eq (. | Name) "help")))}}
+  {{rpad (. | Name) (. | NamePadding) }} {{.Short}}{{end}}{{end}}{{end}}{{end}}{{end}}{{if . | HasAvailableLocalFlags}}
+
+Flags:
+{{. | LocalFlagUsages | trimTrailingWhitespaces}}{{end}}{{if . | HasAvailableInheritedFlags}}
+
+Global Flags:
+{{. | InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if . | HasHelpSubCommands}}
+
+Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{rpad (. | CommandPath) (. | CommandPathPadding)}} {{.Short}}{{end}}{{end}}{{end}}{{if . | HasAvailableSubCommands}}
+
+Use "{{. | CommandPath}} [command] --help" for more information about a command.{{end}}
+`
+}
+
+// HelpTemplate return help template for the command.
+func HelpTemplate(c Commander) string {
+	// 	if c.helpTemplate != "" {
+	// 		return c.helpTemplate
+	// 	}
+
+	// if c.HasParent() {
+	// 	return HelpTemplate(c.Parent())
+	// }
+	str := c.GetLong()
+	if str == "" {
+		str = c.GetShort()
+	}
+	str = trimRightSpace(str)
+	if c.Runnable() || c.HasSubCommands() {
+		str += UsageString(c)
+	}
+	return str
+	// return `{{with (or .GetLong .GetShort)}}{{. | trimTrailingWhitespaces}}
+
+	// {{end}}{{if or .Runnable .HasSubCommands}}{{ .| $UsageString}}{{end}}`
+}
+
+// UsageFunc returns either the function set by SetUsageFunc for this command
+// or a parent, or it returns a default usage function.
+// func UsageFunc(c Commander) (f func(Commander) error) {
+// 	// if c.usageFunc != nil {
+// 	// 	return c.usageFunc
+// 	// }
+// 	// if c.HasParent() {
+// 	// 	return c.Parent().UsageFunc()
+// 	// }
+// 	return func(c Commander) error {
+// 		mergePersistentFlags(c)
+// 		err := tmpl(log.OutOrStderr(), UsageTemplate(c), c)
+// 		if err != nil {
+// 			log.PrintErrLn(err)
+// 		}
+// 		return err
+// 	}
+// }
+
+// UsageString returns usage string.
+func UsageString(c Commander) string {
+	// Storing normal writers
+	tmpOutput := log.outWriter
+	tmpErr := log.errWriter
+
+	bb := new(bytes.Buffer)
+	log.outWriter = bb
+	log.errWriter = bb
+
+	// usageFunc := func(c Commander) error {
+	// 	mergePersistentFlags(c)
+	// 	err := tmpl(log.OutOrStderr(), UsageTemplate(c), c)
+	// 	if err != nil {
+	// 		log.PrintErrLn(err)
+	// 	}
+	// 	return err
+	// }
+	mergePersistentFlags(c)
+	err := tmpl(log.OutOrStderr(), UsageTemplate(c), c)
+	if err != nil {
+		log.PrintErrLn(err)
+	}
+	// return err
+	CheckErr(err)
+
+	// Setting things back to normal
+	log.outWriter = tmpOutput
+	log.errWriter = tmpErr
+
+	return bb.String()
+	// return fmt.Sprintf("UsageString: %v", c.GetUse())
+}
+
+// Help puts out the help for the command.
+// Used when a user calls help [command].
+// Can be defined by user by overriding HelpFunc.
+func Help(c Commander) error {
+	HelpFunc(c, []string{})
+	return nil
 }

@@ -33,7 +33,7 @@ func TestCompleteNoDesCmdInFishScript(t *testing.T) {
 	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
-	assertNoErr(t, rootCmd.GenFishCompletion(buf, false))
+	assertNoErr(t, GenFishCompletion(rootCmd, buf, false))
 	output := buf.String()
 
 	check(t, output, ShellCompNoDescRequestCmd)
@@ -49,7 +49,7 @@ func TestCompleteCmdInFishScript(t *testing.T) {
 	rootCmd.Add(child)
 
 	buf := new(bytes.Buffer)
-	assertNoErr(t, rootCmd.GenFishCompletion(buf, true))
+	assertNoErr(t, GenFishCompletion(rootCmd, buf, true))
 	output := buf.String()
 
 	check(t, output, ShellCompRequestCmd)
@@ -59,7 +59,7 @@ func TestCompleteCmdInFishScript(t *testing.T) {
 func TestProgWithDash(t *testing.T) {
 	rootCmd := &Root{Use: "root-dash", Args: NoArgs, RunE: emptyRun}
 	buf := new(bytes.Buffer)
-	assertNoErr(t, rootCmd.GenFishCompletion(buf, false))
+	assertNoErr(t, GenFishCompletion(rootCmd, buf, false))
 	output := buf.String()
 
 	// Functions name should have replace the '-'
@@ -74,7 +74,7 @@ func TestProgWithDash(t *testing.T) {
 func TestProgWithColon(t *testing.T) {
 	rootCmd := &Root{Use: "root:colon", Args: NoArgs, RunE: emptyRun}
 	buf := new(bytes.Buffer)
-	assertNoErr(t, rootCmd.GenFishCompletion(buf, false))
+	assertNoErr(t, GenFishCompletion(rootCmd, buf, false))
 	output := buf.String()
 
 	// Functions name should have replace the ':'
@@ -90,7 +90,7 @@ func TestFishCompletionNoActiveHelp(t *testing.T) {
 	c := &Root{Use: "c", RunE: emptyRun}
 
 	buf := new(bytes.Buffer)
-	assertNoErr(t, c.GenFishCompletion(buf, true))
+	assertNoErr(t, GenFishCompletion(c, buf, true))
 	output := buf.String()
 
 	// check that active help is being disabled
@@ -114,7 +114,7 @@ func TestGenFishCompletionFile(t *testing.T) {
 	}
 	rootCmd.Add(child)
 
-	assertNoErr(t, rootCmd.GenFishCompletionFile(tmpFile.Name(), false))
+	assertNoErr(t, GenFishCompletionFile(rootCmd, tmpFile.Name(), false))
 }
 
 func TestFailGenFishCompletionFile(t *testing.T) {
@@ -136,7 +136,7 @@ func TestFailGenFishCompletionFile(t *testing.T) {
 	}
 	rootCmd.Add(child)
 
-	got := rootCmd.GenFishCompletionFile(f.Name(), false)
+	got := GenFishCompletionFile(rootCmd, f.Name(), false)
 	if !errors.Is(got, os.ErrPermission) {
 		t.Errorf("got: %s, want: %s", got.Error(), os.ErrPermission.Error())
 	}

@@ -51,7 +51,7 @@ func GenManTreeFromOpts(cmd boot.Commander, opts GenManTreeOptions) error {
 		header = &GenManHeader{}
 	}
 	for _, c := range cmd.Commands() {
-		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || boot.IsAdditionalHelpTopicCommand(c) {
 			continue
 		}
 		if err := GenManTreeFromOpts(c, opts); err != nil {
@@ -185,13 +185,13 @@ func manPrintFlags(buf io.StringWriter, flags *pflag.FlagSet) {
 }
 
 func manPrintOptions(buf io.StringWriter, command boot.Commander) {
-	flags := command.NonInheritedFlags()
+	flags := boot.NonInheritedFlags(command)
 	if flags.HasAvailableFlags() {
 		boot.WriteStringAndCheck(buf, "# OPTIONS\n")
 		manPrintFlags(buf, flags)
 		boot.WriteStringAndCheck(buf, "\n")
 	}
-	flags = command.InheritedFlags()
+	flags = boot.InheritedFlags(command)
 	if flags.HasAvailableFlags() {
 		boot.WriteStringAndCheck(buf, "# OPTIONS INHERITED FROM PARENT COMMANDS\n")
 		manPrintFlags(buf, flags)
@@ -231,7 +231,7 @@ func genMan(cmd boot.Commander, header *GenManHeader) []byte {
 		children := cmd.Commands()
 		sort.Sort(byName(children))
 		for _, c := range children {
-			if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
+			if !boot.IsAvailableCommand(c) || boot.IsAdditionalHelpTopicCommand(c) {
 				continue
 			}
 			seealso := fmt.Sprintf("**%s-%s(%s)**", dashCommandName, boot.ParseName(c), header.Section)

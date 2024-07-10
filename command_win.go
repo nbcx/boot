@@ -29,11 +29,11 @@ var preExecHookFn = preExecHook
 
 func preExecHook(c *Root) {
 	if MousetrapHelpText != "" && mousetrap.StartedByExplorer() {
-		c.Print(MousetrapHelpText)
+		log.Print(MousetrapHelpText)
 		if MousetrapDisplayDuration > 0 {
 			time.Sleep(MousetrapDisplayDuration)
 		} else {
-			c.Println("Press return to continue...")
+			log.Println("Press return to continue...")
 			fmt.Scanln()
 		}
 		os.Exit(1)

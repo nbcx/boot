@@ -28,7 +28,7 @@ func hasSeeAlso(cmd boot.Commander) bool {
 		return true
 	}
 	for _, c := range cmd.Commands() {
-		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || boot.IsAdditionalHelpTopicCommand(c) {
 			continue
 		}
 		return true

@@ -59,7 +59,7 @@ func GenYamlTree(cmd boot.Commander, dir string) error {
 // GenYamlTreeCustom creates yaml structured ref files.
 func GenYamlTreeCustom(cmd boot.Commander, dir string, filePrepender, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
-		if !boot.IsAvailableCommand(c) || c.IsAdditionalHelpTopicCommand() {
+		if !boot.IsAvailableCommand(c) || boot.IsAdditionalHelpTopicCommand(c) {
 			continue
 		}
 		if err := GenYamlTreeCustom(c, dir, filePrepender, linkHandler); err != nil {
@@ -108,11 +108,11 @@ func GenYamlCustom(cmd boot.Commander, w io.Writer, linkHandler func(string) str
 		yamlDoc.Example = cmd.GetExample()
 	}
 
-	flags := cmd.NonInheritedFlags()
+	flags := boot.NonInheritedFlags(cmd)
 	if flags.HasFlags() {
 		yamlDoc.Options = genFlagResult(flags)
 	}
-	flags = cmd.InheritedFlags()
+	flags = boot.InheritedFlags(cmd)
 	if flags.HasFlags() {
 		yamlDoc.InheritedOptions = genFlagResult(flags)
 	}
@@ -126,7 +126,7 @@ func GenYamlCustom(cmd boot.Commander, w io.Writer, linkHandler func(string) str
 		children := cmd.Commands()
 		sort.Sort(byName(children))
 		for _, child := range children {
-			if !boot.IsAvailableCommand(child) || child.IsAdditionalHelpTopicCommand() {
+			if !boot.IsAvailableCommand(child) || boot.IsAdditionalHelpTopicCommand(child) {
 				continue
 			}
 			result = append(result, boot.CommandPath(child)+" - "+child.GetShort())

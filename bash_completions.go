@@ -464,7 +464,7 @@ func writeFlagHandler(buf io.StringWriter, nameStr string, annotations map[strin
 
 			var ext string
 			if len(value) > 0 {
-				ext = fmt.Sprintf("__%s_handle_filename_extension_flag ", name(cmd.Base())) + strings.Join(value, "|")
+				ext = fmt.Sprintf("__%s_handle_filename_extension_flag ", name(Base(cmd))) + strings.Join(value, "|")
 			} else {
 				ext = "_filedir"
 			}
@@ -483,7 +483,7 @@ func writeFlagHandler(buf io.StringWriter, nameStr string, annotations map[strin
 
 			var ext string
 			if len(value) == 1 {
-				ext = fmt.Sprintf("__%s_handle_subdirs_in_dir_flag ", name(cmd.Base())) + value[0]
+				ext = fmt.Sprintf("__%s_handle_subdirs_in_dir_flag ", name(Base(cmd))) + value[0]
 			} else {
 				ext = "_filedir -d"
 			}
@@ -544,7 +544,7 @@ func prepareCustomAnnotationsForFlags(cmd Commander) {
 		if flag.Annotations == nil {
 			flag.Annotations = map[string][]string{}
 		}
-		flag.Annotations[BashCompCustom] = []string{fmt.Sprintf("__%[1]s_handle_go_custom_completion", name(cmd.Base()))}
+		flag.Annotations[BashCompCustom] = []string{fmt.Sprintf("__%[1]s_handle_go_custom_completion", name(Base(cmd)))}
 	}
 }
 
@@ -562,8 +562,8 @@ func writeFlags(buf io.StringWriter, cmd Commander) {
 		WriteStringAndCheck(buf, "    flag_parsing_disabled=1\n")
 	}
 
-	localNonPersistentFlags := cmd.LocalNonPersistentFlags()
-	cmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
+	localNonPersistentFlags := LocalNonPersistentFlags(cmd)
+	NonInheritedFlags(cmd).VisitAll(func(flag *pflag.Flag) {
 		if nonCompletableFlag(flag) {
 			return
 		}
@@ -573,11 +573,11 @@ func writeFlags(buf io.StringWriter, cmd Commander) {
 		}
 		// localNonPersistentFlags are used to stop the completion of subcommands when one is set
 		// if TraverseChildren is true we should allow to complete subcommands
-		if localNonPersistentFlags.Lookup(flag.Name) != nil && !cmd.Base().GetTraverseChildren() {
+		if localNonPersistentFlags.Lookup(flag.Name) != nil && !Base(cmd).GetTraverseChildren() {
 			writeLocalNonPersistentFlag(buf, flag)
 		}
 	})
-	cmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
+	InheritedFlags(cmd).VisitAll(func(flag *pflag.Flag) {
 		if nonCompletableFlag(flag) {
 			return
 		}
@@ -592,7 +592,7 @@ func writeFlags(buf io.StringWriter, cmd Commander) {
 
 func writeRequiredFlag(buf io.StringWriter, cmd Commander) {
 	WriteStringAndCheck(buf, "    must_have_one_flag=()\n")
-	flags := cmd.NonInheritedFlags()
+	flags := NonInheritedFlags(cmd)
 	flags.VisitAll(func(flag *pflag.Flag) {
 		if nonCompletableFlag(flag) {
 			return
@@ -660,7 +660,7 @@ func gen(buf io.StringWriter, cmd Commander) {
 	commandName = strings.ReplaceAll(commandName, " ", "_")
 	commandName = strings.ReplaceAll(commandName, ":", "__")
 
-	if cmd.Base() == cmd {
+	if Base(cmd) == cmd {
 		WriteStringAndCheck(buf, fmt.Sprintf("_%s_root_command()\n{\n", commandName))
 	} else {
 		WriteStringAndCheck(buf, fmt.Sprintf("_%s()\n{\n", commandName))

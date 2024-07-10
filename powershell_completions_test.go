@@ -24,7 +24,7 @@ func TestPwshCompletionNoActiveHelp(t *testing.T) {
 	c := &Root{Use: "c", RunE: emptyRun}
 
 	buf := new(bytes.Buffer)
-	assertNoErr(t, c.GenPowerShellCompletion(buf))
+	assertNoErr(t, GenPowerShellCompletion(c, buf))
 	output := buf.String()
 
 	// check that active help is being disabled

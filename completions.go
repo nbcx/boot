@@ -132,7 +132,7 @@ func FixedCompletions(choices []string, directive ShellCompDirective) func(cmd C
 
 // RegisterFlagCompletionFunc should be called to register a function to provide completion for a flag.
 func (c *Root) RegisterFlagCompletionFunc(flagName string, f func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)) error {
-	flag := c.Flag(flagName)
+	flag := Flag(c, flagName)
 	if flag == nil {
 		return fmt.Errorf("RegisterFlagCompletionFunc: flag '%s' does not exist", flagName)
 	}
@@ -148,7 +148,7 @@ func (c *Root) RegisterFlagCompletionFunc(flagName string, f func(cmd Commander,
 
 // GetFlagCompletionFunc returns the completion function for the given flag of the command, if available.
 func (c *Root) GetFlagCompletionFunc(flagName string) (func(Commander, []string, string) ([]string, ShellCompDirective), bool) {
-	flag := c.Flag(flagName)
+	flag := Flag(c, flagName)
 	if flag == nil {
 		return nil, false
 	}
@@ -277,11 +277,11 @@ func (c *Root) initCompleteCmd(args []string) {
 		// for example, having this command would cause problems to a
 		// cobra program that only consists of the root command, since this
 		// command would cause the root command to suddenly have a subcommand.
-		c.RemoveCommand(completeCmd)
+		RemoveCommand(c, completeCmd)
 	}
 }
 
-func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDirective, error) {
+func getCompletions(c Commander, args []string) (Commander, []string, ShellCompDirective, error) {
 	// The last argument, which is not completely typed by the user,
 	// should not be part of the list of arguments
 	toComplete := args[len(args)-1]
@@ -292,17 +292,17 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 	var err error
 	// Find the real command for which completion must be performed
 	// check if we need to traverse here to parse local flags on parent commands
-	if c.Base().GetTraverseChildren() {
-		finalCmd, finalArgs, err = Traverse(c.Base(), trimmedArgs)
+	if Base(c).GetTraverseChildren() {
+		finalCmd, finalArgs, err = Traverse(Base(c), trimmedArgs)
 	} else {
 		// For Root commands that don't specify any value for their Args fields, when we call
 		// Find(), if those Root commands don't have any sub-commands, they will accept arguments.
 		// However, because we have added the __complete sub-command in the current code path, the
 		// call to Find() -> legacyArgs() will return an error if there are any arguments.
 		// To avoid this, we first remove the __complete command to get back to having no sub-commands.
-		rootCmd := c.Base()
+		rootCmd := Base(c)
 		if len(rootCmd.Commands()) == 1 {
-			rootCmd.RemoveCommand(c)
+			RemoveCommand(rootCmd, c)
 		}
 
 		finalCmd, finalArgs, err = Find(rootCmd, trimmedArgs)
@@ -311,7 +311,7 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 		// Unable to find the real command. E.g., <program> someInvalidCmd <TAB>
 		return c, []string{}, ShellCompDirectiveDefault, fmt.Errorf("unable to find a command for arguments: %v", trimmedArgs)
 	}
-	finalCmd.SetContext(c.ctx)
+	finalCmd.SetContext(c.Context())
 
 	// These flags are normally added when `execute()` is called on `finalCmd`,
 	// however, when doing completion, we don't call `finalCmd.execute()`.
@@ -334,15 +334,15 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 	// if -- was already set or interspersed is false and there is already one arg then
 	// the extra added -- is counted as arg.
 	flagCompletion := true
-	_ = finalCmd.ParseFlags(append(finalArgs, "--"))
-	newArgCount := finalCmd.GetFlags().NArg()
+	_ = ParseFlags(finalCmd, append(finalArgs, "--"))
+	newArgCount := Flags(finalCmd).NArg()
 
 	// Parse the flags early so we can check if required flags are set
-	if err = finalCmd.ParseFlags(finalArgs); err != nil {
+	if err = ParseFlags(finalCmd, finalArgs); err != nil {
 		return finalCmd, []string{}, ShellCompDirectiveDefault, fmt.Errorf("Error while parsing flags from args %v: %s", finalArgs, err.Error())
 	}
 
-	realArgCount := finalCmd.GetFlags().NArg()
+	realArgCount := Flags(finalCmd).NArg()
 	if newArgCount > realArgCount {
 		// don't do flag completion (see above)
 		flagCompletion = false
@@ -364,7 +364,7 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 	// We only remove the flags from the arguments if DisableFlagParsing is not set.
 	// This is important for commands which have requested to do their own flag completion.
 	if !finalCmd.GetDisableFlagParsing() {
-		finalArgs = finalCmd.GetFlags().Args()
+		finalArgs = Flags(finalCmd).Args()
 	}
 
 	if flag != nil && flagCompletion {
@@ -395,7 +395,7 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 	var directive ShellCompDirective
 
 	// Enforce flag groups before doing flag completions
-	finalCmd.enforceFlagGroupsForCompletion()
+	enforceFlagGroupsForCompletion(finalCmd)
 
 	// Note that we want to perform flagname completion even if finalCmd.DisableFlagParsing==true;
 	// doing this allows for completion of persistent flag names even for commands that disable flag parsing.
@@ -422,7 +422,7 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 			// We cannot use finalCmd.Flags() because we may not have called ParsedFlags() for commands
 			// that have set DisableFlagParsing; it is ParseFlags() that merges the inherited and
 			// non-inherited flags.
-			finalCmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
+			InheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
 				doCompleteFlags(flag)
 			})
 			// Try to complete non-inherited flags even if DisableFlagParsing==true.
@@ -430,7 +430,7 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 			// if the actual parsing of flags is not done by Cobra.
 			// For instance, Helm uses this to provide flag name completion for
 			// some of its plugins.
-			finalCmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
+			NonInheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
 				doCompleteFlags(flag)
 			})
 		}
@@ -455,10 +455,10 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 			foundLocalNonPersistentFlag := false
 			// If TraverseChildren is true on the root command we don't check for
 			// local flags because we can use a local flag on a parent command
-			if !finalCmd.Base().GetTraverseChildren() {
+			if !Base(finalCmd).GetTraverseChildren() {
 				// Check if there are any local, non-persistent flags on the command-line
-				localNonPersistentFlags := finalCmd.LocalNonPersistentFlags()
-				finalCmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
+				localNonPersistentFlags := LocalNonPersistentFlags(finalCmd)
+				NonInheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
 					if localNonPersistentFlags.Lookup(flag.Name) != nil && flag.Changed {
 						foundLocalNonPersistentFlag = true
 					}
@@ -538,11 +538,11 @@ func (c *Root) getCompletions(args []string) (Commander, []string, ShellCompDire
 }
 
 func helpOrVersionFlagPresent(cmd Commander) bool {
-	if versionFlag := cmd.GetFlags().Lookup("version"); versionFlag != nil &&
+	if versionFlag := Flags(cmd).Lookup("version"); versionFlag != nil &&
 		len(versionFlag.Annotations[FlagSetByCobraAnnotation]) > 0 && versionFlag.Changed {
 		return true
 	}
-	if helpFlag := cmd.GetFlags().Lookup("help"); helpFlag != nil &&
+	if helpFlag := Flags(cmd).Lookup("help"); helpFlag != nil &&
 		len(helpFlag.Annotations[FlagSetByCobraAnnotation]) > 0 && helpFlag.Changed {
 		return true
 	}
@@ -597,10 +597,10 @@ func completeRequireFlags(finalCmd Commander, toComplete string) []string {
 	// We cannot use finalCmd.Flags() because we may not have called ParsedFlags() for commands
 	// that have set DisableFlagParsing; it is ParseFlags() that merges the inherited and
 	// non-inherited flags.
-	finalCmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
+	InheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
 		doCompleteRequiredFlags(flag)
 	})
-	finalCmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
+	NonInheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
 		doCompleteRequiredFlags(flag)
 	})
 
@@ -718,7 +718,7 @@ func InitDefaultCompletionCmd(c Commander) {
 		Short: "Generate the autocompletion script for the specified shell",
 		Long: fmt.Sprintf(`Generate the autocompletion script for %[1]s for the specified shell.
 See each sub-command's help for details on how to use the generated script.
-`, name(c.Base())),
+`, name(Base(c))),
 		Args:              NoArgs,
 		ValidArgsFunction: NoFileCompletions,
 		Hidden:            completionOptions.HiddenDefaultCmd,
@@ -762,7 +762,7 @@ See each sub-command's help for details on how to use the generated script.
 	// 	}
 	bash := NewBashCompleteCmd(c, shortDesc)
 	if haveNoDescFlag {
-		bash.Flags().BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
+		Flags(bash).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
 	// 	zsh := &Root{
@@ -803,7 +803,7 @@ See each sub-command's help for details on how to use the generated script.
 	//	}
 	zsh := NewZshCompleteCmd(c, shortDesc, noDesc)
 	if haveNoDescFlag {
-		zsh.Flags().BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
+		Flags(zsh).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
 	// 	fish := &Root{
@@ -829,7 +829,7 @@ See each sub-command's help for details on how to use the generated script.
 	// 	}
 	fish := NewFishCompleteCmd(c, shortDesc, noDesc)
 	if haveNoDescFlag {
-		fish.Flags().BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
+		Flags(fish).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
 	// 	powershell := &Root{
@@ -856,21 +856,21 @@ See each sub-command's help for details on how to use the generated script.
 	//	}
 	powershell := NewPowershellCompleteCmd(c, shortDesc, noDesc)
 	if haveNoDescFlag {
-		powershell.Flags().BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
+		Flags(powershell).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
 	completionCmd.Add(bash, zsh, fish, powershell)
 }
 
 func findFlag(cmd Commander, name string) *pflag.Flag {
-	flagSet := cmd.GetFlags()
+	flagSet := Flags(cmd)
 	if len(name) == 1 {
 		// First convert the short flag into a long flag
 		// as the cmd.Flag() search only accepts long flags
 		if short := flagSet.ShorthandLookup(name); short != nil {
 			name = short.Name
 		} else {
-			set := cmd.InheritedFlags()
+			set := InheritedFlags(cmd)
 			if short = set.ShorthandLookup(name); short != nil {
 				name = short.Name
 			} else {
@@ -878,7 +878,7 @@ func findFlag(cmd Commander, name string) *pflag.Flag {
 			}
 		}
 	}
-	return cmd.Flag(name)
+	return Flag(cmd, name)
 }
 
 // CompDebug prints the specified string to the same file as where the
@@ -948,7 +948,7 @@ func configEnvVar(name, suffix string) string {
 // If the value is empty or not set, the value of the environment variable
 // COBRA_<SUFFIX> is returned instead.
 func getEnvConfig(cmd Commander, suffix string) string {
-	v := os.Getenv(configEnvVar(name(cmd.Base()), suffix))
+	v := os.Getenv(configEnvVar(name(Base(cmd)), suffix))
 	if v == "" {
 		v = os.Getenv(configEnvVar(configEnvVarGlobalPrefix, suffix))
 	}

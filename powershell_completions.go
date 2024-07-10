@@ -285,41 +285,41 @@ Register-ArgumentCompleter -CommandName '%[1]s' -ScriptBlock ${__%[2]sCompleterB
 		ShellCompDirectiveFilterFileExt, ShellCompDirectiveFilterDirs, ShellCompDirectiveKeepOrder, activeHelpEnvVar(name)))
 }
 
-func (c *Root) genPowerShellCompletion(w io.Writer, includeDesc bool) error {
+func genPowerShellCompletion(c Commander, w io.Writer, includeDesc bool) error {
 	buf := new(bytes.Buffer)
 	genPowerShellComp(buf, name(c), includeDesc)
 	_, err := buf.WriteTo(w)
 	return err
 }
 
-func (c *Root) genPowerShellCompletionFile(filename string, includeDesc bool) error {
+func genPowerShellCompletionFile(c Commander, filename string, includeDesc bool) error {
 	outFile, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer outFile.Close()
 
-	return c.genPowerShellCompletion(outFile, includeDesc)
+	return genPowerShellCompletion(c, outFile, includeDesc)
 }
 
 // GenPowerShellCompletionFile generates powershell completion file without descriptions.
-func (c *Root) GenPowerShellCompletionFile(filename string) error {
-	return c.genPowerShellCompletionFile(filename, false)
+func GenPowerShellCompletionFile(c Commander, filename string) error {
+	return genPowerShellCompletionFile(c, filename, false)
 }
 
 // GenPowerShellCompletion generates powershell completion file without descriptions
 // and writes it to the passed writer.
-func (c *Root) GenPowerShellCompletion(w io.Writer) error {
-	return c.genPowerShellCompletion(w, false)
+func GenPowerShellCompletion(c Commander, w io.Writer) error {
+	return genPowerShellCompletion(c, w, false)
 }
 
 // GenPowerShellCompletionFileWithDesc generates powershell completion file with descriptions.
-func (c *Root) GenPowerShellCompletionFileWithDesc(filename string) error {
-	return c.genPowerShellCompletionFile(filename, true)
+func GenPowerShellCompletionFileWithDesc(c Commander, filename string) error {
+	return genPowerShellCompletionFile(c, filename, true)
 }
 
 // GenPowerShellCompletionWithDesc generates powershell completion file with descriptions
 // and writes it to the passed writer.
-func (c *Root) GenPowerShellCompletionWithDesc(w io.Writer) error {
-	return c.genPowerShellCompletion(w, true)
+func GenPowerShellCompletionWithDesc(c Commander, w io.Writer) error {
+	return genPowerShellCompletion(c, w, true)
 }

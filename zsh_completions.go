@@ -22,25 +22,25 @@ import (
 )
 
 // GenZshCompletionFile generates zsh completion file including descriptions.
-func (c *Root) GenZshCompletionFile(filename string) error {
-	return c.genZshCompletionFile(filename, true)
+func GenZshCompletionFile(c Commander, filename string) error {
+	return genZshCompletionFile(c, filename, true)
 }
 
 // GenZshCompletion generates zsh completion file including descriptions
 // and writes it to the passed writer.
-func (c *Root) GenZshCompletion(w io.Writer) error {
-	return c.genZshCompletion(w, true)
+func GenZshCompletion(c Commander, w io.Writer) error {
+	return genZshCompletion(c, w, true)
 }
 
 // GenZshCompletionFileNoDesc generates zsh completion file without descriptions.
-func (c *Root) GenZshCompletionFileNoDesc(filename string) error {
-	return c.genZshCompletionFile(filename, false)
+func GenZshCompletionFileNoDesc(c Commander, filename string) error {
+	return genZshCompletionFile(c, filename, false)
 }
 
 // GenZshCompletionNoDesc generates zsh completion file without descriptions
 // and writes it to the passed writer.
-func (c *Root) GenZshCompletionNoDesc(w io.Writer) error {
-	return c.genZshCompletion(w, false)
+func GenZshCompletionNoDesc(c Commander, w io.Writer) error {
+	return genZshCompletion(c, w, false)
 }
 
 // MarkZshCompPositionalArgumentFile only worked for zsh and its behavior was
@@ -52,7 +52,7 @@ func (c *Root) GenZshCompletionNoDesc(w io.Writer) error {
 // ShellCompDirectiveFilterFileExt.
 //
 // Deprecated
-func (c *Root) MarkZshCompPositionalArgumentFile(argPosition int, patterns ...string) error {
+func MarkZshCompPositionalArgumentFile(c Commander, argPosition int, patterns ...string) error {
 	return nil
 }
 
@@ -63,21 +63,21 @@ func (c *Root) MarkZshCompPositionalArgumentFile(argPosition int, patterns ...st
 // any argument (can include the first one also).
 //
 // Deprecated
-func (c *Root) MarkZshCompPositionalArgumentWords(argPosition int, words ...string) error {
+func MarkZshCompPositionalArgumentWords(c Commander, argPosition int, words ...string) error {
 	return nil
 }
 
-func (c *Root) genZshCompletionFile(filename string, includeDesc bool) error {
+func genZshCompletionFile(c Commander, filename string, includeDesc bool) error {
 	outFile, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer outFile.Close()
 
-	return c.genZshCompletion(outFile, includeDesc)
+	return genZshCompletion(c, outFile, includeDesc)
 }
 
-func (c *Root) genZshCompletion(w io.Writer, includeDesc bool) error {
+func genZshCompletion(c Commander, w io.Writer, includeDesc bool) error {
 	buf := new(bytes.Buffer)
 	genZshComp(buf, name(c), includeDesc)
 	_, err := buf.WriteTo(w)

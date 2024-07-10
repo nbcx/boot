@@ -24,7 +24,7 @@ func TestZshCompletionWithActiveHelp(t *testing.T) {
 	c := &Root{Use: "c", RunE: emptyRun}
 
 	buf := new(bytes.Buffer)
-	assertNoErr(t, c.GenZshCompletion(buf))
+	assertNoErr(t, GenZshCompletion(c, buf))
 	output := buf.String()
 
 	// check that active help is not being disabled

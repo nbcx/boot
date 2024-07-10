@@ -21,7 +21,7 @@ import (
 	"os"
 )
 
-func (c *Root) genBashCompletion(w io.Writer, includeDesc bool) error {
+func genBashCompletion(c Commander, w io.Writer, includeDesc bool) error {
 	buf := new(bytes.Buffer)
 	genBashComp(buf, name(c), includeDesc)
 	_, err := buf.WriteTo(w)
@@ -379,18 +379,18 @@ fi
 }
 
 // GenBashCompletionFileV2 generates Bash completion version 2.
-func (c *Root) GenBashCompletionFileV2(filename string, includeDesc bool) error {
+func GenBashCompletionFileV2(c Commander, filename string, includeDesc bool) error {
 	outFile, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer outFile.Close()
 
-	return c.GenBashCompletionV2(outFile, includeDesc)
+	return GenBashCompletionV2(c, outFile, includeDesc)
 }
 
 // GenBashCompletionV2 generates Bash completion file version 2
 // and writes it to the passed writer.
-func (c *Root) GenBashCompletionV2(w io.Writer, includeDesc bool) error {
-	return c.genBashCompletion(w, includeDesc)
+func GenBashCompletionV2(c Commander, w io.Writer, includeDesc bool) error {
+	return genBashCompletion(c, w, includeDesc)
 }

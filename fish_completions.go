@@ -273,7 +273,7 @@ complete -k -c %[2]s -n '__%[1]s_requires_order_preservation && __%[1]s_prepare_
 }
 
 // GenFishCompletion generates fish completion file and writes to the passed writer.
-func (c *Root) GenFishCompletion(w io.Writer, includeDesc bool) error {
+func GenFishCompletion(c Commander, w io.Writer, includeDesc bool) error {
 	buf := new(bytes.Buffer)
 	genFishComp(buf, name(c), includeDesc)
 	_, err := buf.WriteTo(w)
@@ -281,12 +281,12 @@ func (c *Root) GenFishCompletion(w io.Writer, includeDesc bool) error {
 }
 
 // GenFishCompletionFile generates fish completion file.
-func (c *Root) GenFishCompletionFile(filename string, includeDesc bool) error {
+func GenFishCompletionFile(c Commander, filename string, includeDesc bool) error {
 	outFile, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer outFile.Close()
 
-	return c.GenFishCompletion(outFile, includeDesc)
+	return GenFishCompletion(c, outFile, includeDesc)
 }

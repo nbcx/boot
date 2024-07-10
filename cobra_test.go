@@ -36,7 +36,7 @@ func TestAddTemplateFunctions(t *testing.T) {
 	c.SetUsageTemplate(`{{if t}}{{h}}{{end}}{{if f}}{{h}}{{end}} {{w}}`)
 
 	const expected = "Hello, world."
-	if got := c.UsageString(); got != expected {
+	if got := UsageString(c); got != expected {
 		t.Errorf("Expected UsageString: %v\nGot: %v", expected, got)
 	}
 }
