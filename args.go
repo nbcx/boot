@@ -27,12 +27,12 @@ type PositionalArgs func(cmd Commander, args []string) error
 // - subcommands will always accept arbitrary arguments
 func legacyArgs(cmd Commander, args []string) error {
 	// no subcommand, always take args
-	if !cmd.HasSubCommands() {
+	if !HasSubCommands(cmd) {
 		return nil
 	}
 
 	// root command with subcommands, do subcommand checking.
-	if !cmd.HasParent() && len(args) > 0 {
+	if !HasParent(cmd) && len(args) > 0 {
 		return fmt.Errorf("unknown command %q for %q%s", args[0], CommandPath(cmd), findSuggestions(cmd, args[0]))
 	}
 	return nil

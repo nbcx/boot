@@ -97,7 +97,7 @@ func GenReSTCustom(cmd boot.Commander, w io.Writer, linkHandler func(string, str
 	if hasSeeAlso(cmd) {
 		buf.WriteString("SEE ALSO\n")
 		buf.WriteString("~~~~~~~~\n\n")
-		if cmd.HasParent() {
+		if boot.HasParent(cmd) {
 			parent := cmd.Parent()
 			pname := boot.CommandPath(parent)
 			ref = strings.ReplaceAll(pname, " ", "_")

@@ -82,7 +82,7 @@ func GenMarkdownCustom(cmd boot.Commander, w io.Writer, linkHandler func(string)
 	}
 	if hasSeeAlso(cmd) {
 		buf.WriteString("### SEE ALSO\n\n")
-		if cmd.HasParent() {
+		if boot.HasParent(cmd) {
 			parent := cmd.Parent()
 			pname := boot.CommandPath(parent)
 			link := pname + markdownExtension

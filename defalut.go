@@ -538,22 +538,6 @@ func (c *Default) AddGroup(groups ...*Group) {
 	c.commandGroups = append(c.commandGroups, groups...)
 }
 
-// DebugFlags used to determine which flags have been assigned to which commands
-// and which persist.
-func (c *Default) DebugFlags() {
-	// todo: wait do
-}
-
-// HasAlias determines if a given string is an alias of the command.
-func (c *Default) HasAlias(s string) bool {
-	for _, a := range c.Aliases {
-		if commandNameMatches(a, s) {
-			return true
-		}
-	}
-	return false
-}
-
 // CalledAs returns the command name or alias that was used to invoke
 // this command or an empty string if the command has not been called.
 func (c *Default) CalledAs() string {
@@ -570,50 +554,13 @@ func (c *Default) HasExample() bool {
 
 // Runnable determines if the command is itself runnable.
 func (c *Default) Runnable() bool {
-	return true // todo: wait check
-	// return c.Run != nil || c.RunE != nil
+	return true
 }
 
 // HasSubCommands determines if the command has children commands.
 func (c *Default) HasSubCommands() bool {
 	return len(c.commands) > 0
 }
-
-// IsAdditionalHelpTopicCommand determines if a command is an additional
-// help topic command; additional help topic command is determined by the
-// fact that it is NOT runnable/hidden/deprecated, and has no sub commands that
-// are runnable/hidden/deprecated.
-// Concrete example: https://github.com/spf13/cobra/issues/393#issuecomment-282741924.
-// func (c *Default) IsAdditionalHelpTopicCommand() bool {
-// 	// if a command is runnable, deprecated, or hidden it is not a 'help' command
-// 	if c.Runnable() || len(c.Deprecated) != 0 || c.Hidden {
-// 		return false
-// 	}
-
-// 	// if any non-help sub commands are found, the command is not a 'help' command
-// 	for _, sub := range c.commands {
-// 		if !sub.IsAdditionalHelpTopicCommand() {
-// 			return false
-// 		}
-// 	}
-
-// 	// the command either has no sub commands, or no non-help sub commands
-// 	return true
-// }
-
-// HasHelpSubCommands determines if a command has any available 'help' sub commands
-// that need to be shown in the usage/help default template under 'additional help
-// topics'.
-// func (c *Default) HasHelpSubCommands() bool {
-// 	// return true on the first found available 'help' sub command
-// 	for _, sub := range c.commands {
-// 		if sub.IsAdditionalHelpTopicCommand() {
-// 			return true
-// 		}
-// 	}
-// 	// the command either has no sub commands, or no available 'help' sub commands
-// 	return false
-// }
 
 // HasParent determines if the command is a child command.
 func (c *Default) HasParent() bool {
@@ -631,10 +578,6 @@ func (c *Default) Parent() Commander {
 }
 
 //////// new add ////////////////
-
-// func (p *Default) GetParent() Commander {
-// 	return p.parent
-// }
 
 func (p *Default) SetParent(c Commander) {
 	p.parent = c
@@ -776,6 +719,7 @@ func (p *Default) Run(args []string) error {
 	}
 	return nil
 }
+
 func (p *Default) PostRun(args []string) error {
 	return nil
 }
@@ -797,7 +741,7 @@ func (p *Default) GetDisableFlagsInUseLine() bool {
 }
 
 func (p *Default) GetUse() string {
-	return "b" // todo: wait b
+	return ""
 }
 
 func (p *Default) GetAnnotations() map[string]string {
@@ -846,26 +790,18 @@ func (c *Default) UsageString() string {
 	log.outWriter = bb
 	log.errWriter = bb
 
-	// usageFunc := func(c Commander) error {
-	// 	mergePersistentFlags(c)
-	// 	err := tmpl(log.OutOrStderr(), UsageTemplate(c), c)
-	// 	if err != nil {
-	// 		log.PrintErrLn(err)
-	// 	}
-	// 	return err
-	// }
 	mergePersistentFlags(c)
 	err := tmpl(log.OutOrStderr(), UsageTemplate(c), c)
 	if err != nil {
 		log.PrintErrLn(err)
 	}
-	// return err
 	CheckErr(err)
+
+	// todo: 这里的IO还需要理一理
 
 	// Setting things back to normal
 	log.outWriter = tmpOutput
 	log.errWriter = tmpErr
 
 	return bb.String()
-	// return fmt.Sprintf("UsageString: %v", c.GetUse())
 }

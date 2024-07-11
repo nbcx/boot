@@ -38,8 +38,8 @@ func TestMain(t *testing.T) {
 	// root.SetErr(buf)
 	// root.SetArgs("b", "jj", "cc")
 	// root.SetArgs("one", "two")
-	root.SetArgs("--help")
-	// root.SetArgs("b", "--help")
+	// root.SetArgs("--help")
+	root.SetArgs("b", "--help")
 
 	err := root.Execute()
 	if err != nil {

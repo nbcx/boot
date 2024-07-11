@@ -399,7 +399,7 @@ func SetGlobalNormalizationFunc(c Commander, n func(f *flag.FlagSet, name string
 	PersistentFlags(c).SetNormalizeFunc(n)
 	c.SetGlobNormFunc(n)
 
-	for _, command := range c.GetCommands() {
+	for _, command := range c.Commands() {
 		SetGlobalNormalizationFunc(command, n)
 	}
 }
@@ -441,7 +441,7 @@ func FlagErrorFunc(c Commander) (f func(Commander, error) error) {
 		return c.GetFlagErrorFunc()
 	}
 
-	if c.HasParent() {
+	if HasParent(c) {
 		return c.Parent().GetFlagErrorFunc()
 	}
 	return func(c Commander, err error) error {
@@ -500,7 +500,7 @@ func (c *Root) ErrPrefix() string {
 		return c.errPrefix
 	}
 
-	if c.HasParent() {
+	if HasParent(c) {
 		return c.parent.ErrPrefix()
 	}
 	return "Error:"
@@ -652,8 +652,8 @@ func findSuggestions(c Commander, arg string) string {
 
 func findNext(c Commander, next string) Commander {
 	matches := make([]Commander, 0)
-	for _, cmd := range c.GetCommands() {
-		if commandNameMatches(name(cmd), next) || cmd.HasAlias(next) {
+	for _, cmd := range c.Commands() {
+		if commandNameMatches(name(cmd), next) || HasAlias(cmd, next) {
 			cmd.GetCommandCalledAs().name = next
 			return cmd
 		}
@@ -717,7 +717,7 @@ func Traverse(c Commander, args []string) (Commander, []string, error) {
 // SuggestionsFor provides suggestions for the typedName.
 func SuggestionsFor(c Commander, typedName string) []string {
 	suggestions := []string{}
-	for _, cmd := range c.GetCommands() {
+	for _, cmd := range c.Commands() {
 		if IsAvailableCommand(cmd) {
 			levenshteinDistance := ld(typedName, name(cmd), true)
 			suggestByLevenshtein := levenshteinDistance <= c.GetSuggestionsMinimumDistance()
@@ -737,7 +737,7 @@ func SuggestionsFor(c Commander, typedName string) []string {
 
 // VisitParents visits all parents of the command and invokes fn on each parent.
 func VisitParents(c Commander, fn func(Commander)) {
-	if c.HasParent() {
+	if HasParent(c) {
 		fn(c.Parent())
 		VisitParents(c.Parent(), fn)
 	}
@@ -745,7 +745,7 @@ func VisitParents(c Commander, fn func(Commander)) {
 
 // Base finds root command.
 func Base(c Commander) Commander {
-	if c.HasParent() {
+	if HasParent(c) {
 		return Base(c.Parent())
 	}
 	return c
@@ -1032,7 +1032,7 @@ func ValidateRequiredFlags(c Commander) error {
 // checkCommandGroups checks if a command has been added to a group that does not exists.
 // If so, we panic because it indicates a coding error that should be corrected.
 func CheckCommandGroups(c Commander) {
-	for _, sub := range c.GetCommands() {
+	for _, sub := range c.Commands() {
 		// if Group is not defined let the developer know right away
 		if sub.GetGroupID() != "" && !ContainsGroup(c, sub.GetGroupID()) {
 			panic(fmt.Sprintf("group id '%s' is not defined for subcommand '%s'", sub.GetGroupID(), CommandPath(sub)))
@@ -1090,7 +1090,7 @@ func InitDefaultVersionFlag(c Commander) {
 // It is called automatically by executing the c or by calling help and usage.
 // If c already has help command or c has no subcommands, it will do nothing.
 func InitDefaultHelpCmd(c Commander) {
-	if !c.HasSubCommands() {
+	if !HasSubCommands(c) {
 		return
 	}
 
@@ -1200,7 +1200,7 @@ func (c *Root) Groups() []*Group {
 
 // AllChildCommandsHaveGroup returns if all subcommands are assigned to a group
 func AllChildCommandsHaveGroup(c Commander) bool {
-	for _, sub := range c.GetCommands() {
+	for _, sub := range c.Commands() {
 		if (IsAvailableCommand(sub) || sub == c.GetHelpCommand()) && sub.GetGroupID() == "" {
 			return false
 		}
@@ -1227,7 +1227,7 @@ func (c *Root) AddGroup(groups ...*Group) {
 func RemoveCommand(c Commander, cmds ...Commander) {
 	commands := []Commander{}
 main:
-	for _, command := range c.GetCommands() {
+	for _, command := range c.Commands() {
 		for _, cmd := range cmds {
 			if command == cmd {
 				// command.parent = nil
@@ -1264,7 +1264,7 @@ func (c *Root) ResetAdd(cmds ...Commander) {
 
 // CommandPath returns the full path to this command.
 func CommandPath(c Commander) string {
-	if c.HasParent() {
+	if HasParent(c) {
 		return CommandPath(c.Parent()) + " " + name(c)
 	}
 	return displayName(c)
@@ -1282,7 +1282,7 @@ func displayName(c Commander) string {
 func UseLine(c Commander) string {
 	var useLine string
 	use := strings.Replace(c.GetUse(), name(c), displayName(c), 1)
-	if c.HasParent() {
+	if HasParent(c) {
 		useLine = CommandPath(c.Parent()) + " " + use
 	} else {
 		useLine = use
@@ -1298,44 +1298,43 @@ func UseLine(c Commander) string {
 
 // DebugFlags used to determine which flags have been assigned to which commands
 // and which persist.
-func (c *Root) DebugFlags() {
-	// todo: wait do
-	// c.Println("DebugFlags called on", name(c))
-	// var debugflags func(Commander)
+func DebugFlags(c Commander) {
+	log.Println("DebugFlags called on", name(c))
+	var debugFlags func(Commander)
 
-	// debugflags = func(x Commander) {
-	// 	if x.HasFlags() || x.HasPersistentFlags() {
-	// 		c.Println(x.Name())
-	// 	}
-	// 	if x.HasFlags() {
-	// 		x.GetFlags().VisitAll(func(f *flag.Flag) {
-	// 			if x.HasPersistentFlags() && x.persistentFlag(f.Name) != nil {
-	// 				c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [LP]")
-	// 			} else {
-	// 				c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [L]")
-	// 			}
-	// 		})
-	// 	}
-	// 	if x.HasPersistentFlags() {
-	// 		x.GetFlags().VisitAll(func(f *flag.Flag) {
-	// 			if x.HasFlags() {
-	// 				if x.GetFlags().Lookup(f.Name) == nil {
-	// 					c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [P]")
-	// 				}
-	// 			} else {
-	// 				c.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [P]")
-	// 			}
-	// 		})
-	// 	}
-	// 	c.Println(x.flagErrorBuf)
-	// 	if x.HasSubCommands() {
-	// 		for _, y := range x.commands {
-	// 			debugflags(y)
-	// 		}
-	// 	}
-	// }
+	debugFlags = func(x Commander) {
+		if HasFlags(x) || HasPersistentFlags(x) {
+			log.Println(name(x))
+		}
+		if HasFlags(x) {
+			x.GetFlags().VisitAll(func(f *flag.Flag) {
+				if HasPersistentFlags(x) && persistentFlag(x, f.Name) != nil {
+					log.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [LP]")
+				} else {
+					log.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [L]")
+				}
+			})
+		}
+		if HasPersistentFlags(x) {
+			x.GetFlags().VisitAll(func(f *flag.Flag) {
+				if HasFlags(x) {
+					if x.GetFlags().Lookup(f.Name) == nil {
+						log.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [P]")
+					}
+				} else {
+					log.Println("  -"+f.Shorthand+",", "--"+f.Name, "["+f.DefValue+"]", "", f.Value, "  [P]")
+				}
+			})
+		}
+		log.Println(x.GetFlagErrorBuf())
+		if HasSubCommands(x) {
+			for _, y := range x.Commands() {
+				debugFlags(y)
+			}
+		}
+	}
 
-	// debugflags(c)
+	debugFlags(c)
 }
 
 // Name returns the command's name: the first word in the use line.
@@ -1349,8 +1348,8 @@ func name(c Commander) string {
 }
 
 // HasAlias determines if a given string is an alias of the command.
-func (c *Root) HasAlias(s string) bool {
-	for _, a := range c.Aliases {
+func HasAlias(c Commander, s string) bool {
+	for _, a := range c.GetAliases() {
 		if commandNameMatches(a, s) {
 			return true
 		}
@@ -1398,13 +1397,12 @@ func (c *Root) HasExample() bool {
 
 // Runnable determines if the command is itself runnable.
 func (c *Root) Runnable() bool {
-	return true // todo: wait check
-	// return c.Run != nil || c.RunE != nil
+	return true
 }
 
 // HasSubCommands determines if the command has children commands.
-func (c *Root) HasSubCommands() bool {
-	return len(c.commands) > 0
+func HasSubCommands(c Commander) bool {
+	return len(c.Commands()) > 0
 }
 
 // IsAvailableCommand determines if a command is available as a non-help command
@@ -1415,7 +1413,7 @@ func IsAvailableCommand(c Commander) bool {
 		return false
 	}
 
-	if c.HasParent() && c.Parent().GetHelpCommand() == c {
+	if HasParent(c) && c.Parent().GetHelpCommand() == c {
 		return false
 	}
 
@@ -1438,7 +1436,7 @@ func IsAdditionalHelpTopicCommand(c Commander) bool {
 	}
 
 	// if any non-help sub commands are found, the command is not a 'help' command
-	for _, sub := range c.GetCommands() {
+	for _, sub := range c.Commands() {
 		if !IsAdditionalHelpTopicCommand(sub) {
 			return false
 		}
@@ -1453,7 +1451,7 @@ func IsAdditionalHelpTopicCommand(c Commander) bool {
 // topics'.
 func HasHelpSubCommands(c Commander) bool {
 	// return true on the first found available 'help' sub command
-	for _, sub := range c.GetCommands() {
+	for _, sub := range c.Commands() {
 		if IsAdditionalHelpTopicCommand(sub) {
 			return true
 		}
@@ -1468,7 +1466,7 @@ func HasHelpSubCommands(c Commander) bool {
 func HasAvailableSubCommands(c Commander) bool {
 	// return true on the first found available (non deprecated/help/hidden)
 	// sub command
-	for _, sub := range c.GetCommands() {
+	for _, sub := range c.Commands() {
 		if IsAvailableCommand(sub) {
 			return true
 		}
@@ -1480,8 +1478,8 @@ func HasAvailableSubCommands(c Commander) bool {
 }
 
 // HasParent determines if the command is a child command.
-func (c *Root) HasParent() bool {
-	return c.parent != nil
+func HasParent(c Commander) bool {
+	return c.Parent() != nil
 }
 
 // GlobalNormalizationFunc returns the global normalization function or nil if it doesn't exist.
@@ -1724,7 +1722,6 @@ func mergePersistentFlags(c Commander) {
 func updateParentsPflags(c Commander) {
 	if c.GetParentsPFlags() == nil {
 		c.SetParentsPFlags(flag.NewFlagSet(displayName(c), flag.ContinueOnError))
-		// c.parentsPflags =
 		c.GetParentsPFlags().SetOutput(c.GetFlagErrorBuf())
 		c.GetParentsPFlags().SortFlags = false
 	}

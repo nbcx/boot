@@ -701,12 +701,12 @@ func checkIfFlagCompletion(finalCmd Commander, args []string, lastArg string) (*
 func InitDefaultCompletionCmd(c Commander) {
 
 	completionOptions := c.GetCompletionOptions()
-	if completionOptions.DisableDefaultCmd || !c.HasSubCommands() {
+	if completionOptions.DisableDefaultCmd || !HasSubCommands(c) {
 		return
 	}
 
-	for _, cmd := range c.GetCommands() {
-		if name(cmd) == compCmdName || cmd.HasAlias(compCmdName) {
+	for _, cmd := range c.Commands() {
+		if name(cmd) == compCmdName || HasAlias(cmd, compCmdName) {
 			// A completion command is already available
 			return
 		}

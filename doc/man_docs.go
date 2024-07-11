@@ -217,7 +217,7 @@ func genMan(cmd boot.Commander, header *GenManHeader) []byte {
 	if hasSeeAlso(cmd) {
 		buf.WriteString("# SEE ALSO\n")
 		seealsos := make([]string, 0)
-		if cmd.HasParent() {
+		if boot.HasParent(cmd) {
 			parentPath := boot.CommandPath(cmd.Parent())
 			dashParentPath := strings.ReplaceAll(parentPath, " ", "-")
 			seealso := fmt.Sprintf("**%s(%s)**", dashParentPath, header.Section)

@@ -112,7 +112,7 @@ func HelpTemplate(c Commander) string {
 		str = c.GetShort()
 	}
 	str = trimRightSpace(str)
-	if c.Runnable() || c.HasSubCommands() {
+	if c.Runnable() || HasSubCommands(c) {
 		str += UsageString(c)
 	}
 	return str

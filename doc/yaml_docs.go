@@ -119,7 +119,7 @@ func GenYamlCustom(cmd boot.Commander, w io.Writer, linkHandler func(string) str
 
 	if hasSeeAlso(cmd) {
 		result := []string{}
-		if cmd.HasParent() {
+		if boot.HasParent(cmd) {
 			parent := cmd.Parent()
 			result = append(result, boot.CommandPath(parent)+" - "+parent.GetShort())
 		}

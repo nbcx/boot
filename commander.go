@@ -20,13 +20,10 @@ type Commander interface {
 	GetHidden() bool
 	GetLong() string
 	GetExample() string
-	GetCommands() []Commander
 
 	// 层级关系
 	SetParent(Commander)
 	Parent() Commander
-	HasSubCommands() bool
-	HasParent() bool
 	GetGroupID() string
 	SetGroupID(groupID string)
 
@@ -72,6 +69,7 @@ type Commander interface {
 	Runnable() bool
 	GetCommandGroups() []*Group
 	getHelpCommandGroupID() string
+	Commands() []Commander
 
 	// Flags
 	GetFlags() *flag.FlagSet
@@ -92,29 +90,7 @@ type Commander interface {
 	GetFlagErrorFunc() func(Commander, error) error
 	SetFlagErrorBuf(*bytes.Buffer)
 	GetFlagErrorBuf() *bytes.Buffer
-	Commands() []Commander
 	GetSuggestFor() []string
-	HasAlias(s string) bool
-
-	// UsageString() string
-
-	// io
-	// getOut(def io.Writer) io.Writer
-	// getErr(def io.Writer) io.Writer
-	// getIn(def io.Reader) io.Reader
-
-	// OutOrStderr() io.Writer
-	// SetErr(newErr io.Writer)
-	// SetOut(newOut io.Writer)
-	// SetOutput(output io.Writer)
-	// Print(i ...interface{})
-	// Println(i ...interface{})
-	// Printf(format string, i ...interface{})
-	// PrintErr(i ...interface{})
-	// PrintErrLn(i ...interface{})
-	// PrintErrF(format string, i ...interface{})
-	// ErrOrStderr() io.Writer
-	// OutOrStdout() io.Writer
 }
 
 func (p *Root) GetParent() Commander {
