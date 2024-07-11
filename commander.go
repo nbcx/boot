@@ -13,19 +13,12 @@ type Commander interface {
 	GetHelpCommand() Commander
 	GetShort() string
 	GetSilenceErrors() bool
-	GetCommandCalledAs() *CommandCalledAs
 	GetSilenceUsage() bool
-	GetHelpFunc() func(Commander, []string)
 	GetValidArgs() []string
 	GetHidden() bool
 	GetLong() string
 	GetExample() string
-
-	// 层级关系
-	SetParent(Commander)
-	Parent() Commander
-	GetGroupID() string
-	SetGroupID(groupID string)
+	GetCommandCalledAs() *CommandCalledAs
 
 	// run
 	GetPersistentPreRunE() func(cmd Commander, args []string) error
@@ -55,8 +48,13 @@ type Commander interface {
 	GetSuggestionsMinimumDistance() int
 	GetDeprecated() string
 
+	// 层级关系
+	SetParent(Commander)
+	Parent() Commander
+	GetGroupID() string
+	SetGroupID(groupID string)
+
 	// PersistentFlags() *flag.FlagSet
-	CalledAs() string
 	Add(cmds ...Commander)
 	ResetAdd(cmds ...Commander)
 	GetCompletionOptions() *CompletionOptions

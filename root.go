@@ -178,8 +178,6 @@ type Root struct {
 	// flagErrorFunc is func defined by user and it's called when the parsing of
 	// flags returns an error.
 	flagErrorFunc func(Commander, error) error
-	// helpTemplate is help template defined by user.
-	helpTemplate string
 	// helpFunc is help func defined by user.
 	helpFunc func(Commander, []string)
 	// helpCommand is command with usage 'help'. If it's not defined by user,
@@ -375,11 +373,6 @@ func (c *Root) SetHelpCommandGroupID(groupID string) {
 func (c *Root) SetCompletionCommandGroupID(groupID string) {
 	// completionCommandGroupID is used if no completion command is defined by the user
 	Base(c).SetCompletionCommandGroupID(groupID)
-}
-
-// SetHelpTemplate sets help template to be used. Application can use it to set custom template.
-func (c *Root) SetHelpTemplate(s string) {
-	c.helpTemplate = s
 }
 
 // SetVersionTemplate sets version template to be used. Application can use it to set custom template.
@@ -1359,9 +1352,10 @@ func HasAlias(c Commander, s string) bool {
 
 // CalledAs returns the command name or alias that was used to invoke
 // this command or an empty string if the command has not been called.
-func (c *Root) CalledAs() string {
-	if c.commandCalledAs.called {
-		return c.commandCalledAs.name
+func CalledAs(c Commander) string {
+	as := c.GetCommandCalledAs()
+	if as.called {
+		return as.name
 	}
 	return ""
 }
@@ -1391,8 +1385,8 @@ func (c *Root) NameAndAliases() string {
 }
 
 // HasExample determines if the command has example.
-func (c *Root) HasExample() bool {
-	return len(c.Example) > 0
+func HasExample(c Commander) bool {
+	return len(c.GetExample()) > 0
 }
 
 // Runnable determines if the command is itself runnable.

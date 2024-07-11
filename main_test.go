@@ -6,7 +6,7 @@ import (
 )
 
 type b struct {
-	Default
+	Simple
 }
 
 func (p *b) GetUse() string {
@@ -30,7 +30,7 @@ func TestMain(t *testing.T) {
 		},
 	}
 	aCmd := &Root{Use: "a", Args: NoArgs, RunE: func(cmd Commander, args []string) error { fmt.Println("a...."); return nil }}
-	bCmd := &b{Default: Default{Args: RangeArgs(0, 2)}} // &Root{Use: "b", Args: NoArgs, RunE: emptyRun}
+	bCmd := &b{Simple: Simple{Args: RangeArgs(0, 2)}} // &Root{Use: "b", Args: NoArgs, RunE: emptyRun}
 	root.Add(aCmd, bCmd)
 
 	// buf := new(bytes.Buffer)

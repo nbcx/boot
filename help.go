@@ -7,7 +7,7 @@ import (
 )
 
 type HelpCmd struct {
-	Default
+	Simple
 }
 
 func (p *HelpCmd) Run(args []string) error {
@@ -30,10 +30,11 @@ func (p *HelpCmd) GetUse() string {
 
 func NewHelpCmd(cmd Commander) *HelpCmd {
 	return &HelpCmd{
-		Default: Default{
+		Simple: Simple{
 			Short: "Help about any command",
 			Long: `Help provides help for any command in the application.
 Simply type ` + displayName(cmd) + ` help [path to command] for full details.`,
+			GroupID: cmd.getHelpCommandGroupID(),
 			ValidArgsFunction: func(c Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 				var completions []string
 				cmd, _, e := Find(Base(c), args)
@@ -53,7 +54,6 @@ Simply type ` + displayName(cmd) + ` help [path to command] for full details.`,
 				}
 				return completions, ShellCompDirectiveNoFileComp
 			},
-			GroupID: cmd.getHelpCommandGroupID(),
 		},
 	}
 }
@@ -71,7 +71,7 @@ func UsageTemplate(c Commander) string {
   {{. | CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
 Aliases:
-  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+  {{.NameAndAliases}}{{end}}{{if . | HasExample}}
 
 Examples:
 {{.Example}}{{end}}{{if . | HasAvailableSubCommands}}{{$cmds := .GetCommands}}{{if eq (len .Groups) 0}}

@@ -24,25 +24,6 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-// const (
-// 	FlagSetByCobraAnnotation     = "cobra_annotation_flag_set_by_cobra"
-// 	CommandDisplayNameAnnotation = "cobra_annotation_command_display_name"
-// )
-
-// FParseErrWhitelist configures Flag parse errors to be ignored
-// type FParseErrWhitelist flag.ParseErrorsWhitelist
-
-// Group Structure to manage groups for commands
-// type Group struct {
-// 	ID    string
-// 	Title string
-// }
-
-// type CommandCalledAs struct {
-// 	name   string
-// 	called bool
-// }
-
 func ParseName(c Commander) string {
 	return name(c)
 }
@@ -52,101 +33,6 @@ func ParseName(c Commander) string {
 // you to define the usage and description as part of your command
 // definition to ensure usability.
 type Default struct {
-	// Use is the one-line usage message.
-	// Recommended syntax is as follows:
-	//   [ ] identifies an optional argument. Arguments that are not enclosed in brackets are required.
-	//   ... indicates that you can specify multiple values for the previous argument.
-	//   |   indicates mutually exclusive information. You can use the argument to the left of the separator or the
-	//       argument to the right of the separator. You cannot use both arguments in a single use of the command.
-	//   { } delimits a set of mutually exclusive arguments when one of the arguments is required. If the arguments are
-	//       optional, they are enclosed in brackets ([ ]).
-	// Example: add [-F file | -D dir]... [-f format] profile
-	// Use string
-
-	// Aliases is an array of aliases that can be used instead of the first word in Use.
-	Aliases []string
-
-	// SuggestFor is an array of command names for which this command will be suggested -
-	// similar to aliases but only suggests.
-	SuggestFor []string
-
-	// Short is the short description shown in the 'help' output.
-	Short string
-
-	// The group id under which this subcommand is grouped in the 'help' output of its parent.
-	GroupID string
-
-	// Long is the long message shown in the 'help <this-command>' output.
-	Long string
-
-	// Example is examples of how to use the command.
-	Example string
-
-	// ValidArgs is list of all valid non-flag arguments that are accepted in shell completions
-	ValidArgs []string
-	// ValidArgsFunction is an optional function that provides valid non-flag arguments for shell completion.
-	// It is a dynamic version of using ValidArgs.
-	// Only one of ValidArgs and ValidArgsFunction can be used for a command.
-	ValidArgsFunction func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)
-
-	// Expected arguments
-	Args PositionalArgs
-
-	// ArgAliases is List of aliases for ValidArgs.
-	// These are not suggested to the user in the shell completion,
-	// but accepted if entered manually.
-	ArgAliases []string
-
-	// BashCompletionFunction is custom bash functions used by the legacy bash autocompletion generator.
-	// For portability with other shells, it is recommended to instead use ValidArgsFunction
-	BashCompletionFunction string
-
-	// Deprecated defines, if this command is deprecated and should print this string when used.
-	Deprecated string
-
-	// Annotations are key/value pairs that can be used by applications to identify or
-	// group commands or set special options.
-	Annotations map[string]string
-
-	// Version defines the version for this command. If this value is non-empty and the command does not
-	// define a "version" flag, a "version" boolean flag will be added to the command and, if specified,
-	// will print content of the "Version" variable. A shorthand "v" flag will also be added if the
-	// command does not define one.
-	Version string
-
-	// The *Run functions are executed in the following order:
-	//   * PersistentPreRun()
-	//   * PreRun()
-	//   * Run()
-	//   * PostRun()
-	//   * PersistentPostRun()
-	// All functions get the same args, the arguments after the command name.
-	// The *PreRun and *PostRun functions will only be executed if the Run function of the current
-	// command has been declared.
-	//
-	// PersistentPreRun: children of this command will inherit and execute.
-	PersistentPreRun func(cmd Commander, args []string)
-	// PersistentPreRunE: PersistentPreRun but returns an error.
-	PersistentPreRunE func(cmd Commander, args []string) error
-	// PreRun: children of this command will not inherit.
-	// PreRun func(cmd Commander, args []string)
-	// PreRunE: PreRun but returns an error.
-	PreRunE func(cmd Commander, args []string) error
-	// Run: Typically the actual work function. Most commands will only implement this.
-	// Run func(cmd Commander, args []string)
-	// RunE: Run but returns an error.
-	// RunE func(cmd Commander, args []string) error
-	RunE func(cmd Commander, args []string) error
-
-	// PostRun: run after the Run command.
-	// PostRun func(cmd Commander, args []string)
-	// PostRunE: PostRun but returns an error.
-	PostRunE func(cmd Commander, args []string) error
-	// PersistentPostRun: children of this command will inherit and execute after PostRun.
-	PersistentPostRun func(cmd Commander, args []string)
-	// PersistentPostRunE: PersistentPostRun but returns an error.
-	PersistentPostRunE func(cmd Commander, args []string) error
-
 	// groups for subcommands
 	commandGroups []*Group
 
@@ -179,10 +65,7 @@ type Default struct {
 	// flagErrorFunc is func defined by user and it's called when the parsing of
 	// flags returns an error.
 	flagErrorFunc func(Commander, error) error
-	// helpTemplate is help template defined by user.
-	helpTemplate string
-	// helpFunc is help func defined by user.
-	helpFunc func(Commander, []string)
+
 	// helpCommand is command with usage 'help'. If it's not defined by user,
 	// cobra uses default help command.
 	helpCommand Commander
@@ -197,12 +80,6 @@ type Default struct {
 
 	// errPrefix is the error message prefix defined by user.
 	errPrefix string
-
-	// FParseErrWhitelist flag parse errors to be ignored
-	FParseErrWhitelist FParseErrWhitelist
-
-	// CompletionOptions is a set of options to control the handling of shell completion
-	CompletionOptions CompletionOptions
 
 	// commandsAreSorted defines, if command slice are sorted or not.
 	commandsAreSorted bool
@@ -219,43 +96,6 @@ type Default struct {
 	commandsMaxUseLen         int
 	commandsMaxCommandPathLen int
 	commandsMaxNameLen        int
-
-	// TraverseChildren parses flags on all parents before executing child command.
-	TraverseChildren bool
-
-	// Hidden defines, if this command is hidden and should NOT show up in the list of available commands.
-	Hidden bool
-
-	// SilenceErrors is an option to quiet errors down stream.
-	SilenceErrors bool
-
-	// SilenceUsage is an option to silence usage when an error occurs.
-	SilenceUsage bool
-
-	// DisableFlagParsing disables the flag parsing.
-	// If this is true all flags will be passed to the command as arguments.
-	DisableFlagParsing bool
-
-	// DisableAutoGenTag defines, if gen tag ("Auto generated by spf13/cobra...")
-	// will be printed by generating docs for this command.
-	DisableAutoGenTag bool
-
-	// DisableFlagsInUseLine will disable the addition of [flags] to the usage
-	// line of a command when printing help or generating docs
-	DisableFlagsInUseLine bool
-
-	// DisableSuggestions disables the suggestions based on Levenshtein distance
-	// that go along with 'unknown command' messages.
-	DisableSuggestions bool
-
-	// SuggestionsMinimumDistance defines minimum levenshtein distance to display suggestions.
-	// Must be > 0.
-	SuggestionsMinimumDistance int
-}
-
-// GetFParseErrWhitelist implements Commander.
-func (c *Default) GetFParseErrWhitelist() FParseErrWhitelist {
-	return c.FParseErrWhitelist
 }
 
 // GetGlobNormFunc implements Commander.
@@ -263,10 +103,11 @@ func (c *Default) GetGlobNormFunc() func(f *flag.FlagSet, name string) flag.Norm
 	return c.globNormFunc
 }
 
+// GetFParseErrWhitelist implements Commander.
+func (c *Default) GetFParseErrWhitelist() FParseErrWhitelist { return FParseErrWhitelist{} }
+
 // SetFParseErrWhitelist implements Commander.
-func (c *Default) SetFParseErrWhitelist(fp FParseErrWhitelist) {
-	c.FParseErrWhitelist = fp
-}
+func (c *Default) SetFParseErrWhitelist(fp FParseErrWhitelist) {}
 
 // SetGlobNormFunc implements Commander.
 func (c *Default) SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.NormalizedName) {
@@ -274,44 +115,28 @@ func (c *Default) SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.Norm
 }
 
 // GetPFlags implements Commander.
-func (c *Default) GetPFlags() *flag.FlagSet {
-	return c.pFlags
-}
+func (c *Default) GetPFlags() *flag.FlagSet { return c.pFlags }
 
 // GetIFlags implements Commander.
-func (c *Default) GetIFlags() *flag.FlagSet {
-	return c.iFlags
-}
+func (c *Default) GetIFlags() *flag.FlagSet { return c.iFlags }
 
 // GetLFlags implements Commander.
-func (c *Default) GetLFlags() *flag.FlagSet {
-	return c.lFlags
-}
+func (c *Default) GetLFlags() *flag.FlagSet { return c.lFlags }
 
 // GetParentsPFlags implements Commander.
-func (c *Default) GetParentsPFlags() *flag.FlagSet {
-	return c.parentsPFlags
-}
+func (c *Default) GetParentsPFlags() *flag.FlagSet { return c.parentsPFlags }
 
 // SetIFlags implements Commander.
-func (c *Default) SetIFlags(i *flag.FlagSet) {
-	c.iFlags = i
-}
+func (c *Default) SetIFlags(i *flag.FlagSet) { c.iFlags = i }
 
 // SetLFlags implements Commander.
-func (c *Default) SetLFlags(l *flag.FlagSet) {
-	c.lFlags = l
-}
+func (c *Default) SetLFlags(l *flag.FlagSet) { c.lFlags = l }
 
 // SetPFlags implements Commander.
-func (c *Default) SetPFlags(l *flag.FlagSet) {
-	c.pFlags = l
-}
+func (c *Default) SetPFlags(l *flag.FlagSet) { c.pFlags = l }
 
 // SetParentsPFlags implements Commander.
-func (c *Default) SetParentsPFlags(pf *flag.FlagSet) {
-	c.parentsPFlags = pf
-}
+func (c *Default) SetParentsPFlags(pf *flag.FlagSet) { c.parentsPFlags = pf }
 
 // Context returns underlying command context. If command was executed
 // with ExecuteContext or the context was set with SetContext, the
@@ -320,42 +145,21 @@ func (c *Default) SetParentsPFlags(pf *flag.FlagSet) {
 // Notice that a call to Execute and ExecuteC will replace a nil context of
 // a command with a context.Background, so a background context will be
 // returned by Context after one of these functions has been called.
-func (c *Default) Context() context.Context {
-	return c.ctx
-}
+func (c *Default) Context() context.Context { return c.ctx }
 
 // SetContext sets context for the command. This context will be overwritten by
 // Command.ExecuteContext or Command.ExecuteContextC.
-func (c *Default) SetContext(ctx context.Context) {
-	c.ctx = ctx
-}
+func (c *Default) SetContext(ctx context.Context) { c.ctx = ctx }
 
 // SetArgs sets arguments for the command. It is set to os.Args[1:] by default, if desired, can be overridden
 // particularly useful when testing.
-func (c *Default) SetArgs(a []string) {
-	c.args = a
-}
-
-// SetUsageFunc sets usage function. Usage can be defined by application.
-// func (c *Default) SetUsageFunc(f func(Commander) error) {
-// 	c.usageFunc = f
-// }
-
-// SetUsageTemplate sets usage template. Can be defined by Application.
-// func (c *Default) SetUsageTemplate(s string) {
-// 	c.usageTemplate = s
-// }
+func (c *Default) SetArgs(a []string) { c.args = a }
 
 // SetFlagErrorFunc sets a function to generate an error when flag parsing
 // fails.
 func (c *Default) SetFlagErrorFunc(f func(Commander, error) error) {
 	c.flagErrorFunc = f
 }
-
-// SetHelpFunc sets help function. Can be defined by Application.
-// func (c *Default) SetHelpFunc(f func(Commander, []string)) {
-// 	c.helpFunc = f
-// }
 
 // SetHelpCommand sets help command.
 func (c *Default) SetHelpCommand(cmd Commander) {
@@ -377,47 +181,9 @@ func (c *Default) SetCompletionCommandGroupID(groupID string) {
 	Base(c).SetCompletionCommandGroupID(groupID)
 }
 
-// SetHelpTemplate sets help template to be used. Application can use it to set custom template.
-func (c *Default) SetHelpTemplate(s string) {
-	c.helpTemplate = s
-}
-
 // SetVersionTemplate sets version template to be used. Application can use it to set custom template.
 func (c *Default) SetVersionTemplate(s string) {
 	c.versionTemplate = s
-}
-
-// SetErrPrefix sets error message prefix to be used. Application can use it to set custom prefix.
-func (c *Default) SetErrPrefix(s string) {
-	c.errPrefix = s
-}
-
-// SetGlobalNormalizationFunc sets a normalization function to all flag sets and also to child commands.
-// The user should not have a cyclic dependency on commands.
-// func (c *Default) SetGlobalNormalizationFunc(n func(f *flag.FlagSet, name string) flag.NormalizedName) {
-// 	c.Flags().SetNormalizeFunc(n)
-// 	c.PersistentFlags().SetNormalizeFunc(n)
-// 	c.globNormFunc = n
-
-// 	for _, command := range c.commands {
-// 		command.SetGlobalNormalizationFunc(n)
-// 	}
-// }
-
-// FlagErrorFunc returns either the function set by SetFlagErrorFunc for this
-// command or a parent, or it returns a function which returns the original
-// error.
-func (c *Default) FlagErrorFunc() (f func(Commander, error) error) {
-	if c.flagErrorFunc != nil {
-		return c.flagErrorFunc
-	}
-
-	if c.HasParent() {
-		return FlagErrorFunc(c.parent)
-	}
-	return func(c Commander, err error) error {
-		return err
-	}
 }
 
 // UsagePadding return padding for the usage.
@@ -441,8 +207,8 @@ func (c *Default) ErrPrefix() string {
 	if c.errPrefix != "" {
 		return c.errPrefix
 	}
-
-	if c.HasParent() {
+	//todo: wait do
+	if HasParent(c) {
 		return c.parent.ErrPrefix()
 	}
 	return "Error:"
@@ -537,34 +303,11 @@ func (c *Default) ContainsGroup(groupID string) bool {
 func (c *Default) AddGroup(groups ...*Group) {
 	c.commandGroups = append(c.commandGroups, groups...)
 }
-
-// CalledAs returns the command name or alias that was used to invoke
-// this command or an empty string if the command has not been called.
-func (c *Default) CalledAs() string {
-	if c.commandCalledAs.called {
-		return c.commandCalledAs.name
-	}
-	return ""
-}
-
-// HasExample determines if the command has example.
-func (c *Default) HasExample() bool {
-	return len(c.Example) > 0
-}
+func (s *Simple) GetCommandGroups() []*Group { return s.commandGroups }
 
 // Runnable determines if the command is itself runnable.
 func (c *Default) Runnable() bool {
 	return true
-}
-
-// HasSubCommands determines if the command has children commands.
-func (c *Default) HasSubCommands() bool {
-	return len(c.commands) > 0
-}
-
-// HasParent determines if the command is a child command.
-func (c *Default) HasParent() bool {
-	return c.parent != nil
 }
 
 // GlobalNormalizationFunc returns the global normalization function or nil if it doesn't exist.
@@ -583,13 +326,8 @@ func (p *Default) SetParent(c Commander) {
 	p.parent = c
 }
 
-func (p *Default) GetGroupID() string {
-	return p.GroupID
-}
-
-func (p *Default) SetGroupID(groupID string) {
-	p.GroupID = groupID
-}
+func (p *Default) GetGroupID() string        { return "" }
+func (p *Default) SetGroupID(groupID string) {}
 
 func (p *Default) GetFlags() *flag.FlagSet {
 	return p.flags
@@ -604,23 +342,21 @@ func (p *Default) GetHelpCommand() Commander {
 }
 
 func (p *Default) GetShort() string {
-	return p.Short
+	return ""
 }
 
 func (p *Default) GetPersistentPostRunE() func(cmd Commander, args []string) error {
-	return p.PersistentPostRunE
+	return nil
 }
 
 func (p *Default) GetPersistentPostRun() func(cmd Commander, args []string) {
-	return p.PersistentPostRun
+	return nil
 }
 
-func (p *Default) GetSilenceErrors() bool {
-	return p.SilenceErrors
-}
+func (p *Default) GetSilenceErrors() bool { return false }
 
 func (p *Default) GetSilenceUsage() bool {
-	return p.SilenceUsage
+	return false
 }
 
 func (p *Default) GetCommandCalledAs() *CommandCalledAs {
@@ -628,32 +364,29 @@ func (p *Default) GetCommandCalledAs() *CommandCalledAs {
 }
 
 func (p *Default) GetPersistentPreRunE() func(cmd Commander, args []string) error {
-	return p.PersistentPreRunE
+	return nil
 }
 
 func (p *Default) GetPersistentPreRun() func(cmd Commander, args []string) {
-	return p.PersistentPreRun
+	return nil
 }
 
 func (p *Default) GetSuggestFor() []string {
-	return p.SuggestFor
+	return nil
 }
 
-func (p *Default) GetArgs() PositionalArgs {
-	return p.Args
-}
+func (p *Default) GetArgs() PositionalArgs { return nil }
 
 func (p *Default) GetCommandsMaxUseLen() int {
 	return p.commandsMaxUseLen
 }
+
 func (p *Default) GetCommandsMaxCommandPathLen() int {
 	return p.commandsMaxCommandPathLen
 }
+
 func (p *Default) GetCommandsMaxNameLen() int {
 	return p.commandsMaxNameLen
-}
-func (p *Default) GetHelpFunc() func(Commander, []string) {
-	return p.helpFunc
 }
 
 func (p *Default) GetFlagErrorFunc() func(Commander, error) error {
@@ -661,123 +394,38 @@ func (p *Default) GetFlagErrorFunc() func(Commander, error) error {
 }
 
 func (p *Default) GetTraverseChildren() bool {
-	return p.TraverseChildren
+	return false
 }
 
-func (p *Default) GetDisableFlagParsing() bool {
-	return p.DisableFlagParsing
-}
-
+func (p *Default) GetDisableFlagParsing() bool              { return false }
+func (p *Default) GetArgAliases() []string                  { return nil }
+func (p *Default) GetValidArgs() []string                   { return nil }
+func (p *Default) GetAliases() []string                     { return nil }
+func (p *Default) GetHidden() bool                          { return false }
+func (p *Default) GetLong() string                          { return "" }
+func (p *Default) GetDisableAutoGenTag() bool               { return false }
+func (p *Default) SetDisableAutoGenTag(d bool)              {}
+func (p *Default) GetExample() string                       { return "" }
+func (p *Default) GetCommands() []Commander                 { return p.commands }
+func (p *Default) PreRun(args []string) error               { return nil }
+func (p *Default) Run(args []string) error                  { return nil } // todo: 这个考虑不默认实现
+func (p *Default) PostRun(args []string) error              { return nil }
+func (p *Default) getHelpCommandGroupID() string            { return p.helpCommandGroupID }
+func (p *Default) GetVersion() string                       { return "" }
+func (p *Default) GetDeprecated() string                    { return "" }
+func (p *Default) GetDisableFlagsInUseLine() bool           { return false }
+func (p *Default) GetDisableSuggestions() bool              { return false }
+func (p *Default) GetUse() string                           { return "" } // todo: 这个考虑不默认实现
+func (p *Default) GetAnnotations() map[string]string        { return nil }
+func (p *Default) GetCommandGroups() []*Group               { return nil }
+func (p *Default) GetCompletionOptions() *CompletionOptions { return nil }
+func (p *Default) GetSuggestionsMinimumDistance() int       { return 1 }
+func (p *Default) SetSuggestionsMinimumDistance(v int)      {}
+func (p *Default) GetCompletionCommandGroupID() string      { return p.completionCommandGroupID }
+func (p *Default) SetFlagErrorBuf(b *bytes.Buffer)          { p.flagErrorBuf = b }
+func (p *Default) GetFlagErrorBuf() *bytes.Buffer           { return p.flagErrorBuf }
 func (p *Default) GetValidArgsFunction() func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
-	return p.ValidArgsFunction
-}
-
-func (p *Default) GetArgAliases() []string {
-	return p.ArgAliases
-}
-
-func (p *Default) GetValidArgs() []string {
-	return p.ValidArgs
-}
-
-func (p *Default) GetAliases() []string {
-	return p.Aliases
-}
-func (p *Default) GetHidden() bool {
-	return p.Hidden
-}
-
-func (p *Default) GetLong() string {
-	return p.Long
-}
-
-func (p *Default) GetDisableAutoGenTag() bool {
-	return p.DisableAutoGenTag
-}
-
-func (p *Default) SetDisableAutoGenTag(d bool) {
-	p.DisableAutoGenTag = d
-}
-func (p *Default) GetExample() string {
-	return p.Example
-}
-
-func (p *Default) GetCommands() []Commander {
-	return p.commands
-}
-
-func (p *Default) PreRun(args []string) error {
-	if p.PreRunE != nil {
-		return p.PreRunE(p, args)
-	}
 	return nil
-}
-
-func (p *Default) Run(args []string) error {
-	if p.RunE != nil {
-		return p.RunE(p, args)
-	}
-	return nil
-}
-
-func (p *Default) PostRun(args []string) error {
-	return nil
-}
-
-func (p *Default) getHelpCommandGroupID() string {
-	return p.helpCommandGroupID
-}
-
-func (p *Default) GetVersion() string {
-	return p.Version
-}
-
-func (p *Default) GetDeprecated() string {
-	return p.Deprecated
-}
-
-func (p *Default) GetDisableFlagsInUseLine() bool {
-	return p.DisableFlagsInUseLine
-}
-
-func (p *Default) GetUse() string {
-	return ""
-}
-
-func (p *Default) GetAnnotations() map[string]string {
-	return p.Annotations
-}
-
-func (p *Default) GetCommandGroups() []*Group {
-	return p.commandGroups
-}
-
-func (p *Default) GetDisableSuggestions() bool {
-	return p.DisableSuggestions
-}
-
-func (p *Default) GetSuggestionsMinimumDistance() int {
-	return p.SuggestionsMinimumDistance
-}
-
-func (p *Default) SetSuggestionsMinimumDistance(v int) {
-	p.SuggestionsMinimumDistance = v
-}
-
-func (p *Default) GetCompletionOptions() *CompletionOptions {
-	return &p.CompletionOptions
-}
-
-func (p *Default) GetCompletionCommandGroupID() string {
-	return p.completionCommandGroupID
-}
-
-func (p *Default) SetFlagErrorBuf(b *bytes.Buffer) {
-	p.flagErrorBuf = b
-}
-
-func (p *Default) GetFlagErrorBuf() *bytes.Buffer {
-	return p.flagErrorBuf
 }
 
 // UsageString returns usage string.
@@ -804,4 +452,255 @@ func (c *Default) UsageString() string {
 	log.errWriter = tmpErr
 
 	return bb.String()
+}
+
+type Simple struct {
+	Default
+
+	// Use is the one-line usage message.
+	// Recommended syntax is as follows:
+	//   [ ] identifies an optional argument. Arguments that are not enclosed in brackets are required.
+	//   ... indicates that you can specify multiple values for the previous argument.
+	//   |   indicates mutually exclusive information. You can use the argument to the left of the separator or the
+	//       argument to the right of the separator. You cannot use both arguments in a single use of the command.
+	//   { } delimits a set of mutually exclusive arguments when one of the arguments is required. If the arguments are
+	//       optional, they are enclosed in brackets ([ ]).
+	// Example: add [-F file | -D dir]... [-f format] profile
+	Use string
+
+	// Long is the long message shown in the 'help <this-command>' output.
+	// Long string
+	Long string
+
+	// Short is the short description shown in the 'help' output.
+	Short string
+
+	// DisableFlagsInUseLine will disable the addition of [flags] to the usage
+	// line of a command when printing help or generating docs
+	DisableFlagsInUseLine bool
+
+	// Hidden defines, if this command is hidden and should NOT show up in the list of available commands.
+	Hidden bool
+
+	// Deprecated defines, if this command is deprecated and should print this string when used.
+	Deprecated string
+
+	// Version defines the version for this command. If this value is non-empty and the command does not
+	// define a "version" flag, a "version" boolean flag will be added to the command and, if specified,
+	// will print content of the "Version" variable. A shorthand "v" flag will also be added if the
+	// command does not define one.
+	Version string
+
+	// Aliases is an array of aliases that can be used instead of the first word in Use.
+	Aliases []string
+
+	// SuggestFor is an array of command names for which this command will be suggested -
+	// similar to aliases but only suggests.
+	SuggestFor []string
+
+	// Example is examples of how to use the command.
+	Example string
+
+	// TraverseChildren parses flags on all parents before executing child command.
+	TraverseChildren bool
+
+	// SilenceErrors is an option to quiet errors down stream.
+	SilenceErrors bool
+
+	// The group id under which this subcommand is grouped in the 'help' output of its parent.
+	GroupID string
+
+	// ValidArgs is list of all valid non-flag arguments that are accepted in shell completions
+	ValidArgs []string
+
+	// SuggestionsMinimumDistance defines minimum levenshtein distance to display suggestions.
+	// Must be > 0.
+	SuggestionsMinimumDistance int
+
+	// Expected arguments
+	Args PositionalArgs
+
+	// ArgAliases is List of aliases for ValidArgs.
+	// These are not suggested to the user in the shell completion,
+	// but accepted if entered manually.
+	ArgAliases []string
+
+	// SilenceUsage is an option to silence usage when an error occurs.
+	SilenceUsage bool
+
+	// DisableFlagParsing disables the flag parsing.
+	// If this is true all flags will be passed to the command as arguments.
+	DisableFlagParsing bool
+
+	// DisableAutoGenTag defines, if gen tag ("Auto generated by spf13/cobra...")
+	// will be printed by generating docs for this command.
+	DisableAutoGenTag bool
+
+	// DisableSuggestions disables the suggestions based on Levenshtein distance
+	// that go along with 'unknown command' messages.
+	DisableSuggestions bool
+
+	// ValidArgsFunction is an optional function that provides valid non-flag arguments for shell completion.
+	// It is a dynamic version of using ValidArgs.
+	// Only one of ValidArgs and ValidArgsFunction can be used for a command.
+	ValidArgsFunction func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)
+
+	// BashCompletionFunction is custom bash functions used by the legacy bash autocompletion generator.
+	// For portability with other shells, it is recommended to instead use ValidArgsFunction
+	BashCompletionFunction string
+
+	// Annotations are key/value pairs that can be used by applications to identify or
+	// group commands or set special options.
+	Annotations map[string]string
+
+	// FParseErrWhitelist flag parse errors to be ignored
+	FParseErrWhitelist FParseErrWhitelist
+
+	// CompletionOptions is a set of options to control the handling of shell completion
+	CompletionOptions CompletionOptions
+
+	// The *Run functions are executed in the following order:
+	//   * PersistentPreRun()
+	//   * PreRun()
+	//   * Run()
+	//   * PostRun()
+	//   * PersistentPostRun()
+	// All functions get the same args, the arguments after the command name.
+	// The *PreRun and *PostRun functions will only be executed if the Run function of the current
+	// command has been declared.
+	//
+	// PersistentPreRun: children of this command will inherit and execute.
+	PersistentPreRun func(cmd Commander, args []string)
+	// PersistentPreRunE: PersistentPreRun but returns an error.
+	PersistentPreRunE func(cmd Commander, args []string) error
+	// PreRun: children of this command will not inherit.
+	// PreRun func(cmd Commander, args []string)
+	// PreRunE: PreRun but returns an error.
+	PreRunE func(cmd Commander, args []string) error
+	// Run: Typically the actual work function. Most commands will only implement this.
+	// Run func(cmd Commander, args []string)
+	// RunE: Run but returns an error.
+	// RunE func(cmd Commander, args []string) error
+	RunE func(cmd Commander, args []string) error
+
+	// PostRun: run after the Run command.
+	// PostRun func(cmd Commander, args []string)
+	// PostRunE: PostRun but returns an error.
+	PostRunE func(cmd Commander, args []string) error
+	// PersistentPostRun: children of this command will inherit and execute after PostRun.
+	PersistentPostRun func(cmd Commander, args []string)
+	// PersistentPostRunE: PersistentPostRun but returns an error.
+	PersistentPostRunE func(cmd Commander, args []string) error
+}
+
+func (s *Simple) GetUse() string {
+	return s.Use
+}
+
+func (s *Simple) GetLong() string {
+	return s.Long
+}
+
+func (s *Simple) GetHidden() bool {
+	return s.Hidden
+}
+
+func (s *Simple) GetDeprecated() string {
+	return s.Deprecated
+}
+
+func (s *Simple) GetVersion() string {
+	return s.Version
+}
+
+func (s *Simple) GetAliases() []string {
+	return s.Aliases
+}
+
+func (s *Simple) GetPersistentPostRunE() func(cmd Commander, args []string) error {
+	return s.PersistentPostRunE
+}
+
+func (s *Simple) GetPersistentPostRun() func(cmd Commander, args []string) {
+	return s.PersistentPostRun
+}
+
+func (s *Simple) PreRun(args []string) error {
+	if s.PreRunE != nil {
+		return s.PreRunE(s, args)
+	}
+	return nil
+}
+
+func (s *Simple) Run(args []string) error {
+	if s.RunE != nil {
+		return s.RunE(s, args)
+	}
+	return nil
+}
+
+func (s *Simple) GetPersistentPreRunE() func(cmd Commander, args []string) error {
+	return s.PersistentPreRunE
+}
+
+func (s *Simple) GetPersistentPreRun() func(cmd Commander, args []string) {
+	return s.PersistentPreRun
+}
+
+func (s *Simple) GetSuggestFor() []string {
+	return s.SuggestFor
+}
+
+func (s *Simple) GetExample() string {
+	return s.Example
+}
+
+func (s *Simple) GetTraverseChildren() bool {
+	return s.TraverseChildren
+}
+
+func (s *Simple) GetSilenceErrors() bool {
+	return s.SilenceErrors
+}
+
+func (s *Simple) GetGroupID() string {
+	return s.GroupID
+}
+
+func (s *Simple) SetGroupID(groupID string) {
+	s.GroupID = groupID
+}
+
+func (s *Simple) GetValidArgs() []string {
+	return s.ValidArgs
+}
+
+func (s *Simple) GetSuggestionsMinimumDistance() int  { return s.SuggestionsMinimumDistance }
+func (s *Simple) SetSuggestionsMinimumDistance(v int) { s.SuggestionsMinimumDistance = v }
+func (s *Simple) GetArgs() PositionalArgs             { return s.Args }
+
+func (s *Simple) GetArgAliases() []string {
+	return s.ArgAliases
+}
+
+func (s *Simple) GetSilenceUsage() bool {
+	return s.SilenceUsage
+}
+
+func (s *Simple) GetDisableAutoGenTag() bool               { return s.DisableAutoGenTag }
+func (s *Simple) SetDisableAutoGenTag(d bool)              { s.DisableAutoGenTag = d }
+func (s *Simple) GetDisableFlagParsing() bool              { return s.DisableFlagParsing }
+func (s *Simple) GetDisableFlagsInUseLine() bool           { return s.DisableFlagsInUseLine }
+func (s *Simple) GetDisableSuggestions() bool              { return s.DisableSuggestions }
+func (s *Simple) GetAnnotations() map[string]string        { return s.Annotations }
+func (s *Simple) GetCompletionOptions() *CompletionOptions { return &s.CompletionOptions }
+
+// GetFParseErrWhitelist implements Commander.
+func (s *Simple) GetFParseErrWhitelist() FParseErrWhitelist {
+	return s.FParseErrWhitelist
+}
+
+// SetFParseErrWhitelist implements Commander.
+func (s *Simple) SetFParseErrWhitelist(fp FParseErrWhitelist) {
+	s.FParseErrWhitelist = fp
 }

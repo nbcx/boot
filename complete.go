@@ -7,7 +7,22 @@ import (
 )
 
 type CompleteCmd struct {
-	Default
+	Simple
+}
+
+func NewCompleteCmd(cmd Commander) *CompleteCmd {
+	return &CompleteCmd{
+		Simple: Simple{
+			Hidden: true,
+			Short:  "Request shell completion choices for the specified command-line",
+			Long: fmt.Sprintf("%[2]s is a special command that is used by the shell completion logic\n%[1]s",
+				"to request completion choices for the specified command-line.", ShellCompRequestCmd),
+			Aliases:               []string{ShellCompNoDescRequestCmd},
+			DisableFlagsInUseLine: true,
+			DisableFlagParsing:    true,
+			Args:                  MinimumNArgs(1),
+		},
+	}
 }
 
 func (cmd *CompleteCmd) GetUse() string {
@@ -23,7 +38,7 @@ func (cmd *CompleteCmd) Run(args []string) error {
 		// 2- Even without completions, we need to print the directive
 	}
 
-	noDescriptions := cmd.CalledAs() == ShellCompNoDescRequestCmd
+	noDescriptions := CalledAs(cmd) == ShellCompNoDescRequestCmd
 	if !noDescriptions {
 		if doDescriptions, err := strconv.ParseBool(getEnvConfig(cmd, configEnvVarSuffixDescriptions)); err == nil {
 			noDescriptions = !doDescriptions
@@ -70,7 +85,7 @@ func (cmd *CompleteCmd) Run(args []string) error {
 }
 
 type BashCompleteCmd struct {
-	Default
+	Simple
 }
 
 func (cmd *BashCompleteCmd) Run(args []string) error {
@@ -82,7 +97,7 @@ func (cmd *BashCompleteCmd) GetUse() string {
 
 func NewBashCompleteCmd(cmd Commander, shortDesc string) *BashCompleteCmd {
 	return &BashCompleteCmd{
-		Default{
+		Simple{
 			Short: fmt.Sprintf(shortDesc, "bash"),
 			Long: fmt.Sprintf(`Generate the autocompletion script for the bash shell.
 
@@ -105,15 +120,15 @@ To load completions for every new session, execute once:
 
 You will need to start a new shell for this setup to take effect.
 `, name(cmd)),
-			Args:                  NoArgs,
 			DisableFlagsInUseLine: true,
+			Args:                  NoArgs,
 			ValidArgsFunction:     NoFileCompletions,
 		},
 	}
 }
 
 type ZshCompleteCmd struct {
-	Default
+	Simple
 	noDesc bool
 }
 
@@ -123,8 +138,10 @@ func (p *ZshCompleteCmd) GetUse() string {
 
 func NewZshCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *ZshCompleteCmd {
 	return &ZshCompleteCmd{
-		Default: Default{
-			Short: fmt.Sprintf(shortDesc, "zsh"),
+		Simple: Simple{
+			Short:             fmt.Sprintf(shortDesc, "zsh"),
+			Args:              NoArgs,
+			ValidArgsFunction: NoFileCompletions,
 			Long: fmt.Sprintf(`Generate the autocompletion script for the zsh shell.
 
 If shell completion is not already enabled in your environment you will need
@@ -148,8 +165,6 @@ To load completions for every new session, execute once:
 
 You will need to start a new shell for this setup to take effect.
 `, name(Base(cmd))),
-			Args:              NoArgs,
-			ValidArgsFunction: NoFileCompletions,
 		},
 		noDesc: noDesc,
 	}
@@ -164,7 +179,7 @@ func (p *ZshCompleteCmd) Run(args []string) error {
 }
 
 type FishCompleteCmd struct {
-	Default
+	Simple
 	noDesc bool
 }
 
@@ -179,8 +194,10 @@ func (p *FishCompleteCmd) Run(args []string) error {
 
 func NewFishCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *FishCompleteCmd {
 	return &FishCompleteCmd{
-		Default: Default{
-			Short: fmt.Sprintf(shortDesc, "fish"),
+		Simple: Simple{
+			Args:              NoArgs,
+			ValidArgsFunction: NoFileCompletions,
+			Short:             fmt.Sprintf(shortDesc, "fish"),
 			Long: fmt.Sprintf(`Generate the autocompletion script for the fish shell.
 
 To load completions in your current shell session:
@@ -193,15 +210,13 @@ To load completions for every new session, execute once:
 
 You will need to start a new shell for this setup to take effect.
 `, name(Base(cmd))),
-			Args:              NoArgs,
-			ValidArgsFunction: NoFileCompletions,
 		},
 		noDesc: noDesc,
 	}
 }
 
 type PowershellCompleteCmd struct {
-	Default
+	Simple
 	noDesc bool
 }
 
@@ -217,8 +232,10 @@ func (cmd *PowershellCompleteCmd) GetUse() string {
 }
 func NewPowershellCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *PowershellCompleteCmd {
 	return &PowershellCompleteCmd{
-		Default: Default{
-			Short: fmt.Sprintf(shortDesc, "powershell"),
+		Simple: Simple{
+			Args:              NoArgs,
+			ValidArgsFunction: NoFileCompletions,
+			Short:             fmt.Sprintf(shortDesc, "powershell"),
 			Long: fmt.Sprintf(`Generate the autocompletion script for powershell.
 
 To load completions in your current shell session:
@@ -228,8 +245,6 @@ To load completions in your current shell session:
 To load completions for every new session, add the output of the above command
 to your powershell profile.
 `, name(Base(cmd))),
-			Args:              NoArgs,
-			ValidArgsFunction: NoFileCompletions,
 		},
 		noDesc: noDesc,
 	}

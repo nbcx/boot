@@ -213,14 +213,10 @@ func TestExecuteContext(t *testing.T) {
 func TestExecuteContextC(t *testing.T) {
 	ctx := context.TODO()
 
-	ctxRun := func(cmd Commander, args []string) {
+	ctxRunE := func(cmd Commander, args []string) error {
 		if cmd.Context() != ctx {
 			t.Errorf("Command %q must have context when called with ExecuteContext", cmd.GetUse())
 		}
-	}
-
-	ctxRunE := func(cmd Commander, args []string) error {
-		ctxRun(cmd, args)
 		return nil
 	}
 
@@ -2435,7 +2431,7 @@ func (tc *calledAsTestcase) test(t *testing.T) {
 
 	if name(called) != tc.call {
 		t.Errorf("called command == %q; Wanted %q", name(called), tc.call)
-	} else if got := called.CalledAs(); got != tc.want {
+	} else if got := CalledAs(called); got != tc.want {
 		t.Errorf("%s.CalledAs() == %q; Wanted: %q", tc.call, got, tc.want)
 	}
 }
