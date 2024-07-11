@@ -88,6 +88,9 @@ type Default struct {
 
 	ctx context.Context
 
+	// self is the combination is realized default
+	self Commander
+
 	// commands is the list of commands supported by this program.
 	commands []Commander
 	// parent is a parent command for this command.
@@ -256,13 +259,17 @@ func (c *Default) Add2(main Commander, commands ...Commander) {
 	}
 }
 
+func (d *Default) Self() Commander     { return d.self }
+func (d *Default) SetSelf(c Commander) { d.self = c }
+
 // Add adds one or more commands to this parent command.
 func (c *Default) Add(commands ...Commander) {
 	for i, x := range commands {
 		if commands[i] == c {
 			panic("command can't be a child of itself")
 		}
-		commands[i].SetParent(c)
+		commands[i].SetSelf(commands[i])
+		commands[i].SetParent(c.Self())
 		// cmds[i].parent = c
 		// update max lengths
 		usageLen := len(x.GetUse())

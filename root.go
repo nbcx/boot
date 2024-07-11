@@ -730,6 +730,10 @@ func (c *Root) ExecuteC() (cmd Commander, err error) {
 		c.SetContext(context.Background())
 	}
 
+	for _, v := range c.commands {
+		v.SetParent(c)
+	}
+
 	// windows hook
 	if preExecHookFn != nil {
 		preExecHookFn(c)

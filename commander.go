@@ -53,6 +53,8 @@ type Commander interface {
 	Parent() Commander
 	GetGroupID() string
 	SetGroupID(groupID string)
+	Self() Commander
+	SetSelf(Commander)
 
 	// PersistentFlags() *flag.FlagSet
 	Add(cmds ...Commander)
