@@ -33,7 +33,7 @@ func TestAddTemplateFunctions(t *testing.T) {
 		"w": func() string { return "world." }})
 
 	c := &Root{}
-	c.SetUsageTemplate(`{{if t}}{{h}}{{end}}{{if f}}{{h}}{{end}} {{w}}`)
+	// c.SetUsageTemplate(`{{if t}}{{h}}{{end}}{{if f}}{{h}}{{end}} {{w}}`)
 
 	const expected = "Hello, world."
 	if got := UsageString(c); got != expected {

@@ -91,14 +91,6 @@ type Commander interface {
 	GetSuggestFor() []string
 }
 
-func (p *Root) GetParent() Commander {
-	return p.parent
-}
-
-func (p *Root) SetParent(c Commander) {
-	p.parent = c
-}
-
 func (p *Root) GetUse() string {
 	return p.Use
 }
@@ -109,17 +101,6 @@ func (p *Root) GetGroupID() string {
 
 func (p *Root) SetGroupID(groupID string) {
 	p.GroupID = groupID
-}
-
-func (p *Root) GetFlags() *flag.FlagSet {
-	return p.flags
-}
-func (p *Root) SetFlags(f *flag.FlagSet) {
-	p.flags = f
-}
-
-func (p *Root) GetHelpCommand() Commander {
-	return p.helpCommand
 }
 
 func (p *Root) GetShort() string {
@@ -142,10 +123,6 @@ func (p *Root) GetSilenceUsage() bool {
 	return p.SilenceUsage
 }
 
-func (p *Root) GetCommandCalledAs() *CommandCalledAs {
-	return &p.commandCalledAs
-}
-
 func (p *Root) GetPersistentPreRunE() func(cmd Commander, args []string) error {
 	return p.PersistentPreRunE
 }
@@ -160,23 +137,6 @@ func (p *Root) GetSuggestFor() []string {
 
 func (p *Root) GetArgs() PositionalArgs {
 	return p.Args
-}
-
-func (p *Root) GetCommandsMaxUseLen() int {
-	return p.commandsMaxUseLen
-}
-func (p *Root) GetCommandsMaxCommandPathLen() int {
-	return p.commandsMaxCommandPathLen
-}
-func (p *Root) GetCommandsMaxNameLen() int {
-	return p.commandsMaxNameLen
-}
-func (p *Root) GetHelpFunc() func(Commander, []string) {
-	return p.helpFunc
-}
-
-func (p *Root) GetFlagErrorFunc() func(Commander, error) error {
-	return p.flagErrorFunc
 }
 
 func (p *Root) GetTraverseChildren() bool {
@@ -217,12 +177,9 @@ func (p *Root) GetDisableAutoGenTag() bool {
 func (p *Root) SetDisableAutoGenTag(d bool) {
 	p.DisableAutoGenTag = d
 }
+
 func (p *Root) GetExample() string {
 	return p.Example
-}
-
-func (p *Root) GetCommands() []Commander {
-	return p.commands
 }
 
 func (p *Root) PreRun(args []string) error {
@@ -242,10 +199,6 @@ func (p *Root) PostRun(args []string) error {
 	return nil
 }
 
-func (p *Root) getHelpCommandGroupID() string {
-	return p.helpCommandGroupID
-}
-
 func (p *Root) GetVersion() string {
 	return p.Version
 }
@@ -262,34 +215,10 @@ func (p *Root) GetAnnotations() map[string]string {
 	return p.Annotations
 }
 
-func (p *Root) GetCommandGroups() []*Group {
-	return p.commandgroups
-}
 func (p *Root) GetDisableSuggestions() bool {
 	return p.DisableSuggestions
 }
 
-func (p *Root) GetSuggestionsMinimumDistance() int {
-	return 2
-}
-
 func (p *Root) GetCompletionOptions() *CompletionOptions {
 	return &p.CompletionOptions
-}
-
-func (p *Root) GetCompletionCommandGroupID() string {
-	return p.completionCommandGroupID
-}
-
-func (p *Root) SetFlagErrorBuf(b *bytes.Buffer) {
-	p.flagErrorBuf = b
-}
-
-func (p *Root) GetFlagErrorBuf() *bytes.Buffer {
-	return p.flagErrorBuf
-}
-
-// SuggestFor []string
-func (p *Root) test() {
-	p.GetUse()
 }

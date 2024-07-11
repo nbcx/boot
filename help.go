@@ -121,25 +121,6 @@ func HelpTemplate(c Commander) string {
 	// {{end}}{{if or .Runnable .HasSubCommands}}{{ .| $UsageString}}{{end}}`
 }
 
-// UsageFunc returns either the function set by SetUsageFunc for this command
-// or a parent, or it returns a default usage function.
-// func UsageFunc(c Commander) (f func(Commander) error) {
-// 	// if c.usageFunc != nil {
-// 	// 	return c.usageFunc
-// 	// }
-// 	// if c.HasParent() {
-// 	// 	return c.Parent().UsageFunc()
-// 	// }
-// 	return func(c Commander) error {
-// 		mergePersistentFlags(c)
-// 		err := tmpl(log.OutOrStderr(), UsageTemplate(c), c)
-// 		if err != nil {
-// 			log.PrintErrLn(err)
-// 		}
-// 		return err
-// 	}
-// }
-
 // UsageString returns usage string.
 func UsageString(c Commander) string {
 	// Storing normal writers

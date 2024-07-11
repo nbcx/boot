@@ -535,8 +535,8 @@ func TestFlagLong(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	if c.ArgsLenAtDash() != 1 {
-		t.Errorf("Expected ArgsLenAtDash: %v but got %v", 1, c.ArgsLenAtDash())
+	if ArgsLenAtDash(c) != 1 {
+		t.Errorf("Expected ArgsLenAtDash: %v but got %v", 1, ArgsLenAtDash(c))
 	}
 	if intFlagValue != 7 {
 		t.Errorf("Expected intFlagValue: %v, got %v", 7, intFlagValue)
@@ -2117,13 +2117,12 @@ func TestSetIn(t *testing.T) {
 
 func TestUsageStringRedirected(t *testing.T) {
 	c := &Root{}
-
-	c.usageFunc = func(cmd Commander) error {
-		log.Print("[stdout1]")
-		log.PrintErr("[stderr2]")
-		log.Print("[stdout3]")
-		return nil
-	}
+	// c.usageFunc = func(cmd Commander) error {
+	// 	log.Print("[stdout1]")
+	// 	log.PrintErr("[stderr2]")
+	// 	log.Print("[stdout3]")
+	// 	return nil
+	// }
 
 	expected := "[stdout1][stderr2][stdout3]"
 	if got := UsageString(c); got != expected {

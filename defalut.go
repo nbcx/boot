@@ -153,7 +153,7 @@ func (c *Default) SetContext(ctx context.Context) { c.ctx = ctx }
 
 // SetArgs sets arguments for the command. It is set to os.Args[1:] by default, if desired, can be overridden
 // particularly useful when testing.
-func (c *Default) SetArgs(a []string) { c.args = a }
+func (c *Default) SetArgs(a ...string) { c.args = a }
 
 // SetFlagErrorFunc sets a function to generate an error when flag parsing
 // fails.
@@ -179,19 +179,6 @@ func (c *Default) SetHelpCommandGroupID(groupID string) {
 func (c *Default) SetCompletionCommandGroupID(groupID string) {
 	// completionCommandGroupID is used if no completion command is defined by the user
 	Base(c).SetCompletionCommandGroupID(groupID)
-}
-
-// SetVersionTemplate sets version template to be used. Application can use it to set custom template.
-func (c *Default) SetVersionTemplate(s string) {
-	c.versionTemplate = s
-}
-
-// UsagePadding return padding for the usage.
-func (c *Default) UsagePadding() int {
-	if c.parent == nil || minUsagePadding > c.parent.GetCommandsMaxUseLen() {
-		return minUsagePadding
-	}
-	return c.parent.GetCommandsMaxUseLen()
 }
 
 // CommandPathPadding return padding for the command path.
@@ -222,6 +209,13 @@ func (c *Default) ResetCommands() {
 	c.parentsPFlags = nil
 }
 
+// Sorts commands by their names.
+type commandSorterByName []Commander
+
+func (c commandSorterByName) Len() int           { return len(c) }
+func (c commandSorterByName) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
+func (c commandSorterByName) Less(i, j int) bool { return name(c[i]) < name(c[j]) }
+
 // Commands returns a sorted slice of child commands.
 func (c *Default) Commands() []Commander {
 	// do not sort commands if it already sorted or sorting was disabled
@@ -233,12 +227,42 @@ func (c *Default) Commands() []Commander {
 }
 
 // Add adds one or more commands to this parent command.
-func (c *Default) Add(cmds ...Commander) {
-	for i, x := range cmds {
-		if cmds[i] == c {
-			panic("Command can't be a child of itself")
+func (c *Default) Add2(main Commander, commands ...Commander) {
+	for i, x := range commands {
+		if commands[i] == main {
+			panic("command can't be a child of itself")
 		}
-		cmds[i].SetParent(c)
+		commands[i].SetParent(main)
+		// cmds[i].parent = c
+		// update max lengths
+		usageLen := len(x.GetUse())
+		if usageLen > c.commandsMaxUseLen {
+			c.commandsMaxUseLen = usageLen
+		}
+		commandPathLen := len(CommandPath(x))
+		if commandPathLen > c.commandsMaxCommandPathLen {
+			c.commandsMaxCommandPathLen = commandPathLen
+		}
+		nameLen := len(name(x))
+		if nameLen > c.commandsMaxNameLen {
+			c.commandsMaxNameLen = nameLen
+		}
+		// If global normalization function exists, update all children
+		if c.globNormFunc != nil {
+			SetGlobalNormalizationFunc(x, c.globNormFunc)
+		}
+		c.commands = append(c.commands, x)
+		c.commandsAreSorted = false
+	}
+}
+
+// Add adds one or more commands to this parent command.
+func (c *Default) Add(commands ...Commander) {
+	for i, x := range commands {
+		if commands[i] == c {
+			panic("command can't be a child of itself")
+		}
+		commands[i].SetParent(c)
 		// cmds[i].parent = c
 		// update max lengths
 		usageLen := len(x.GetUse())
@@ -299,131 +323,68 @@ func (c *Default) ContainsGroup(groupID string) bool {
 	return false
 }
 
-// AddGroup adds one or more command groups to this parent command.
-func (c *Default) AddGroup(groups ...*Group) {
-	c.commandGroups = append(c.commandGroups, groups...)
-}
-func (s *Simple) GetCommandGroups() []*Group { return s.commandGroups }
-
 // Runnable determines if the command is itself runnable.
-func (c *Default) Runnable() bool {
-	return true
-}
+func (c *Default) Runnable() bool { return true }
 
 // GlobalNormalizationFunc returns the global normalization function or nil if it doesn't exist.
 func (c *Default) GlobalNormalizationFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
 	return c.globNormFunc
 }
 
+// AddGroup adds one or more command groups to this parent command.
+func (c *Default) AddGroup(groups ...*Group) { c.commandGroups = append(c.commandGroups, groups...) }
+func (s *Simple) GetCommandGroups() []*Group { return s.commandGroups }
+
 // Parent returns a commands parent command.
-func (c *Default) Parent() Commander {
-	return c.parent
-}
-
-//////// new add ////////////////
-
-func (p *Default) SetParent(c Commander) {
-	p.parent = c
-}
-
-func (p *Default) GetGroupID() string        { return "" }
-func (p *Default) SetGroupID(groupID string) {}
-
-func (p *Default) GetFlags() *flag.FlagSet {
-	return p.flags
-}
-
-func (p *Default) SetFlags(f *flag.FlagSet) {
-	p.flags = f
-}
-
-func (p *Default) GetHelpCommand() Commander {
-	return p.helpCommand
-}
-
-func (p *Default) GetShort() string {
-	return ""
-}
-
-func (p *Default) GetPersistentPostRunE() func(cmd Commander, args []string) error {
-	return nil
-}
-
-func (p *Default) GetPersistentPostRun() func(cmd Commander, args []string) {
-	return nil
-}
-
-func (p *Default) GetSilenceErrors() bool { return false }
-
-func (p *Default) GetSilenceUsage() bool {
-	return false
-}
-
-func (p *Default) GetCommandCalledAs() *CommandCalledAs {
-	return &p.commandCalledAs
-}
-
-func (p *Default) GetPersistentPreRunE() func(cmd Commander, args []string) error {
-	return nil
-}
-
-func (p *Default) GetPersistentPreRun() func(cmd Commander, args []string) {
-	return nil
-}
-
-func (p *Default) GetSuggestFor() []string {
-	return nil
-}
-
-func (p *Default) GetArgs() PositionalArgs { return nil }
-
-func (p *Default) GetCommandsMaxUseLen() int {
-	return p.commandsMaxUseLen
-}
-
-func (p *Default) GetCommandsMaxCommandPathLen() int {
-	return p.commandsMaxCommandPathLen
-}
-
-func (p *Default) GetCommandsMaxNameLen() int {
-	return p.commandsMaxNameLen
-}
-
-func (p *Default) GetFlagErrorFunc() func(Commander, error) error {
-	return p.flagErrorFunc
-}
-
-func (p *Default) GetTraverseChildren() bool {
-	return false
-}
-
-func (p *Default) GetDisableFlagParsing() bool              { return false }
-func (p *Default) GetArgAliases() []string                  { return nil }
-func (p *Default) GetValidArgs() []string                   { return nil }
-func (p *Default) GetAliases() []string                     { return nil }
-func (p *Default) GetHidden() bool                          { return false }
-func (p *Default) GetLong() string                          { return "" }
-func (p *Default) GetDisableAutoGenTag() bool               { return false }
-func (p *Default) SetDisableAutoGenTag(d bool)              {}
-func (p *Default) GetExample() string                       { return "" }
-func (p *Default) GetCommands() []Commander                 { return p.commands }
-func (p *Default) PreRun(args []string) error               { return nil }
-func (p *Default) Run(args []string) error                  { return nil } // todo: 这个考虑不默认实现
-func (p *Default) PostRun(args []string) error              { return nil }
-func (p *Default) getHelpCommandGroupID() string            { return p.helpCommandGroupID }
-func (p *Default) GetVersion() string                       { return "" }
-func (p *Default) GetDeprecated() string                    { return "" }
-func (p *Default) GetDisableFlagsInUseLine() bool           { return false }
-func (p *Default) GetDisableSuggestions() bool              { return false }
-func (p *Default) GetUse() string                           { return "" } // todo: 这个考虑不默认实现
-func (p *Default) GetAnnotations() map[string]string        { return nil }
-func (p *Default) GetCommandGroups() []*Group               { return nil }
-func (p *Default) GetCompletionOptions() *CompletionOptions { return nil }
-func (p *Default) GetSuggestionsMinimumDistance() int       { return 1 }
-func (p *Default) SetSuggestionsMinimumDistance(v int)      {}
-func (p *Default) GetCompletionCommandGroupID() string      { return p.completionCommandGroupID }
-func (p *Default) SetFlagErrorBuf(b *bytes.Buffer)          { p.flagErrorBuf = b }
-func (p *Default) GetFlagErrorBuf() *bytes.Buffer           { return p.flagErrorBuf }
+func (d *Default) Parent() Commander                                               { return d.parent }
+func (p *Default) SetParent(c Commander)                                           { p.parent = c }
+func (p *Default) GetGroupID() string                                              { return "" }
+func (p *Default) SetGroupID(groupID string)                                       {}
+func (p *Default) GetFlags() *flag.FlagSet                                         { return p.flags }
+func (p *Default) SetFlags(f *flag.FlagSet)                                        { p.flags = f }
+func (p *Default) GetHelpCommand() Commander                                       { return p.helpCommand }
+func (p *Default) GetShort() string                                                { return "" }
+func (p *Default) GetPersistentPostRunE() func(cmd Commander, args []string) error { return nil }
+func (p *Default) GetPersistentPostRun() func(cmd Commander, args []string)        { return nil }
+func (p *Default) GetSilenceErrors() bool                                          { return false }
+func (p *Default) GetSilenceUsage() bool                                           { return false }
+func (p *Default) GetCommandCalledAs() *CommandCalledAs                            { return &p.commandCalledAs }
+func (p *Default) GetPersistentPreRunE() func(cmd Commander, args []string) error  { return nil }
+func (p *Default) GetPersistentPreRun() func(cmd Commander, args []string)         { return nil }
+func (p *Default) GetSuggestFor() []string                                         { return nil }
+func (p *Default) GetArgs() PositionalArgs                                         { return nil }
+func (p *Default) GetCommandsMaxUseLen() int                                       { return p.commandsMaxUseLen }
+func (p *Default) GetCommandsMaxCommandPathLen() int                               { return p.commandsMaxCommandPathLen }
+func (p *Default) GetCommandsMaxNameLen() int                                      { return p.commandsMaxNameLen }
+func (p *Default) GetFlagErrorFunc() func(Commander, error) error                  { return p.flagErrorFunc }
+func (p *Default) GetTraverseChildren() bool                                       { return false }
+func (p *Default) GetDisableFlagParsing() bool                                     { return false }
+func (p *Default) GetArgAliases() []string                                         { return nil }
+func (p *Default) GetValidArgs() []string                                          { return nil }
+func (p *Default) GetAliases() []string                                            { return nil }
+func (p *Default) GetHidden() bool                                                 { return false }
+func (p *Default) GetLong() string                                                 { return "" }
+func (p *Default) GetDisableAutoGenTag() bool                                      { return false }
+func (p *Default) SetDisableAutoGenTag(d bool)                                     {}
+func (p *Default) GetExample() string                                              { return "" }
+func (p *Default) GetCommands() []Commander                                        { return p.commands }
+func (p *Default) PreRun(args []string) error                                      { return nil }
+func (p *Default) Run(args []string) error                                         { return nil } // todo: 这个考虑不默认实现
+func (p *Default) PostRun(args []string) error                                     { return nil }
+func (p *Default) getHelpCommandGroupID() string                                   { return p.helpCommandGroupID }
+func (p *Default) GetVersion() string                                              { return "" }
+func (p *Default) GetDeprecated() string                                           { return "" }
+func (p *Default) GetDisableFlagsInUseLine() bool                                  { return false }
+func (p *Default) GetDisableSuggestions() bool                                     { return false }
+func (p *Default) GetUse() string                                                  { return "" } // todo: 这个考虑不默认实现
+func (p *Default) GetAnnotations() map[string]string                               { return nil }
+func (p *Default) GetCommandGroups() []*Group                                      { return nil }
+func (p *Default) GetCompletionOptions() *CompletionOptions                        { return nil }
+func (p *Default) GetSuggestionsMinimumDistance() int                              { return 2 }
+func (p *Default) SetSuggestionsMinimumDistance(v int)                             {}
+func (p *Default) GetCompletionCommandGroupID() string                             { return p.completionCommandGroupID }
+func (p *Default) SetFlagErrorBuf(b *bytes.Buffer)                                 { p.flagErrorBuf = b }
+func (p *Default) GetFlagErrorBuf() *bytes.Buffer                                  { return p.flagErrorBuf }
 func (p *Default) GetValidArgsFunction() func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 	return nil
 }
@@ -613,9 +574,7 @@ func (s *Simple) GetVersion() string {
 	return s.Version
 }
 
-func (s *Simple) GetAliases() []string {
-	return s.Aliases
-}
+func (s *Simple) GetAliases() []string { return s.Aliases }
 
 func (s *Simple) GetPersistentPostRunE() func(cmd Commander, args []string) error {
 	return s.PersistentPostRunE
@@ -642,63 +601,29 @@ func (s *Simple) Run(args []string) error {
 func (s *Simple) GetPersistentPreRunE() func(cmd Commander, args []string) error {
 	return s.PersistentPreRunE
 }
-
-func (s *Simple) GetPersistentPreRun() func(cmd Commander, args []string) {
-	return s.PersistentPreRun
-}
-
-func (s *Simple) GetSuggestFor() []string {
-	return s.SuggestFor
-}
-
-func (s *Simple) GetExample() string {
-	return s.Example
-}
-
-func (s *Simple) GetTraverseChildren() bool {
-	return s.TraverseChildren
-}
-
-func (s *Simple) GetSilenceErrors() bool {
-	return s.SilenceErrors
-}
-
-func (s *Simple) GetGroupID() string {
-	return s.GroupID
-}
-
-func (s *Simple) SetGroupID(groupID string) {
-	s.GroupID = groupID
-}
-
-func (s *Simple) GetValidArgs() []string {
-	return s.ValidArgs
-}
-
-func (s *Simple) GetSuggestionsMinimumDistance() int  { return s.SuggestionsMinimumDistance }
-func (s *Simple) SetSuggestionsMinimumDistance(v int) { s.SuggestionsMinimumDistance = v }
-func (s *Simple) GetArgs() PositionalArgs             { return s.Args }
-
-func (s *Simple) GetArgAliases() []string {
-	return s.ArgAliases
-}
-
-func (s *Simple) GetSilenceUsage() bool {
-	return s.SilenceUsage
-}
-
-func (s *Simple) GetDisableAutoGenTag() bool               { return s.DisableAutoGenTag }
-func (s *Simple) SetDisableAutoGenTag(d bool)              { s.DisableAutoGenTag = d }
-func (s *Simple) GetDisableFlagParsing() bool              { return s.DisableFlagParsing }
-func (s *Simple) GetDisableFlagsInUseLine() bool           { return s.DisableFlagsInUseLine }
-func (s *Simple) GetDisableSuggestions() bool              { return s.DisableSuggestions }
-func (s *Simple) GetAnnotations() map[string]string        { return s.Annotations }
-func (s *Simple) GetCompletionOptions() *CompletionOptions { return &s.CompletionOptions }
+func (s *Simple) GetPersistentPreRun() func(cmd Commander, args []string) { return s.PersistentPreRun }
+func (s *Simple) GetSuggestFor() []string                                 { return s.SuggestFor }
+func (s *Simple) GetExample() string                                      { return s.Example }
+func (s *Simple) GetTraverseChildren() bool                               { return s.TraverseChildren }
+func (s *Simple) GetSilenceErrors() bool                                  { return s.SilenceErrors }
+func (s *Simple) GetGroupID() string                                      { return s.GroupID }
+func (s *Simple) SetGroupID(groupID string)                               { s.GroupID = groupID }
+func (s *Simple) GetValidArgs() []string                                  { return s.ValidArgs }
+func (s *Simple) GetSuggestionsMinimumDistance() int                      { return s.SuggestionsMinimumDistance }
+func (s *Simple) SetSuggestionsMinimumDistance(v int)                     { s.SuggestionsMinimumDistance = v }
+func (s *Simple) GetArgs() PositionalArgs                                 { return s.Args }
+func (s *Simple) GetArgAliases() []string                                 { return s.ArgAliases }
+func (s *Simple) GetSilenceUsage() bool                                   { return s.SilenceUsage }
+func (s *Simple) GetDisableAutoGenTag() bool                              { return s.DisableAutoGenTag }
+func (s *Simple) SetDisableAutoGenTag(d bool)                             { s.DisableAutoGenTag = d }
+func (s *Simple) GetDisableFlagParsing() bool                             { return s.DisableFlagParsing }
+func (s *Simple) GetDisableFlagsInUseLine() bool                          { return s.DisableFlagsInUseLine }
+func (s *Simple) GetDisableSuggestions() bool                             { return s.DisableSuggestions }
+func (s *Simple) GetAnnotations() map[string]string                       { return s.Annotations }
+func (s *Simple) GetCompletionOptions() *CompletionOptions                { return &s.CompletionOptions }
 
 // GetFParseErrWhitelist implements Commander.
-func (s *Simple) GetFParseErrWhitelist() FParseErrWhitelist {
-	return s.FParseErrWhitelist
-}
+func (s *Simple) GetFParseErrWhitelist() FParseErrWhitelist { return s.FParseErrWhitelist }
 
 // SetFParseErrWhitelist implements Commander.
 func (s *Simple) SetFParseErrWhitelist(fp FParseErrWhitelist) {
