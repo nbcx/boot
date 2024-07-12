@@ -51,6 +51,7 @@ var templateFuncs = template.FuncMap{
 	"InheritedFlags":             InheritedFlags,
 	"NamePadding":                NamePadding,
 	"HasExample":                 HasExample,
+	"UsagePadding":               UsagePadding,
 }
 
 func LocalFlagUsages(c Commander) string {

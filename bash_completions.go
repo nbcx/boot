@@ -680,7 +680,7 @@ func gen(buf io.StringWriter, cmd Commander) {
 }
 
 // GenBashCompletion generates bash completion file and writes to the passed writer.
-func (c *Root) GenBashCompletion(w io.Writer) error {
+func (c *Command) GenBashCompletion(w io.Writer) error {
 	buf := new(bytes.Buffer)
 	writePreamble(buf, name(c))
 	if len(c.BashCompletionFunction) > 0 {
@@ -698,7 +698,7 @@ func nonCompletableFlag(flag *pflag.Flag) bool {
 }
 
 // GenBashCompletionFile generates bash completion file.
-func (c *Root) GenBashCompletionFile(filename string) error {
+func (c *Command) GenBashCompletionFile(filename string) error {
 	outFile, err := os.Create(filename)
 	if err != nil {
 		return err

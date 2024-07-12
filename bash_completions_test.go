@@ -81,7 +81,7 @@ const bashCompletionFunc = `__root_custom_func() {
 `
 
 func TestBashCompletions(t *testing.T) {
-	rootCmd := &Root{
+	rootCmd := &Command{
 		Use:                    "root",
 		ArgAliases:             []string{"pods", "nodes", "services", "replicationcontrollers", "po", "no", "svc", "rc"},
 		ValidArgs:              []string{"pod", "node", "service", "replicationcontroller"},
@@ -114,7 +114,7 @@ func TestBashCompletions(t *testing.T) {
 	Flags(rootCmd).StringP("two", "t", "", "this is two word flags")
 	Flags(rootCmd).BoolP("two-w-default", "T", false, "this is not two word flags")
 
-	echoCmd := &Root{
+	echoCmd := &Command{
 		Use:     "echo [string to echo]",
 		Aliases: []string{"say"},
 		Short:   "Echo anything to the screen",
@@ -128,7 +128,7 @@ func TestBashCompletions(t *testing.T) {
 	Flags(echoCmd).String("config", "", "config to use (located in /config/PROFILE/)")
 	assertNoErr(t, Flags(echoCmd).SetAnnotation("config", BashCompSubdirsInDir, []string{"config"}))
 
-	printCmd := &Root{
+	printCmd := &Command{
 		Use:   "print [string to print]",
 		Args:  MinimumNArgs(1),
 		Short: "Print anything to the screen",
@@ -136,7 +136,7 @@ func TestBashCompletions(t *testing.T) {
 		RunE:  emptyRun,
 	}
 
-	deprecatedCmd := &Root{
+	deprecatedCmd := &Command{
 		Use:        "deprecated [can't do anything here]",
 		Args:       NoArgs,
 		Short:      "A command which is deprecated",
@@ -145,12 +145,12 @@ func TestBashCompletions(t *testing.T) {
 		RunE:       emptyRun,
 	}
 
-	colonCmd := &Root{
+	colonCmd := &Command{
 		Use:  "cmd:colon",
 		RunE: emptyRun,
 	}
 
-	timesCmd := &Root{
+	timesCmd := &Command{
 		Use:        "times [# times] [string to echo]",
 		SuggestFor: []string{"counts"},
 		Args:       OnlyValidArgs,
@@ -227,7 +227,7 @@ func TestBashCompletions(t *testing.T) {
 }
 
 func TestBashCompletionHiddenFlag(t *testing.T) {
-	c := &Root{Use: "c", RunE: emptyRun}
+	c := &Command{Use: "c", RunE: emptyRun}
 
 	const flagName = "hiddenFlag"
 	Flags(c).Bool(flagName, false, "")
@@ -243,7 +243,7 @@ func TestBashCompletionHiddenFlag(t *testing.T) {
 }
 
 func TestBashCompletionDeprecatedFlag(t *testing.T) {
-	c := &Root{Use: "c", RunE: emptyRun}
+	c := &Command{Use: "c", RunE: emptyRun}
 
 	const flagName = "deprecated-flag"
 	Flags(c).Bool(flagName, false, "")
@@ -259,7 +259,7 @@ func TestBashCompletionDeprecatedFlag(t *testing.T) {
 }
 
 func TestBashCompletionTraverseChildren(t *testing.T) {
-	c := &Root{Use: "c", RunE: emptyRun, TraverseChildren: true}
+	c := &Command{Use: "c", RunE: emptyRun, TraverseChildren: true}
 
 	Flags(c).StringP("string-flag", "s", "", "string flag")
 	Flags(c).BoolP("bool-flag", "b", false, "bool flag")
@@ -277,7 +277,7 @@ func TestBashCompletionTraverseChildren(t *testing.T) {
 }
 
 func TestBashCompletionNoActiveHelp(t *testing.T) {
-	c := &Root{Use: "c", RunE: emptyRun}
+	c := &Command{Use: "c", RunE: emptyRun}
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, c.GenBashCompletion(buf))

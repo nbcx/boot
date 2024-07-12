@@ -21,7 +21,7 @@ import (
 )
 
 func TestZshCompletionWithActiveHelp(t *testing.T) {
-	c := &Root{Use: "c", RunE: emptyRun}
+	c := &Command{Use: "c", RunE: emptyRun}
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, GenZshCompletion(c, buf))

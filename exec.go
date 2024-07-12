@@ -1,19 +1,3 @@
-// Copyright 2013-2023 The Cobra Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// package boot is a commander providing a simple interface to create powerful modern CLI interfaces.
-// In addition to providing an interface, Cobra simultaneously provides a controller to organize your application code.
 package boot
 
 import (
@@ -28,193 +12,225 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-const (
-	FlagSetByCobraAnnotation     = "cobra_annotation_flag_set_by_cobra"
-	CommandDisplayNameAnnotation = "cobra_annotation_command_display_name"
-)
-
-// FParseErrWhitelist configures Flag parse errors to be ignored
-type FParseErrWhitelist flag.ParseErrorsWhitelist
-
-// Group Structure to manage groups for commands
-type Group struct {
-	ID    string
-	Title string
+// Execute uses the args (os.Args[1:] by default)
+// and run through the command tree finding appropriate matches
+// for commands and then corresponding flags.
+func Execute(c Commander) error { // todo: 原Execute
+	_, err := ExecuteC(c)
+	return err
 }
 
-type CommandCalledAs struct {
-	name   string
-	called bool
+// ExecuteC executes the command.
+func ExecuteC(c Commander) (cmd Commander, err error) {
+	if c.Context() == nil {
+		c.SetContext(context.Background())
+	}
+
+	// correct the parent class reference so that it points to the composite instance
+	var fixParent func(c Commander)
+	fixParent = func(c Commander) {
+		for _, v := range c.Commands() {
+			v.SetParent(c)
+			fixParent(v)
+		}
+	}
+	fixParent(c)
+
+	// windows hook
+	if preExecHookFn != nil {
+		preExecHookFn(c)
+	}
+
+	// initialize help at the last point to allow for user overriding
+	InitDefaultHelpCmd(c)
+	// initialize completion at the last point to allow for user overriding
+	InitDefaultCompletionCmd(c)
+
+	// Now that all commands have been created, let's make sure all groups
+	// are properly created also
+	CheckCommandGroups(c)
+
+	args := c.GetArgs()
+
+	// Workaround FAIL with "go test -v" or "cobra.test -test.v", see #155
+	if args == nil && filepath.Base(os.Args[0]) != "cobra.test" {
+		args = os.Args[1:]
+	}
+
+	// initialize the hidden command to be used for shell completion
+	initCompleteCmd(c, args)
+
+	var flags []string
+	if c.GetTraverseChildren() {
+		cmd, flags, err = Traverse(c, args)
+	} else {
+		cmd, flags, err = Find(c, args)
+	}
+	if err != nil {
+		var dc Commander
+		// If found parse to a subcommand and then failed, talk about the subcommand
+		if cmd != nil {
+			dc = cmd
+		} else {
+			dc = c
+		}
+		if !dc.GetSilenceErrors() {
+			log.PrintErrLn(c.ErrPrefix(), err.Error())
+			log.PrintErrF("Run '%v --help' for usage.\n", CommandPath(c))
+		}
+		return dc, err
+	}
+	as := cmd.GetCommandCalledAs()
+	as.called = true
+	if as.name == "" {
+		as.name = name(cmd)
+	}
+
+	// We have to pass global context to children command
+	// if context is present on the parent command.
+	if cmd.Context() == nil {
+		cmd.SetContext(c.Context())
+	}
+
+	err = execute(cmd, flags)
+	if err != nil {
+		// Always show help if requested, even if SilenceErrors is in
+		// effect
+		if errors.Is(err, flag.ErrHelp) {
+			HelpFunc(cmd, args)
+			return cmd, nil
+		}
+
+		// If root command has SilenceErrors flagged,
+		// all subcommands should respect it
+		if !cmd.GetSilenceErrors() && !c.GetSilenceErrors() {
+			log.PrintErrLn(cmd.ErrPrefix(), err.Error())
+		}
+
+		// If root command has SilenceUsage flagged,
+		// all subcommands should respect it
+		if !cmd.GetSilenceUsage() && !c.GetSilenceUsage() {
+			log.Println(UsageString(cmd))
+		}
+	}
+	return cmd, err
 }
 
-// Root is just that, a command for your application.
-// E.g.  'go run ...' - 'run' is the command. Cobra requires
-// you to define the usage and description as part of your command
-// definition to ensure usability.
-type Root struct {
-	Default
-	// Use is the one-line usage message.
-	// Recommended syntax is as follows:
-	//   [ ] identifies an optional argument. Arguments that are not enclosed in brackets are required.
-	//   ... indicates that you can specify multiple values for the previous argument.
-	//   |   indicates mutually exclusive information. You can use the argument to the left of the separator or the
-	//       argument to the right of the separator. You cannot use both arguments in a single use of the command.
-	//   { } delimits a set of mutually exclusive arguments when one of the arguments is required. If the arguments are
-	//       optional, they are enclosed in brackets ([ ]).
-	// Example: add [-F file | -D dir]... [-f format] profile
-	Use string
+func execute(c Commander, a []string) (err error) {
+	if c == nil {
+		return fmt.Errorf("called Execute() on a nil Command")
+	}
 
-	// Aliases is an array of aliases that can be used instead of the first word in Use.
-	Aliases []string
+	if len(c.GetDeprecated()) > 0 {
+		log.Printf("Command %q is deprecated, %s\n", name(c), c.GetDeprecated())
+	}
 
-	// SuggestFor is an array of command names for which this command will be suggested -
-	// similar to aliases but only suggests.
-	SuggestFor []string
+	// initialize help and version flag at the last point possible to allow for user
+	// overriding
+	InitDefaultHelpFlag(c)
+	InitDefaultVersionFlag(c)
 
-	// Short is the short description shown in the 'help' output.
-	Short string
+	err = ParseFlags(c, a)
+	if err != nil {
+		return FlagErrorFunc(c)(c, err)
+	}
 
-	// The group id under which this subcommand is grouped in the 'help' output of its parent.
-	GroupID string
+	// If help is called, regardless of other flags, return we want help.
+	// Also say we need help if the command isn't runnable.
+	helpVal, err := Flags(c).GetBool("help")
+	if err != nil {
+		// should be impossible to get here as we always declare a help
+		// flag in InitDefaultHelpFlag()
+		log.Println("\"help\" flag declared as non-bool. Please correct your code")
+		return err
+	}
 
-	// Long is the long message shown in the 'help <this-command>' output.
-	Long string
+	if helpVal {
+		return flag.ErrHelp
+	}
 
-	// Example is examples of how to use the command.
-	Example string
+	// for back-compat, only add version flag behavior if version is defined
+	if c.GetVersion() != "" {
+		versionVal, err := Flags(c).GetBool("version")
+		if err != nil {
+			log.Println("\"version\" flag declared as non-bool. Please correct your code")
+			return err
+		}
+		if versionVal {
+			err := tmpl(log.OutOrStdout(), VersionTemplate(c), c)
+			if err != nil {
+				log.Println(err)
+			}
+			return err
+		}
+	}
 
-	// ValidArgs is list of all valid non-flag arguments that are accepted in shell completions
-	ValidArgs []string
-	// ValidArgsFunction is an optional function that provides valid non-flag arguments for shell completion.
-	// It is a dynamic version of using ValidArgs.
-	// Only one of ValidArgs and ValidArgsFunction can be used for a command.
-	ValidArgsFunction func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)
+	if !c.Runnable() {
+		return flag.ErrHelp
+	}
 
-	// Expected arguments
-	Args PositionalArgs
+	preRun()
+	defer postRun()
 
-	// ArgAliases is List of aliases for ValidArgs.
-	// These are not suggested to the user in the shell completion,
-	// but accepted if entered manually.
-	ArgAliases []string
+	argWoFlags := Flags(c).Args()
+	if c.GetDisableFlagParsing() {
+		argWoFlags = a
+	}
 
-	// BashCompletionFunction is custom bash functions used by the legacy bash autocompletion generator.
-	// For portability with other shells, it is recommended to instead use ValidArgsFunction
-	BashCompletionFunction string
+	if err := ValidateArgs(c, argWoFlags); err != nil {
+		return err
+	}
 
-	// Deprecated defines, if this command is deprecated and should print this string when used.
-	Deprecated string
+	parents := make([]Commander, 0, 5)
+	var pc Commander
+	for pc = c; pc != nil; pc = pc.Parent() {
+		if EnableTraverseRunHooks {
+			// When EnableTraverseRunHooks is set:
+			// - Execute all persistent pre-runs from the root parent till this command.
+			// - Execute all persistent post-runs from this command till the root parent.
+			parents = append([]Commander{pc}, parents...)
+		} else {
+			// Otherwise, execute only the first found persistent hook.
+			parents = append(parents, pc)
+		}
+	}
+	for _, p := range parents {
+		if err := p.PersistentPreExec(argWoFlags); err != nil {
+			return err
+		}
+		if !EnableTraverseRunHooks {
+			break
+		}
+	}
 
-	// Annotations are key/value pairs that can be used by applications to identify or
-	// group commands or set special options.
-	Annotations map[string]string
+	if err := c.PreExec(argWoFlags); err != nil {
+		return err
+	}
 
-	// Version defines the version for this command. If this value is non-empty and the command does not
-	// define a "version" flag, a "version" boolean flag will be added to the command and, if specified,
-	// will print content of the "Version" variable. A shorthand "v" flag will also be added if the
-	// command does not define one.
-	Version string
+	if err := ValidateRequiredFlags(c); err != nil {
+		return err
+	}
+	if err := ValidateFlagGroups(c); err != nil {
+		return err
+	}
 
-	// The *Run functions are executed in the following order:
-	//   * PersistentPreRun()
-	//   * PreRun()
-	//   * Run()
-	//   * PostRun()
-	//   * PersistentPostRun()
-	// All functions get the same args, the arguments after the command name.
-	// The *PreRun and *PostRun functions will only be executed if the Run function of the current
-	// command has been declared.
-	//
-	// PersistentPreRun: children of this command will inherit and execute.
-	PersistentPreRun func(cmd Commander, args []string)
-	// PersistentPreRunE: PersistentPreRun but returns an error.
-	PersistentPreRunE func(cmd Commander, args []string) error
-	// PreRun: children of this command will not inherit.
-	// PreRun func(cmd Commander, args []string)
-	// PreRunE: PreRun but returns an error.
-	PreRunE func(cmd Commander, args []string) error
-	// Run: Typically the actual work function. Most commands will only implement this.
-	// Run func(cmd Commander, args []string)
-	// RunE: Run but returns an error.
-	// RunE func(cmd Commander, args []string) error
-	RunE func(cmd Commander, args []string) error
+	if err := c.Exec(argWoFlags); err != nil {
+		return err
+	}
 
-	// PostRun: run after the Run command.
-	// PostRun func(cmd Commander, args []string)
-	// PostRunE: PostRun but returns an error.
-	PostRunE func(cmd Commander, args []string) error
-	// PersistentPostRun: children of this command will inherit and execute after PostRun.
-	PersistentPostRun func(cmd Commander, args []string)
-	// PersistentPostRunE: PersistentPostRun but returns an error.
-	PersistentPostRunE func(cmd Commander, args []string) error
-
-	// FParseErrWhitelist flag parse errors to be ignored
-	FParseErrWhitelist FParseErrWhitelist
-
-	// CompletionOptions is a set of options to control the handling of shell completion
-	CompletionOptions CompletionOptions
-
-	// TraverseChildren parses flags on all parents before executing child command.
-	TraverseChildren bool
-
-	// Hidden defines, if this command is hidden and should NOT show up in the list of available commands.
-	Hidden bool
-
-	// SilenceErrors is an option to quiet errors down stream.
-	SilenceErrors bool
-
-	// SilenceUsage is an option to silence usage when an error occurs.
-	SilenceUsage bool
-
-	// DisableFlagParsing disables the flag parsing.
-	// If this is true all flags will be passed to the command as arguments.
-	DisableFlagParsing bool
-
-	// DisableAutoGenTag defines, if gen tag ("Auto generated by spf13/cobra...")
-	// will be printed by generating docs for this command.
-	DisableAutoGenTag bool
-
-	// DisableFlagsInUseLine will disable the addition of [flags] to the usage
-	// line of a command when printing help or generating docs
-	DisableFlagsInUseLine bool
-
-	// DisableSuggestions disables the suggestions based on Levenshtein distance
-	// that go along with 'unknown command' messages.
-	DisableSuggestions bool
-
-	// SuggestionsMinimumDistance defines minimum levenshtein distance to display suggestions.
-	// Must be > 0.
-	SuggestionsMinimumDistance int
-}
-
-// GetFParseErrWhitelist implements Commander.
-func (c *Root) GetFParseErrWhitelist() FParseErrWhitelist {
-	return c.FParseErrWhitelist
-}
-
-// SetFParseErrWhitelist implements Commander.
-func (c *Root) SetFParseErrWhitelist(fp FParseErrWhitelist) {
-	c.FParseErrWhitelist = fp
-}
-
-// GetGlobNormFunc implements Commander.
-func (c *Root) GetGlobNormFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
-	return c.globNormFunc
-}
-
-// SetGlobNormFunc implements Commander.
-func (c *Root) SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.NormalizedName) {
-	c.globNormFunc = f
-}
-
-// SetVersionTemplate sets version template to be used. Application can use it to set custom template.
-func (c *Root) SetVersionTemplate(s string) {
-	c.versionTemplate = s
-}
-
-// SetErrPrefix sets error message prefix to be used. Application can use it to set custom prefix.
-func (c *Root) SetErrPrefix(s string) {
-	c.errPrefix = s
+	if err := c.PostExec(argWoFlags); err != nil {
+		return err
+	}
+	var p Commander
+	for p = c; p != nil; p = p.Parent() {
+		if err := p.PersistentPostExec(argWoFlags); err != nil {
+			return err
+		}
+		if !EnableTraverseRunHooks {
+			break
+		}
+	}
+	return nil
 }
 
 // SetGlobalNormalizationFunc sets a normalization function to all flag sets and also to child commands.
@@ -251,7 +267,6 @@ func HelpFunc(c Commander, a []string) {
 	// See https://github.com/spf13/cobra/issues/1002
 	err := tmpl(log.OutOrStdout(), HelpTemplate(c), c)
 	if err != nil {
-		fmt.Println(">>>>>", err)
 		log.PrintErrLn(err)
 	}
 
@@ -277,11 +292,11 @@ func FlagErrorFunc(c Commander) (f func(Commander, error) error) {
 var minUsagePadding = 25
 
 // UsagePadding return padding for the usage.
-func (c *Root) UsagePadding() int {
-	if c.parent == nil || minUsagePadding > c.parent.GetCommandsMaxUseLen() {
+func UsagePadding(c Commander) int {
+	if c.Parent() == nil || minUsagePadding > c.Parent().GetCommandsMaxUseLen() {
 		return minUsagePadding
 	}
-	return c.parent.GetCommandsMaxUseLen()
+	return c.Parent().GetCommandsMaxUseLen()
 }
 
 var minCommandPathPadding = 11
@@ -307,18 +322,6 @@ func NamePadding(c Commander) int {
 // VersionTemplate return version template for the command.
 func VersionTemplate(c Commander) string {
 	return `{{with . | Name}}{{printf "%s " .}}{{end}}{{printf "version %s" .Version}}`
-}
-
-// ErrPrefix return error message prefix for the command
-func (c *Root) ErrPrefix() string {
-	if c.errPrefix != "" {
-		return c.errPrefix
-	}
-
-	if HasParent(c) {
-		return c.parent.ErrPrefix()
-	}
-	return "Error:"
 }
 
 func hasNoOptDefVal(name string, fs *flag.FlagSet) bool {
@@ -572,138 +575,6 @@ func ArgsLenAtDash(c Commander) int {
 	return Flags(c).ArgsLenAtDash()
 }
 
-func Execute(c Commander, a []string) (err error) {
-	if c == nil {
-		return fmt.Errorf("called Execute() on a nil Command")
-	}
-
-	if len(c.GetDeprecated()) > 0 {
-		log.Printf("Command %q is deprecated, %s\n", name(c), c.GetDeprecated())
-	}
-
-	// initialize help and version flag at the last point possible to allow for user
-	// overriding
-	InitDefaultHelpFlag(c)
-	InitDefaultVersionFlag(c)
-
-	err = ParseFlags(c, a)
-	if err != nil {
-		return FlagErrorFunc(c)(c, err)
-	}
-
-	// If help is called, regardless of other flags, return we want help.
-	// Also say we need help if the command isn't runnable.
-	helpVal, err := Flags(c).GetBool("help")
-	if err != nil {
-		// should be impossible to get here as we always declare a help
-		// flag in InitDefaultHelpFlag()
-		log.Println("\"help\" flag declared as non-bool. Please correct your code")
-		return err
-	}
-
-	if helpVal {
-		return flag.ErrHelp
-	}
-
-	// for back-compat, only add version flag behavior if version is defined
-	if c.GetVersion() != "" {
-		versionVal, err := Flags(c).GetBool("version")
-		if err != nil {
-			log.Println("\"version\" flag declared as non-bool. Please correct your code")
-			return err
-		}
-		if versionVal {
-			err := tmpl(log.OutOrStdout(), VersionTemplate(c), c)
-			if err != nil {
-				log.Println(err)
-			}
-			return err
-		}
-	}
-
-	if !c.Runnable() {
-		return flag.ErrHelp
-	}
-
-	preRun()
-	defer postRun()
-
-	argWoFlags := Flags(c).Args()
-	if c.GetDisableFlagParsing() {
-		argWoFlags = a
-	}
-
-	if err := ValidateArgs(c, argWoFlags); err != nil {
-		return err
-	}
-
-	parents := make([]Commander, 0, 5)
-	var pc Commander
-	for pc = c; pc != nil; pc = pc.Parent() {
-		if EnableTraverseRunHooks {
-			// When EnableTraverseRunHooks is set:
-			// - Execute all persistent pre-runs from the root parent till this command.
-			// - Execute all persistent post-runs from this command till the root parent.
-			parents = append([]Commander{pc}, parents...)
-		} else {
-			// Otherwise, execute only the first found persistent hook.
-			parents = append(parents, pc)
-		}
-	}
-	for _, p := range parents {
-		if p.GetPersistentPreRunE() != nil {
-			if err := p.GetPersistentPreRunE()(c, argWoFlags); err != nil {
-				return err
-			}
-			if !EnableTraverseRunHooks {
-				break
-			}
-		} else if p.GetPersistentPreRun() != nil {
-			p.GetPersistentPreRun()(c, argWoFlags)
-			if !EnableTraverseRunHooks {
-				break
-			}
-		}
-	}
-
-	if err := c.PreRun(argWoFlags); err != nil {
-		return err
-	}
-
-	if err := ValidateRequiredFlags(c); err != nil {
-		return err
-	}
-	if err := ValidateFlagGroups(c); err != nil {
-		return err
-	}
-
-	if err := c.Run(argWoFlags); err != nil {
-		return err
-	}
-
-	if err := c.PostRun(argWoFlags); err != nil {
-		return err
-	}
-	var p Commander
-	for p = c; p != nil; p = p.Parent() {
-		if p.GetPersistentPostRunE() != nil {
-			if err := p.GetPersistentPostRunE()(c, argWoFlags); err != nil {
-				return err
-			}
-			if !EnableTraverseRunHooks {
-				break
-			}
-		} else if p.GetPersistentPostRun() != nil {
-			p.GetPersistentPostRun()(c, argWoFlags)
-			if !EnableTraverseRunHooks {
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
 func preRun() {
 	for _, x := range initializers {
 		x()
@@ -716,106 +587,8 @@ func postRun() {
 	}
 }
 
-// Execute uses the args (os.Args[1:] by default)
-// and run through the command tree finding appropriate matches
-// for commands and then corresponding flags.
-func (c *Root) Execute() error { // todo: 原Execute
-	_, err := c.ExecuteC()
-	return err
-}
-
-// ExecuteC executes the command.
-func (c *Root) ExecuteC() (cmd Commander, err error) {
-	if c.Context() == nil {
-		c.SetContext(context.Background())
-	}
-
-	for _, v := range c.commands {
-		v.SetParent(c)
-	}
-
-	// windows hook
-	if preExecHookFn != nil {
-		preExecHookFn(c)
-	}
-
-	// initialize help at the last point to allow for user overriding
-	InitDefaultHelpCmd(c)
-	// initialize completion at the last point to allow for user overriding
-	InitDefaultCompletionCmd(c)
-
-	// Now that all commands have been created, let's make sure all groups
-	// are properly created also
-	CheckCommandGroups(c)
-
-	args := c.args
-
-	// Workaround FAIL with "go test -v" or "cobra.test -test.v", see #155
-	if c.args == nil && filepath.Base(os.Args[0]) != "cobra.test" {
-		args = os.Args[1:]
-	}
-
-	// initialize the hidden command to be used for shell completion
-	c.initCompleteCmd(args)
-
-	var flags []string
-	if c.TraverseChildren {
-		cmd, flags, err = Traverse(c, args)
-	} else {
-		cmd, flags, err = Find(c, args)
-	}
-	if err != nil {
-		var dc Commander
-		// If found parse to a subcommand and then failed, talk about the subcommand
-		if cmd != nil {
-			dc = cmd
-		} else {
-			dc = c
-		}
-		if !dc.GetSilenceErrors() {
-			log.PrintErrLn(c.ErrPrefix(), err.Error())
-			log.PrintErrF("Run '%v --help' for usage.\n", CommandPath(c))
-		}
-		return dc, err
-	}
-	as := cmd.GetCommandCalledAs()
-	as.called = true
-	if as.name == "" {
-		as.name = name(cmd)
-	}
-
-	// We have to pass global context to children command
-	// if context is present on the parent command.
-	if cmd.Context() == nil {
-		cmd.SetContext(c.ctx)
-	}
-
-	err = Execute(cmd, flags)
-	if err != nil {
-		// Always show help if requested, even if SilenceErrors is in
-		// effect
-		if errors.Is(err, flag.ErrHelp) {
-			HelpFunc(cmd, args)
-			return cmd, nil
-		}
-
-		// If root command has SilenceErrors flagged,
-		// all subcommands should respect it
-		if !cmd.GetSilenceErrors() && !c.GetSilenceErrors() {
-			log.PrintErrLn(cmd.ErrPrefix(), err.Error())
-		}
-
-		// If root command has SilenceUsage flagged,
-		// all subcommands should respect it
-		if !cmd.GetSilenceUsage() && !c.GetSilenceUsage() {
-			log.Println(UsageString(cmd))
-		}
-	}
-	return cmd, err
-}
-
 func ValidateArgs(c Commander, args []string) error {
-	cArgs := c.GetArgs()
+	cArgs := c.GetPositionalArgs()
 	if cArgs == nil {
 		return ArbitraryArgs(c, args)
 	}
@@ -1075,19 +848,9 @@ func hasNameOrAliasPrefix(c Commander, prefix string) bool {
 	return false
 }
 
-// NameAndAliases returns a list of the command name and all aliases
-func (c *Root) NameAndAliases() string {
-	return strings.Join(append([]string{name(c)}, c.Aliases...), ", ")
-}
-
 // HasExample determines if the command has example.
 func HasExample(c Commander) bool {
 	return len(c.GetExample()) > 0
-}
-
-// Runnable determines if the command is itself runnable.
-func (c *Root) Runnable() bool {
-	return true
 }
 
 // HasSubCommands determines if the command has children commands.
@@ -1173,7 +936,7 @@ func HasParent(c Commander) bool {
 }
 
 // GlobalNormalizationFunc returns the global normalization function or nil if it doesn't exist.
-func (c *Root) GlobalNormalizationFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
+func (c *Command) GlobalNormalizationFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
 	return c.globNormFunc
 }
 
@@ -1286,21 +1049,6 @@ func PersistentFlags(c Commander) *flag.FlagSet {
 	return c.GetPFlags()
 }
 
-// todo: 业务调用
-// ResetFlags deletes all flags from command.
-// func (c *Root) ResetFlags() {
-// 	c.flagErrorBuf = new(bytes.Buffer)
-// 	c.flagErrorBuf.Reset()
-// 	c.flags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
-// 	c.flags.SetOutput(c.flagErrorBuf)
-// 	c.pflags = flag.NewFlagSet(displayName(c), flag.ContinueOnError)
-// 	c.pflags.SetOutput(c.flagErrorBuf)
-
-// 	c.lflags = nil
-// 	c.iflags = nil
-// 	c.parentsPflags = nil
-// }
-
 // HasFlags checks if the command contains any flags (local plus persistent from the entire structure).
 func HasFlags(c Commander) bool {
 	return Flags(c).HasFlags()
@@ -1391,11 +1139,6 @@ func ParseFlags(c Commander, args []string) error {
 	}
 
 	return err
-}
-
-// Parent returns a commands parent command.
-func (c *Root) Parent() Commander {
-	return c.parent
 }
 
 // mergePersistentFlags merges c.PersistentFlags() to c.Flags()

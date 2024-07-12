@@ -21,7 +21,7 @@ import (
 )
 
 func TestPwshCompletionNoActiveHelp(t *testing.T) {
-	c := &Root{Use: "c", RunE: emptyRun}
+	c := &Command{Use: "c", RunE: emptyRun}
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, GenPowerShellCompletion(c, buf))

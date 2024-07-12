@@ -24,8 +24,8 @@ import (
 )
 
 func TestCompleteNoDesCmdInFishScript(t *testing.T) {
-	rootCmd := &Root{Use: "root", Args: NoArgs, RunE: emptyRun}
-	child := &Root{
+	rootCmd := &Command{Use: "root", Args: NoArgs, RunE: emptyRun}
+	child := &Command{
 		Use:               "child",
 		ValidArgsFunction: validArgsFunc,
 		RunE:              emptyRun,
@@ -40,8 +40,8 @@ func TestCompleteNoDesCmdInFishScript(t *testing.T) {
 }
 
 func TestCompleteCmdInFishScript(t *testing.T) {
-	rootCmd := &Root{Use: "root", Args: NoArgs, RunE: emptyRun}
-	child := &Root{
+	rootCmd := &Command{Use: "root", Args: NoArgs, RunE: emptyRun}
+	child := &Command{
 		Use:               "child",
 		ValidArgsFunction: validArgsFunc,
 		RunE:              emptyRun,
@@ -57,7 +57,7 @@ func TestCompleteCmdInFishScript(t *testing.T) {
 }
 
 func TestProgWithDash(t *testing.T) {
-	rootCmd := &Root{Use: "root-dash", Args: NoArgs, RunE: emptyRun}
+	rootCmd := &Command{Use: "root-dash", Args: NoArgs, RunE: emptyRun}
 	buf := new(bytes.Buffer)
 	assertNoErr(t, GenFishCompletion(rootCmd, buf, false))
 	output := buf.String()
@@ -72,7 +72,7 @@ func TestProgWithDash(t *testing.T) {
 }
 
 func TestProgWithColon(t *testing.T) {
-	rootCmd := &Root{Use: "root:colon", Args: NoArgs, RunE: emptyRun}
+	rootCmd := &Command{Use: "root:colon", Args: NoArgs, RunE: emptyRun}
 	buf := new(bytes.Buffer)
 	assertNoErr(t, GenFishCompletion(rootCmd, buf, false))
 	output := buf.String()
@@ -87,7 +87,7 @@ func TestProgWithColon(t *testing.T) {
 }
 
 func TestFishCompletionNoActiveHelp(t *testing.T) {
-	c := &Root{Use: "c", RunE: emptyRun}
+	c := &Command{Use: "c", RunE: emptyRun}
 
 	buf := new(bytes.Buffer)
 	assertNoErr(t, GenFishCompletion(c, buf, true))
@@ -106,8 +106,8 @@ func TestGenFishCompletionFile(t *testing.T) {
 
 	defer os.Remove(tmpFile.Name())
 
-	rootCmd := &Root{Use: "root", Args: NoArgs, RunE: emptyRun}
-	child := &Root{
+	rootCmd := &Command{Use: "root", Args: NoArgs, RunE: emptyRun}
+	child := &Command{
 		Use:               "child",
 		ValidArgsFunction: validArgsFunc,
 		RunE:              emptyRun,
@@ -128,8 +128,8 @@ func TestFailGenFishCompletionFile(t *testing.T) {
 	f, _ := os.OpenFile(filepath.Join(tmpDir, "test"), os.O_CREATE, 0400)
 	defer f.Close()
 
-	rootCmd := &Root{Use: "root", Args: NoArgs, RunE: emptyRun}
-	child := &Root{
+	rootCmd := &Command{Use: "root", Args: NoArgs, RunE: emptyRun}
+	child := &Command{
 		Use:               "child",
 		ValidArgsFunction: validArgsFunc,
 		RunE:              emptyRun,

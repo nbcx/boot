@@ -27,7 +27,7 @@ const (
 )
 
 func TestActiveHelpAlone(t *testing.T) {
-	rootCmd := &Root{
+	rootCmd := &Command{
 		Use:  "root",
 		RunE: emptyRun,
 	}
@@ -57,7 +57,7 @@ func TestActiveHelpAlone(t *testing.T) {
 	rootCmd.ValidArgsFunction = nil
 
 	// Test that activeHelp can be added to a child command
-	childCmd := &Root{
+	childCmd := &Command{
 		Use:   "thechild",
 		Short: "The child command",
 		RunE:  emptyRun,
@@ -82,12 +82,12 @@ func TestActiveHelpAlone(t *testing.T) {
 }
 
 func TestActiveHelpWithComps(t *testing.T) {
-	rootCmd := &Root{
+	rootCmd := &Command{
 		Use:  "root",
 		RunE: emptyRun,
 	}
 
-	childCmd := &Root{
+	childCmd := &Command{
 		Use:   "thechild",
 		Short: "The child command",
 		RunE:  emptyRun,
@@ -167,12 +167,12 @@ func TestActiveHelpWithComps(t *testing.T) {
 }
 
 func TestMultiActiveHelp(t *testing.T) {
-	rootCmd := &Root{
+	rootCmd := &Command{
 		Use:  "root",
 		RunE: emptyRun,
 	}
 
-	childCmd := &Root{
+	childCmd := &Command{
 		Use:   "thechild",
 		Short: "The child command",
 		RunE:  emptyRun,
@@ -229,7 +229,7 @@ func TestMultiActiveHelp(t *testing.T) {
 }
 
 func TestActiveHelpForFlag(t *testing.T) {
-	rootCmd := &Root{
+	rootCmd := &Command{
 		Use:  "root",
 		RunE: emptyRun,
 	}
@@ -264,12 +264,12 @@ func TestActiveHelpForFlag(t *testing.T) {
 }
 
 func TestConfigActiveHelp(t *testing.T) {
-	rootCmd := &Root{
+	rootCmd := &Command{
 		Use:  "root",
 		RunE: emptyRun,
 	}
 
-	childCmd := &Root{
+	childCmd := &Command{
 		Use:   "thechild",
 		Short: "The child command",
 		RunE:  emptyRun,
@@ -317,12 +317,12 @@ func TestConfigActiveHelp(t *testing.T) {
 }
 
 func TestDisableActiveHelp(t *testing.T) {
-	rootCmd := &Root{
+	rootCmd := &Command{
 		Use:  "root",
 		RunE: emptyRun,
 	}
 
-	childCmd := &Root{
+	childCmd := &Command{
 		Use:   "thechild",
 		Short: "The child command",
 		RunE:  emptyRun,

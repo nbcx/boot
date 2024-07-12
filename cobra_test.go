@@ -32,7 +32,7 @@ func TestAddTemplateFunctions(t *testing.T) {
 		"h": func() string { return "Hello," },
 		"w": func() string { return "world." }})
 
-	c := &Root{}
+	c := &Command{}
 	// c.SetUsageTemplate(`{{if t}}{{h}}{{end}}{{if f}}{{h}}{{end}} {{w}}`)
 
 	const expected = "Hello, world."

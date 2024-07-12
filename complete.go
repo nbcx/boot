@@ -7,12 +7,12 @@ import (
 )
 
 type CompleteCmd struct {
-	Simple
+	Command
 }
 
 func NewCompleteCmd(cmd Commander) *CompleteCmd {
 	return &CompleteCmd{
-		Simple: Simple{
+		Command: Command{
 			Hidden: true,
 			Short:  "Request shell completion choices for the specified command-line",
 			Long: fmt.Sprintf("%[2]s is a special command that is used by the shell completion logic\n%[1]s",
@@ -85,7 +85,7 @@ func (cmd *CompleteCmd) Run(args []string) error {
 }
 
 type BashCompleteCmd struct {
-	Simple
+	Command
 }
 
 func (cmd *BashCompleteCmd) Run(args []string) error {
@@ -97,7 +97,7 @@ func (cmd *BashCompleteCmd) GetUse() string {
 
 func NewBashCompleteCmd(cmd Commander, shortDesc string) *BashCompleteCmd {
 	return &BashCompleteCmd{
-		Simple{
+		Command{
 			Short: fmt.Sprintf(shortDesc, "bash"),
 			Long: fmt.Sprintf(`Generate the autocompletion script for the bash shell.
 
@@ -128,7 +128,7 @@ You will need to start a new shell for this setup to take effect.
 }
 
 type ZshCompleteCmd struct {
-	Simple
+	Command
 	noDesc bool
 }
 
@@ -138,7 +138,7 @@ func (p *ZshCompleteCmd) GetUse() string {
 
 func NewZshCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *ZshCompleteCmd {
 	return &ZshCompleteCmd{
-		Simple: Simple{
+		Command: Command{
 			Short:             fmt.Sprintf(shortDesc, "zsh"),
 			Args:              NoArgs,
 			ValidArgsFunction: NoFileCompletions,
@@ -179,7 +179,7 @@ func (p *ZshCompleteCmd) Run(args []string) error {
 }
 
 type FishCompleteCmd struct {
-	Simple
+	Command
 	noDesc bool
 }
 
@@ -194,7 +194,7 @@ func (p *FishCompleteCmd) Run(args []string) error {
 
 func NewFishCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *FishCompleteCmd {
 	return &FishCompleteCmd{
-		Simple: Simple{
+		Command: Command{
 			Args:              NoArgs,
 			ValidArgsFunction: NoFileCompletions,
 			Short:             fmt.Sprintf(shortDesc, "fish"),
@@ -216,7 +216,7 @@ You will need to start a new shell for this setup to take effect.
 }
 
 type PowershellCompleteCmd struct {
-	Simple
+	Command
 	noDesc bool
 }
 
@@ -232,7 +232,7 @@ func (cmd *PowershellCompleteCmd) GetUse() string {
 }
 func NewPowershellCompleteCmd(cmd Commander, shortDesc string, noDesc bool) *PowershellCompleteCmd {
 	return &PowershellCompleteCmd{
-		Simple: Simple{
+		Command: Command{
 			Args:              NoArgs,
 			ValidArgsFunction: NoFileCompletions,
 			Short:             fmt.Sprintf(shortDesc, "powershell"),

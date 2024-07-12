@@ -20,8 +20,8 @@ import (
 )
 
 func TestValidateFlagGroups(t *testing.T) {
-	getCmd := func() *Root {
-		c := &Root{
+	getCmd := func() *Command {
+		c := &Command{
 			Use:  "testcmd",
 			RunE: emptyRun,
 		}
@@ -32,7 +32,7 @@ func TestValidateFlagGroups(t *testing.T) {
 		for _, v := range []string{"e", "f", "g"} {
 			PersistentFlags(c).String(v, "", "")
 		}
-		subC := &Root{
+		subC := &Command{
 			Use:  "subcmd",
 			RunE: emptyRun,
 		}
@@ -183,7 +183,7 @@ func TestValidateFlagGroups(t *testing.T) {
 				MarkFlagsMutuallyExclusive(sub, strings.Split(flagGroup, " ")...)
 			}
 			c.SetArgs(tc.args...)
-			err := c.Execute()
+			err := Execute(c)
 			switch {
 			case err == nil && len(tc.expectErr) > 0:
 				t.Errorf("Expected error %q but got nil", tc.expectErr)

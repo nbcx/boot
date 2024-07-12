@@ -44,14 +44,14 @@ func init() {
 	rootCmd.Add(printCmd, echoCmd, dummyCmd)
 }
 
-var rootCmd = &boot.Root{
+var rootCmd = &boot.Command{
 	Use:   "root",
 	Short: "Root short description",
 	Long:  "Root long description",
 	RunE:  emptyRun,
 }
 
-var echoCmd = &boot.Root{
+var echoCmd = &boot.Command{
 	Use:     "echo [string to echo]",
 	Aliases: []string{"say"},
 	Short:   "Echo anything to the screen",
@@ -59,14 +59,14 @@ var echoCmd = &boot.Root{
 	Example: "Just run cobra-test echo",
 }
 
-var echoSubCmd = &boot.Root{
+var echoSubCmd = &boot.Command{
 	Use:   "echosub [string to print]",
 	Short: "second sub command for echo",
 	Long:  "an absolutely utterly useless command for testing gendocs!.",
 	RunE:  emptyRun,
 }
 
-var timesCmd = &boot.Root{
+var timesCmd = &boot.Command{
 	Use:        "times [# times] [string to echo]",
 	SuggestFor: []string{"counts"},
 	Short:      "Echo anything to the screen more times",
@@ -74,20 +74,20 @@ var timesCmd = &boot.Root{
 	RunE:       emptyRun,
 }
 
-var deprecatedCmd = &boot.Root{
+var deprecatedCmd = &boot.Command{
 	Use:        "deprecated [can't do anything here]",
 	Short:      "A command which is deprecated",
 	Long:       `an absolutely utterly useless command for testing deprecation!.`,
 	Deprecated: "Please use echo instead",
 }
 
-var printCmd = &boot.Root{
+var printCmd = &boot.Command{
 	Use:   "print [string to print]",
 	Short: "Print anything to the screen",
 	Long:  `an absolutely utterly useless command for testing.`,
 }
 
-var dummyCmd = &boot.Root{
+var dummyCmd = &boot.Command{
 	Use:   "dummy [action]",
 	Short: "Performs a dummy action",
 }

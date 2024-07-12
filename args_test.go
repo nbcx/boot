@@ -20,8 +20,8 @@ import (
 	"testing"
 )
 
-func getCommand(args PositionalArgs, withValid bool) *Root {
-	c := &Root{
+func getCommand(args PositionalArgs, withValid bool) *Command {
+	c := &Command{
 		Use:  "c",
 		Args: args,
 		RunE: emptyRun,
@@ -382,8 +382,8 @@ func TestRangeArgs_WithInvalidCount_WithValidOnly_WithInvalidArgs(t *testing.T) 
 // Takes(No)Args
 
 func TestRootTakesNoArgs(t *testing.T) {
-	rootCmd := &Root{Use: "root", RunE: emptyRun}
-	childCmd := &Root{Use: "child", RunE: emptyRun}
+	rootCmd := &Command{Use: "root", RunE: emptyRun}
+	childCmd := &Command{Use: "child", RunE: emptyRun}
 	rootCmd.Add(childCmd)
 
 	_, err := executeCommand(rootCmd, "illegal", "args")
@@ -399,8 +399,8 @@ func TestRootTakesNoArgs(t *testing.T) {
 }
 
 func TestRootTakesArgs(t *testing.T) {
-	rootCmd := &Root{Use: "root", Args: ArbitraryArgs, RunE: emptyRun}
-	childCmd := &Root{Use: "child", RunE: emptyRun}
+	rootCmd := &Command{Use: "root", Args: ArbitraryArgs, RunE: emptyRun}
+	childCmd := &Command{Use: "child", RunE: emptyRun}
 	rootCmd.Add(childCmd)
 
 	_, err := executeCommand(rootCmd, "legal", "args")
@@ -410,8 +410,8 @@ func TestRootTakesArgs(t *testing.T) {
 }
 
 func TestChildTakesNoArgs(t *testing.T) {
-	rootCmd := &Root{Use: "root", RunE: emptyRun}
-	childCmd := &Root{Use: "child", Args: NoArgs, RunE: emptyRun}
+	rootCmd := &Command{Use: "root", RunE: emptyRun}
+	childCmd := &Command{Use: "child", Args: NoArgs, RunE: emptyRun}
 	rootCmd.Add(childCmd)
 
 	_, err := executeCommand(rootCmd, "child", "illegal", "args")
@@ -427,8 +427,8 @@ func TestChildTakesNoArgs(t *testing.T) {
 }
 
 func TestChildTakesArgs(t *testing.T) {
-	rootCmd := &Root{Use: "root", RunE: emptyRun}
-	childCmd := &Root{Use: "child", Args: ArbitraryArgs, RunE: emptyRun}
+	rootCmd := &Command{Use: "root", RunE: emptyRun}
+	childCmd := &Command{Use: "child", Args: ArbitraryArgs, RunE: emptyRun}
 	rootCmd.Add(childCmd)
 
 	_, err := executeCommand(rootCmd, "child", "legal", "args")
@@ -470,7 +470,7 @@ func TestMatchAll(t *testing.T) {
 		},
 	}
 
-	rootCmd := &Root{Use: "root", Args: pargs, RunE: emptyRun}
+	rootCmd := &Command{Use: "root", Args: pargs, RunE: emptyRun}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -516,7 +516,7 @@ func TestExactValidArgs_WithInvalidArgs(t *testing.T) {
 // It makes sure the root command accepts arguments if it does not have
 // sub-commands.
 func TestLegacyArgsRootAcceptsArgs(t *testing.T) {
-	rootCmd := &Root{Use: "root", Args: nil, RunE: emptyRun}
+	rootCmd := &Command{Use: "root", Args: nil, RunE: emptyRun}
 
 	_, err := executeCommand(rootCmd, "somearg")
 	if err != nil {
@@ -528,9 +528,9 @@ func TestLegacyArgsRootAcceptsArgs(t *testing.T) {
 // to the legacyArgs() function.
 // It makes sure a sub-command accepts arguments and further sub-commands
 func TestLegacyArgsSubcmdAcceptsArgs(t *testing.T) {
-	rootCmd := &Root{Use: "root", Args: nil, RunE: emptyRun}
-	childCmd := &Root{Use: "child", Args: nil, RunE: emptyRun}
-	grandchildCmd := &Root{Use: "grandchild", Args: nil, RunE: emptyRun}
+	rootCmd := &Command{Use: "root", Args: nil, RunE: emptyRun}
+	childCmd := &Command{Use: "child", Args: nil, RunE: emptyRun}
+	grandchildCmd := &Command{Use: "grandchild", Args: nil, RunE: emptyRun}
 	rootCmd.Add(childCmd)
 	childCmd.Add(grandchildCmd)
 

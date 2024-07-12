@@ -56,7 +56,7 @@ func TestGenYamlNoTag(t *testing.T) {
 }
 
 func TestGenYamlTree(t *testing.T) {
-	c := &boot.Root{Use: "do [OPTIONS] arg1 arg2"}
+	c := &boot.Command{Use: "do [OPTIONS] arg1 arg2"}
 
 	tmpDir, err := os.MkdirTemp("", "test-gen-yaml-tree")
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 )
 
 type b struct {
-	Simple
+	Command
 }
 
 func (p *b) GetUse() string {
@@ -20,7 +20,7 @@ func (p *b) Run(args []string) error {
 
 func TestMain(t *testing.T) {
 	var rootCmdArgs []string
-	root := &Root{
+	root := &Command{
 		Use:  "root",
 		Args: RangeArgs(0, 2),
 		RunE: func(_ Commander, args []string) error {
@@ -29,8 +29,8 @@ func TestMain(t *testing.T) {
 			return nil
 		},
 	}
-	aCmd := &Root{Use: "a", Args: NoArgs, RunE: func(cmd Commander, args []string) error { fmt.Println("a...."); return nil }}
-	bCmd := &b{Simple: Simple{Args: RangeArgs(0, 2)}}
+	aCmd := &Command{Use: "a", Args: NoArgs, RunE: func(cmd Commander, args []string) error { fmt.Println("a...."); return nil }}
+	bCmd := &b{Command: Command{Args: RangeArgs(0, 2)}}
 	root.Add(aCmd, bCmd)
 
 	// buf := new(bytes.Buffer)
@@ -39,9 +39,10 @@ func TestMain(t *testing.T) {
 	// root.SetArgs("b", "jj", "cc")
 	// root.SetArgs("one", "two")
 	// root.SetArgs("--help")
-	root.SetArgs("b", "--help")
+	// root.SetArgs("b", "--help")
 
-	err := root.Execute()
+	// aCmd.SetArgs("a")
+	err := Execute(root)
 	if err != nil {
 		fmt.Println("execute x", err, rootCmdArgs)
 	}

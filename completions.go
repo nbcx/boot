@@ -131,7 +131,7 @@ func FixedCompletions(choices []string, directive ShellCompDirective) func(cmd C
 }
 
 // RegisterFlagCompletionFunc should be called to register a function to provide completion for a flag.
-func (c *Root) RegisterFlagCompletionFunc(flagName string, f func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)) error {
+func (c *Command) RegisterFlagCompletionFunc(flagName string, f func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)) error {
 	flag := Flag(c, flagName)
 	if flag == nil {
 		return fmt.Errorf("RegisterFlagCompletionFunc: flag '%s' does not exist", flagName)
@@ -147,7 +147,7 @@ func (c *Root) RegisterFlagCompletionFunc(flagName string, f func(cmd Commander,
 }
 
 // GetFlagCompletionFunc returns the completion function for the given flag of the command, if available.
-func (c *Root) GetFlagCompletionFunc(flagName string) (func(Commander, []string, string) ([]string, ShellCompDirective), bool) {
+func (c *Command) GetFlagCompletionFunc(flagName string) (func(Commander, []string, string) ([]string, ShellCompDirective), bool) {
 	flag := Flag(c, flagName)
 	if flag == nil {
 		return nil, false
@@ -192,7 +192,7 @@ func (d ShellCompDirective) string() string {
 }
 
 // initCompleteCmd adds a special hidden command that can be used to request custom completions.
-func (c *Root) initCompleteCmd(args []string) {
+func initCompleteCmd(c Commander, args []string) {
 	completeCmd := NewCompleteCmd(c)
 	c.Add(completeCmd)
 	subCmd, _, err := Find(c, args)
@@ -638,7 +638,7 @@ func InitDefaultCompletionCmd(c Commander) {
 	}
 	haveNoDescFlag := !completionOptions.DisableNoDescFlag && !completionOptions.DisableDescriptions
 
-	completionCmd := &Root{
+	completionCmd := &Command{
 		Use:   compCmdName,
 		Short: "Generate the autocompletion script for the specified shell",
 		Long: fmt.Sprintf(`Generate the autocompletion script for %[1]s for the specified shell.
@@ -654,7 +654,7 @@ See each sub-command's help for details on how to use the generated script.
 	// out := c.OutOrStdout()
 	noDesc := completionOptions.DisableDescriptions
 	shortDesc := "Generate the autocompletion script for %s"
-	// 	bash := &Root{
+	// 	bash := &Command{
 	// 		Use:   "bash",
 	// 		Short: fmt.Sprintf(shortDesc, "bash"),
 	// 		Long: fmt.Sprintf(`Generate the autocompletion script for the bash shell.
@@ -690,7 +690,7 @@ See each sub-command's help for details on how to use the generated script.
 		Flags(bash).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
-	// 	zsh := &Root{
+	// 	zsh := &Command{
 	// 		Use:   "zsh",
 	// 		Short: fmt.Sprintf(shortDesc, "zsh"),
 	// 		Long: fmt.Sprintf(`Generate the autocompletion script for the zsh shell.
@@ -731,7 +731,7 @@ See each sub-command's help for details on how to use the generated script.
 		Flags(zsh).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
-	// 	fish := &Root{
+	// 	fish := &Command{
 	// 		Use:   "fish",
 	// 		Short: fmt.Sprintf(shortDesc, "fish"),
 	// 		Long: fmt.Sprintf(`Generate the autocompletion script for the fish shell.
@@ -757,7 +757,7 @@ See each sub-command's help for details on how to use the generated script.
 		Flags(fish).BoolVar(&noDesc, compCmdNoDescFlagName, compCmdNoDescFlagDefault, compCmdNoDescFlagDesc)
 	}
 
-	// 	powershell := &Root{
+	// 	powershell := &Command{
 	// 		Use:   "powershell",
 	// 		Short: fmt.Sprintf(shortDesc, "powershell"),
 	// 		Long: fmt.Sprintf(`Generate the autocompletion script for powershell.

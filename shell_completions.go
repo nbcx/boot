@@ -41,7 +41,7 @@ func markFlagRequired(flags *pflag.FlagSet, name string) error {
 
 // MarkFlagFilename instructs the various shell completion implementations to
 // limit completions for the named flag to the specified file extensions.
-func (c *Root) MarkFlagFilename(name string, extensions ...string) error {
+func (c *Command) MarkFlagFilename(name string, extensions ...string) error {
 	return MarkFlagFilename(Flags(c), name, extensions...)
 }
 
@@ -51,7 +51,7 @@ func (c *Root) MarkFlagFilename(name string, extensions ...string) error {
 // This will only work for bash completion.
 // It is recommended to instead use c.RegisterFlagCompletionFunc(...) which allows
 // to register a Go function which will work across all shells.
-func (c *Root) MarkFlagCustom(name string, f string) error {
+func (c *Command) MarkFlagCustom(name string, f string) error {
 	return MarkFlagCustom(Flags(c), name, f)
 }
 
@@ -80,14 +80,14 @@ func MarkFlagCustom(flags *pflag.FlagSet, name string, f string) error {
 
 // MarkFlagDirname instructs the various shell completion implementations to
 // limit completions for the named flag to directory names.
-func (c *Root) MarkFlagDirname(name string) error {
+func (c *Command) MarkFlagDirname(name string) error {
 	return MarkFlagDirname(Flags(c), name)
 }
 
 // MarkPersistentFlagDirname instructs the various shell completion
 // implementations to limit completions for the named persistent flag to
 // directory names.
-func (c *Root) MarkPersistentFlagDirname(name string) error {
+func (c *Command) MarkPersistentFlagDirname(name string) error {
 	return MarkFlagDirname(PersistentFlags(c), name)
 }
 

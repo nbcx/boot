@@ -7,7 +7,7 @@ import (
 )
 
 type HelpCmd struct {
-	Simple
+	Command
 }
 
 func (p *HelpCmd) Run(args []string) error {
@@ -30,7 +30,7 @@ func (p *HelpCmd) GetUse() string {
 
 func NewHelpCmd(cmd Commander) *HelpCmd {
 	return &HelpCmd{
-		Simple: Simple{
+		Command: Command{
 			Short: "Help about any command",
 			Long: `Help provides help for any command in the application.
 Simply type ` + displayName(cmd) + ` help [path to command] for full details.`,
@@ -124,12 +124,12 @@ func HelpTemplate(c Commander) string {
 // UsageString returns usage string.
 func UsageString(c Commander) string {
 	// Storing normal writers
-	tmpOutput := log.outWriter
-	tmpErr := log.errWriter
+	// tmpOutput := log.outWriter
+	// tmpErr := log.errWriter
 
 	bb := new(bytes.Buffer)
-	log.outWriter = bb
-	log.errWriter = bb
+	// log.outWriter = bb
+	// log.errWriter = bb
 
 	// usageFunc := func(c Commander) error {
 	// 	mergePersistentFlags(c)
@@ -140,7 +140,7 @@ func UsageString(c Commander) string {
 	// 	return err
 	// }
 	mergePersistentFlags(c)
-	err := tmpl(log.OutOrStderr(), UsageTemplate(c), c)
+	err := tmpl(bb, UsageTemplate(c), c)
 	if err != nil {
 		log.PrintErrLn(err)
 	}
@@ -148,8 +148,8 @@ func UsageString(c Commander) string {
 	CheckErr(err)
 
 	// Setting things back to normal
-	log.outWriter = tmpOutput
-	log.errWriter = tmpErr
+	// log.outWriter = tmpOutput
+	// log.errWriter = tmpErr
 
 	return bb.String()
 	// return fmt.Sprintf("UsageString: %v", c.GetUse())

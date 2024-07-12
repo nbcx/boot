@@ -211,9 +211,9 @@ subcommands. For example, consider the following directory structure:
 
 In this case:
 
-* The `init` function of `root.go` adds the command defined in `sub1.go` to the root command.
-* The `init` function of `sub1.go` adds the command defined in `sub2.go` to the sub1 command.
-* The `init` function of `sub2.go` adds the commands defined in `leafA.go` and `leafB.go` to the
+- The `init` function of `root.go` adds the command defined in `sub1.go` to the root command.
+- The `init` function of `sub1.go` adds the command defined in `sub2.go` to the sub1 command.
+- The `init` function of `sub2.go` adds the commands defined in `leafA.go` and `leafB.go` to the
   sub2 command.
 
 This approach ensures the subcommands are always included at compile time while avoiding cyclic
@@ -365,10 +365,11 @@ rootCmd.MarkFlagsMutuallyExclusive("json", "yaml")
 ```
 
 In these cases:
-  - both local and persistent flags can be used
-    - **NOTE:** the group is only enforced on commands where every flag is defined
-  - a flag may appear in multiple groups
-  - a group may contain any number of flags
+
+- both local and persistent flags can be used
+  - **NOTE:** the group is only enforced on commands where every flag is defined
+- a flag may appear in multiple groups
+- a group may contain any number of flags
 
 ## Positional and Custom Arguments
 
@@ -501,7 +502,7 @@ Cobra automatically adds a help command to your application when you have subcom
 This will be called when a user runs 'app help'. Additionally, help will also
 support all other commands as input. Say, for instance, you have a command called
 'create' without any additional configuration; Cobra will work when 'app help
-create' is called.  Every command will automatically have the '--help' flag added.
+create' is called. Every command will automatically have the '--help' flag added.
 
 ### Example
 
@@ -532,16 +533,15 @@ command and flag definitions are needed.
 
     Use "cobra-cli [command] --help" for more information about a command.
 
-
 Help is just a command like any other. There is no special logic or behavior
 around it. In fact, you can provide your own if you want.
 
 ### Grouping commands in help
 
-Cobra supports grouping of available commands in the help output.  To group commands, each group must be explicitly
-defined using `AddGroup()` on the parent command.  Then a subcommand can be added to a group using the `GroupID` element
+Cobra supports grouping of available commands in the help output. To group commands, each group must be explicitly
+defined using `AddGroup()` on the parent command. Then a subcommand can be added to a group using the `GroupID` element
 of that subcommand. The groups will appear in the help output in the same order as they are defined using different
-calls to `AddGroup()`.  If you use the generated `help` or `completion` commands, you can set their group ids using
+calls to `AddGroup()`. If you use the generated `help` or `completion` commands, you can set their group ids using
 `SetHelpCommandGroupId()` and `SetCompletionCommandGroupId()` on the root command, respectively.
 
 ### Defining your own help
@@ -550,8 +550,8 @@ You can provide your own Help command or your own template for the default comma
 with the following functions:
 
 ```go
-cmd.SetHelpCommand(cmd *Root)
-cmd.SetHelpFunc(f func(*Root, []string))
+cmd.SetHelpCommand(cmd *Command)
+cmd.SetHelpFunc(f func(*Command, []string))
 cmd.SetHelpTemplate(s string)
 ```
 
@@ -563,6 +563,7 @@ When the user provides an invalid flag or invalid command, Cobra responds by
 showing the user the 'usage'.
 
 ### Example
+
 You may recognize this from the help above. That's because the default help
 embeds the usage as part of its output.
 
@@ -587,11 +588,12 @@ embeds the usage as part of its output.
     Use "cobra [command] --help" for more information about a command.
 
 ### Defining your own usage
+
 You can provide your own usage function or template for Cobra to use.
 Like help, the function and template are overridable through public methods:
 
 ```go
-cmd.SetUsageFunc(f func(*Root) error)
+cmd.SetUsageFunc(f func(*Command) error)
 cmd.SetUsageTemplate(s string)
 ```
 
@@ -610,7 +612,7 @@ The Prefix, `Error:` can be customized using the `cmd.SetErrPrefix(s string)` fu
 
 ## PreRun and PostRun Hooks
 
-It is possible to run functions before or after the main `Run` function of your command. The `PersistentPreRun` and `PreRun` functions will be executed before `Run`. `PersistentPostRun` and `PostRun` will be executed after `Run`.  The `Persistent*Run` functions will be inherited by children if they do not declare their own.  The `*PreRun` and `*PostRun` functions will only be executed if the `Run` function of the current command has been declared.  These functions are run in the following order:
+It is possible to run functions before or after the main `Run` function of your command. The `PersistentPreRun` and `PreRun` functions will be executed before `Run`. `PersistentPostRun` and `PostRun` will be executed after `Run`. The `Persistent*Run` functions will be inherited by children if they do not declare their own. The `*PreRun` and `*PostRun` functions will only be executed if the `Run` function of the current command has been declared. These functions are run in the following order:
 
 - `PersistentPreRun`
 - `PreRun`
@@ -618,7 +620,7 @@ It is possible to run functions before or after the main `Run` function of your 
 - `PostRun`
 - `PersistentPostRun`
 
-An example of two commands which use all of these features is below.  When the subcommand is executed, it will run the root command's `PersistentPreRun` but not the root command's `PersistentPostRun`:
+An example of two commands which use all of these features is below. When the subcommand is executed, it will run the root command's `PersistentPreRun` but not the root command's `PersistentPostRun`:
 
 ```go
 package main
@@ -679,6 +681,7 @@ func main() {
 ```
 
 Output:
+
 ```
 Inside rootCmd PersistentPreRun with args: []
 Inside rootCmd PreRun with args: []
@@ -757,7 +760,7 @@ Read more about it in [Active Help](active_help.md).
 
 ## Creating a plugin
 
-When creating a plugin for tools like *kubectl*, the executable is named
+When creating a plugin for tools like _kubectl_, the executable is named
 `kubectl-myplugin`, but it is used as `kubectl myplugin`. To fix help
 messages and completions, annotate the root command with the
 `cobra.CommandDisplayNameAnnotation` annotation.
