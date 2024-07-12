@@ -341,3 +341,7 @@ func (c *Command) GetCompletionOptions() *CompletionOptions {
 func (c *Command) Add(v ...Commander) {
 	Bind(c, v...)
 }
+
+func (c *Command) Execute() error {
+	return Execute(c)
+}
