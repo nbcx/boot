@@ -170,48 +170,48 @@ type Default struct {
 }
 
 // GetGlobNormFunc implements Commander.
-func (c *Default) GetGlobNormFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
-	return c.globNormFunc
+func (d *Default) GetGlobNormFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
+	return d.globNormFunc
 }
 
-func (c *Default) SetCommands(v ...Commander) {
-	c.commands = v
+func (d *Default) SetCommands(v ...Commander) {
+	d.commands = v
 }
 
 // GetFParseErrWhitelist implements Commander.
-func (c *Default) GetFParseErrWhitelist() FParseErrWhitelist { return FParseErrWhitelist{} }
+func (d *Default) GetFParseErrWhitelist() FParseErrWhitelist { return FParseErrWhitelist{} }
 
 // SetFParseErrWhitelist implements Commander.
-func (c *Default) SetFParseErrWhitelist(fp FParseErrWhitelist) {}
+func (d *Default) SetFParseErrWhitelist(fp FParseErrWhitelist) {}
 
 // SetGlobNormFunc implements Commander.
-func (c *Default) SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.NormalizedName) {
-	c.globNormFunc = f
+func (d *Default) SetGlobNormFunc(f func(f *flag.FlagSet, name string) flag.NormalizedName) {
+	d.globNormFunc = f
 }
 
 // GetPFlags implements Commander.
-func (c *Default) GetPFlags() *flag.FlagSet { return c.pFlags }
+func (d *Default) GetPFlags() *flag.FlagSet { return d.pFlags }
 
 // GetIFlags implements Commander.
-func (c *Default) GetIFlags() *flag.FlagSet { return c.iFlags }
+func (d *Default) GetIFlags() *flag.FlagSet { return d.iFlags }
 
 // GetLFlags implements Commander.
-func (c *Default) GetLFlags() *flag.FlagSet { return c.lFlags }
+func (d *Default) GetLFlags() *flag.FlagSet { return d.lFlags }
 
 // GetParentsPFlags implements Commander.
-func (c *Default) GetParentsPFlags() *flag.FlagSet { return c.parentsPFlags }
+func (d *Default) GetParentsPFlags() *flag.FlagSet { return d.parentsPFlags }
 
 // SetIFlags implements Commander.
-func (c *Default) SetIFlags(i *flag.FlagSet) { c.iFlags = i }
+func (d *Default) SetIFlags(i *flag.FlagSet) { d.iFlags = i }
 
 // SetLFlags implements Commander.
-func (c *Default) SetLFlags(l *flag.FlagSet) { c.lFlags = l }
+func (d *Default) SetLFlags(l *flag.FlagSet) { d.lFlags = l }
 
 // SetPFlags implements Commander.
-func (c *Default) SetPFlags(l *flag.FlagSet) { c.pFlags = l }
+func (d *Default) SetPFlags(l *flag.FlagSet) { d.pFlags = l }
 
 // SetParentsPFlags implements Commander.
-func (c *Default) SetParentsPFlags(pf *flag.FlagSet) { c.parentsPFlags = pf }
+func (d *Default) SetParentsPFlags(pf *flag.FlagSet) { d.parentsPFlags = pf }
 
 // Context returns underlying command context. If command was executed
 // with ExecuteContext or the context was set with SetContext, the
@@ -220,118 +220,118 @@ func (c *Default) SetParentsPFlags(pf *flag.FlagSet) { c.parentsPFlags = pf }
 // Notice that a call to Execute and ExecuteC will replace a nil context of
 // a command with a context.Background, so a background context will be
 // returned by Context after one of these functions has been called.
-func (c *Default) Context() context.Context { return c.ctx }
+func (d *Default) Context() context.Context { return d.ctx }
 
 // SetContext sets context for the command. This context will be overwritten by
 // Command.ExecuteContext or Command.ExecuteContextC.
-func (c *Default) SetContext(ctx context.Context) { c.ctx = ctx }
+func (d *Default) SetContext(ctx context.Context) { d.ctx = ctx }
 
 // SetArgs sets arguments for the command. It is set to os.Args[1:] by default, if desired, can be overridden
 // particularly useful when testing.
-func (c *Default) SetArgs(a ...string) { c.args = a }
+func (d *Default) SetArgs(a ...string) { d.args = a }
 
 // func (c *Default) SetCommands(v ...Commander) { c.commands = v }
 
-func (c *Default) GetArgs() []string                               { return c.args }
-func (c *Default) SetFlagErrorFunc(f func(Commander, error) error) { c.flagErrorFunc = f }                                  // SetFlagErrorFunc sets a function to generate an error when flag parsing fails.
-func (c *Default) SetHelpCommand(cmd Commander)                    { c.helpCommand = cmd }                                  // SetHelpCommand sets help command.
-func (c *Default) Groups() []*Group                                { return c.commandGroups }                               // Groups returns a slice of child command groups.
-func (c *Default) Runnable() bool                                  { return true }                                          // Runnable determines if the command is itself runnable.
-func (c *Default) AddGroup(groups ...*Group)                       { c.commandGroups = append(c.commandGroups, groups...) } // AddGroup adds one or more command groups to this parent command.
+func (d *Default) GetArgs() []string                               { return d.args }
+func (d *Default) SetFlagErrorFunc(f func(Commander, error) error) { d.flagErrorFunc = f }                                  // SetFlagErrorFunc sets a function to generate an error when flag parsing fails.
+func (d *Default) SetHelpCommand(cmd Commander)                    { d.helpCommand = cmd }                                  // SetHelpCommand sets help command.
+func (d *Default) Groups() []*Group                                { return d.commandGroups }                               // Groups returns a slice of child command groups.
+func (d *Default) Runnable() bool                                  { return true }                                          // Runnable determines if the command is itself runnable.
+func (d *Default) AddGroup(groups ...*Group)                       { d.commandGroups = append(d.commandGroups, groups...) } // AddGroup adds one or more command groups to this parent command.
 func (d *Default) Parent() Commander                               { return d.parent }                                      // Parent returns a commands parent command.
-func (p *Default) SetParent(c Commander)                           { p.parent = c }
-func (p *Default) GetGroupID() string                              { return "" }
-func (p *Default) SetGroupID(groupID string)                       {}
-func (p *Default) GetFlags() *flag.FlagSet                         { return p.flags }
-func (p *Default) SetFlags(f *flag.FlagSet)                        { p.flags = f }
-func (p *Default) GetHelpCommand() Commander                       { return p.helpCommand }
-func (p *Default) GetShort() string                                { return "" }
-func (p *Default) PersistentPostExec(args []string) error          { return nil }
-func (p *Default) GetSilenceErrors() bool                          { return false }
-func (p *Default) GetSilenceUsage() bool                           { return false }
-func (p *Default) GetCommandCalledAs() *CommandCalledAs            { return &p.commandCalledAs }
-func (p *Default) PersistentPreExec(args []string) error           { return nil }
-func (p *Default) GetSuggestFor() []string                         { return nil }
-func (p *Default) GetPositionalArgs() PositionalArgs               { return nil }
-func (p *Default) GetCommandsMaxUseLen() int                       { return p.commandsMaxUseLen }
-func (p *Default) GetCommandsMaxCommandPathLen() int               { return p.commandsMaxCommandPathLen }
-func (p *Default) GetCommandsMaxNameLen() int                      { return p.commandsMaxNameLen }
-func (p *Default) SetCommandsMaxUseLen(v int)                      { p.commandsMaxUseLen = v }
-func (p *Default) SetCommandsMaxCommandPathLen(v int)              { p.commandsMaxCommandPathLen = v }
-func (p *Default) SetCommandsMaxNameLen(v int)                     { p.commandsMaxNameLen = v }
+func (d *Default) SetParent(c Commander)                           { d.parent = c }
+func (d *Default) GetGroupID() string                              { return "" }
+func (d *Default) SetGroupID(groupID string)                       {}
+func (d *Default) GetFlags() *flag.FlagSet                         { return d.flags }
+func (d *Default) SetFlags(f *flag.FlagSet)                        { d.flags = f }
+func (d *Default) GetHelpCommand() Commander                       { return d.helpCommand }
+func (d *Default) GetShort() string                                { return "" }
+func (d *Default) PersistentPostExec(args []string) error          { return nil }
+func (d *Default) GetSilenceErrors() bool                          { return false }
+func (d *Default) GetSilenceUsage() bool                           { return false }
+func (d *Default) GetCommandCalledAs() *CommandCalledAs            { return &d.commandCalledAs }
+func (d *Default) PersistentPreExec(args []string) error           { return nil }
+func (d *Default) GetSuggestFor() []string                         { return nil }
+func (d *Default) GetPositionalArgs() PositionalArgs               { return nil }
+func (d *Default) GetCommandsMaxUseLen() int                       { return d.commandsMaxUseLen }
+func (d *Default) GetCommandsMaxCommandPathLen() int               { return d.commandsMaxCommandPathLen }
+func (d *Default) GetCommandsMaxNameLen() int                      { return d.commandsMaxNameLen }
+func (d *Default) SetCommandsMaxUseLen(v int)                      { d.commandsMaxUseLen = v }
+func (d *Default) SetCommandsMaxCommandPathLen(v int)              { d.commandsMaxCommandPathLen = v }
+func (d *Default) SetCommandsMaxNameLen(v int)                     { d.commandsMaxNameLen = v }
 
-func (p *Default) GetFlagErrorFunc() func(Commander, error) error { return p.flagErrorFunc }
-func (p *Default) GetTraverseChildren() bool                      { return false }
-func (p *Default) GetDisableFlagParsing() bool                    { return false }
-func (p *Default) GetArgAliases() []string                        { return nil }
-func (p *Default) GetValidArgs() []string                         { return nil }
-func (p *Default) GetAliases() []string                           { return nil }
-func (p *Default) GetHidden() bool                                { return false }
-func (p *Default) GetLong() string                                { return "" }
-func (p *Default) GetDisableAutoGenTag() bool                     { return false }
-func (p *Default) SetDisableAutoGenTag(d bool)                    {}
-func (p *Default) GetExample() string                             { return "" }
-func (p *Default) GetCommands() []Commander                       { return p.commands }
-func (p *Default) PreExec(args []string) error                    { return nil }
+func (d *Default) GetFlagErrorFunc() func(Commander, error) error { return d.flagErrorFunc }
+func (d *Default) GetTraverseChildren() bool                      { return false }
+func (d *Default) GetDisableFlagParsing() bool                    { return false }
+func (d *Default) GetArgAliases() []string                        { return nil }
+func (d *Default) GetValidArgs() []string                         { return nil }
+func (d *Default) GetAliases() []string                           { return nil }
+func (d *Default) GetHidden() bool                                { return false }
+func (d *Default) GetLong() string                                { return "" }
+func (d *Default) GetDisableAutoGenTag() bool                     { return false }
+func (d *Default) SetDisableAutoGenTag(v bool)                    {}
+func (d *Default) GetExample() string                             { return "" }
+func (d *Default) GetCommands() []Commander                       { return d.commands }
+func (d *Default) PreExec(args []string) error                    { return nil }
 
-// func (p *Default) Exec(args []string) error                        { return nil } // todo: 这个考虑不默认实现
-func (p *Default) PostExec(args []string) error   { return nil }
-func (p *Default) getHelpCommandGroupID() string  { return p.helpCommandGroupID }
-func (p *Default) GetVersion() string             { return "" }
-func (p *Default) GetDeprecated() string          { return "" }
-func (p *Default) GetDisableFlagsInUseLine() bool { return false }
-func (p *Default) GetDisableSuggestions() bool    { return false }
+// func (d *Default) Exec(args []string) error                        { return nil } // todo: 这个考虑不默认实现
+func (d *Default) PostExec(args []string) error   { return nil }
+func (d *Default) getHelpCommandGroupID() string  { return d.helpCommandGroupID }
+func (d *Default) GetVersion() string             { return "" }
+func (d *Default) GetDeprecated() string          { return "" }
+func (d *Default) GetDisableFlagsInUseLine() bool { return false }
+func (d *Default) GetDisableSuggestions() bool    { return false }
 
-// func (p *Default) GetUse() string                                  { return "" } // todo: 这个考虑不默认实现
-func (p *Default) GetAnnotations() map[string]string        { return nil }
-func (p *Default) GetCommandGroups() []*Group               { return nil }
-func (p *Default) GetCompletionOptions() *CompletionOptions { return nil }
-func (p *Default) GetSuggestionsMinimumDistance() int       { return 2 }
-func (p *Default) SetSuggestionsMinimumDistance(v int)      {}
-func (p *Default) GetCompletionCommandGroupID() string      { return p.completionCommandGroupID }
-func (p *Default) SetFlagErrorBuf(b *bytes.Buffer)          { p.flagErrorBuf = b }
-func (p *Default) GetFlagErrorBuf() *bytes.Buffer           { return p.flagErrorBuf }
-func (p *Default) GetValidArgsFunction() func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
+// func (d *Default) GetUse() string                                  { return "" } // todo: 这个考虑不默认实现
+func (d *Default) GetAnnotations() map[string]string        { return nil }
+func (d *Default) GetCommandGroups() []*Group               { return nil }
+func (d *Default) GetCompletionOptions() *CompletionOptions { return nil }
+func (d *Default) GetSuggestionsMinimumDistance() int       { return 2 }
+func (d *Default) SetSuggestionsMinimumDistance(v int)      {}
+func (d *Default) GetCompletionCommandGroupID() string      { return d.completionCommandGroupID }
+func (d *Default) SetFlagErrorBuf(b *bytes.Buffer)          { d.flagErrorBuf = b }
+func (d *Default) GetFlagErrorBuf() *bytes.Buffer           { return d.flagErrorBuf }
+func (d *Default) GetValidArgsFunction() func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective) {
 	return nil
 }
 
 // GlobalNormalizationFunc returns the global normalization function or nil if it doesn't exist.
-func (c *Default) GlobalNormalizationFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
-	return c.globNormFunc
+func (d *Default) GlobalNormalizationFunc() func(f *flag.FlagSet, name string) flag.NormalizedName {
+	return d.globNormFunc
 }
 
 // SetHelpCommandGroupID sets the group id of the help command.
-func (c *Default) SetHelpCommandGroupID(groupID string) {
-	if c.helpCommand != nil {
-		c.helpCommand.SetGroupID(groupID)
+func (d *Default) SetHelpCommandGroupID(groupID string) {
+	if d.helpCommand != nil {
+		d.helpCommand.SetGroupID(groupID)
 	}
 	// helpCommandGroupID is used if no helpCommand is defined by the user
-	c.helpCommandGroupID = groupID
+	d.helpCommandGroupID = groupID
 }
 
 // SetCompletionCommandGroupID sets the group id of the completion command.
-func (c *Default) SetCompletionCommandGroupID(groupID string) {
+func (d *Default) SetCompletionCommandGroupID(groupID string) {
 	// completionCommandGroupID is used if no completion command is defined by the user
 	// Base(c).SetCompletionCommandGroupID(groupID) // todo: wait do
 }
 
 // CommandPathPadding return padding for the command path.
-func (c *Default) CommandPathPadding() int {
-	if c.parent == nil || minCommandPathPadding > c.parent.GetCommandsMaxCommandPathLen() {
+func (d *Default) CommandPathPadding() int {
+	if d.parent == nil || minCommandPathPadding > d.parent.GetCommandsMaxCommandPathLen() {
 		return minCommandPathPadding
 	}
-	return c.parent.GetCommandsMaxCommandPathLen()
+	return d.parent.GetCommandsMaxCommandPathLen()
 }
 
 // ErrPrefix return error message prefix for the command
-func (c *Default) ErrPrefix() string { return "Error:" }
+func (d *Default) ErrPrefix() string { return "Error:" }
 
 // ResetCommands delete parent, subcommand and help command from c.
-func (c *Default) ResetCommands() {
-	c.parent = nil
-	c.commands = nil
-	c.helpCommand = nil
-	c.parentsPFlags = nil
+func (d *Default) ResetCommands() {
+	d.parent = nil
+	d.commands = nil
+	d.helpCommand = nil
+	d.parentsPFlags = nil
 }
 
 // Sorts commands by their names.
@@ -342,16 +342,16 @@ func (c commandSorterByName) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 func (c commandSorterByName) Less(i, j int) bool { return name(c[i]) < name(c[j]) }
 
 // Commands returns a sorted slice of child commands.
-func (c *Default) Commands() []Commander {
+func (d *Default) Commands() []Commander {
 	// do not sort commands if it already sorted or sorting was disabled
-	if EnableCommandSorting && !c.commandsAreSorted {
-		sort.Sort(commandSorterByName(c.commands))
-		c.commandsAreSorted = true
+	if EnableCommandSorting && !d.commandsAreSorted {
+		sort.Sort(commandSorterByName(d.commands))
+		d.commandsAreSorted = true
 	}
-	return c.commands
+	return d.commands
 }
 
-func (c *Default) SetCommandsAreSorted(v bool) { c.commandsAreSorted = v }
+func (d *Default) SetCommandsAreSorted(v bool) { d.commandsAreSorted = v }
 
 // func (c *Default) ResetAdd(cmds ...Commander) {
 // 	c.commands = cmds
@@ -376,8 +376,8 @@ func (c *Default) SetCommandsAreSorted(v bool) { c.commandsAreSorted = v }
 // }
 
 // ContainsGroup return if groupID exists in the list of command groups.
-func (c *Default) ContainsGroup(groupID string) bool {
-	for _, x := range c.commandGroups {
+func (d *Default) ContainsGroup(groupID string) bool {
+	for _, x := range d.commandGroups {
 		if x.ID == groupID {
 			return true
 		}
