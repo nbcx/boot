@@ -684,7 +684,7 @@ func InitDefaultHelpCmd(c Commander) {
 	if !HasSubCommands(c) {
 		return
 	}
-	c.Add(NewHelpCmd(c))
+	Bind(c, NewHelpCmd(c))
 }
 
 // AllChildCommandsHaveGroup returns if all subcommands are assigned to a group
@@ -721,7 +721,27 @@ main:
 		}
 		commands = append(commands, command)
 	}
-	c.ResetAdd(commands...)
+	// c.ResetAdd(commands...)
+
+	c.SetCommands(commands...) // c.commands = cmds
+	// recompute all lengths
+	c.SetCommandsMaxUseLen(0) // c.commandsMaxUseLen = 0
+	c.SetCommandsMaxCommandPathLen(0)
+	c.SetCommandsMaxNameLen(0)
+	for _, command := range c.Commands() {
+		usageLen := len(command.GetUse())
+		if usageLen > c.GetCommandsMaxUseLen() {
+			c.SetCommandsMaxUseLen(usageLen)
+		}
+		commandPathLen := len(CommandPath(command))
+		if commandPathLen > c.GetCommandsMaxCommandPathLen() {
+			c.SetCommandsMaxCommandPathLen(commandPathLen)
+		}
+		nameLen := len(name(command))
+		if nameLen > c.GetCommandsMaxNameLen() {
+			c.SetCommandsMaxNameLen(nameLen)
+		}
+	}
 }
 
 // CommandPath returns the full path to this command.
@@ -1179,4 +1199,37 @@ func commandNameMatches(s string, t string) bool {
 	}
 
 	return s == t
+}
+
+// Add adds one or more commands to this parent command.
+func Bind(main Commander, commands ...Commander) {
+	ap := main.Commands()
+	for i, x := range commands {
+		if commands[i] == main {
+			panic("command can't be a child of itself")
+		}
+		commands[i].SetParent(main)
+
+		// update max lengths
+		usageLen := len(x.GetUse())
+		if usageLen > main.GetCommandsMaxUseLen() {
+			main.SetCommandsMaxUseLen(usageLen)
+		}
+		commandPathLen := len(CommandPath(x))
+		if commandPathLen > main.GetCommandsMaxCommandPathLen() {
+			main.SetCommandsMaxCommandPathLen(commandPathLen)
+		}
+		nameLen := len(name(x))
+		if nameLen > main.GetCommandsMaxNameLen() {
+			main.SetCommandsMaxNameLen(nameLen)
+		}
+		// If global normalization function exists, update all children
+		if main.GetGlobNormFunc() != nil {
+			SetGlobalNormalizationFunc(x, main.GetGlobNormFunc())
+		}
+		ap = append(ap, x)
+		// main.SetCommands = append(c.commands, x)
+		main.SetCommandsAreSorted(false)
+	}
+	main.SetCommands(ap...)
 }

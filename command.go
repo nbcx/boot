@@ -337,3 +337,7 @@ func (c *Command) GetDisableSuggestions() bool {
 func (c *Command) GetCompletionOptions() *CompletionOptions {
 	return &c.CompletionOptions
 }
+
+func (c *Command) Add(v ...Commander) {
+	Bind(c, v...)
+}

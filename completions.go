@@ -194,7 +194,8 @@ func (d ShellCompDirective) string() string {
 // initCompleteCmd adds a special hidden command that can be used to request custom completions.
 func initCompleteCmd(c Commander, args []string) {
 	completeCmd := NewCompleteCmd(c)
-	c.Add(completeCmd)
+	// c.Add(completeCmd)
+	Bind(c, completeCmd)
 	subCmd, _, err := Find(c, args)
 	if err != nil || name(subCmd) != ShellCompRequestCmd {
 		// Only create this special command if it is actually being called.
@@ -649,7 +650,7 @@ See each sub-command's help for details on how to use the generated script.
 		Hidden:            completionOptions.HiddenDefaultCmd,
 		GroupID:           c.GetCompletionCommandGroupID(),
 	}
-	c.Add(completionCmd)
+	Bind(c, completionCmd)
 
 	// out := c.OutOrStdout()
 	noDesc := completionOptions.DisableDescriptions
