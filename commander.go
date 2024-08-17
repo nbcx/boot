@@ -22,6 +22,7 @@ type Commander interface {
 	GetCommandCalledAs() *CommandCalledAs
 	// run
 	// GetPersistentPreRunE() func(cmd Commander, args []string) error
+	Init()
 	PersistentPreExec(args []string) error
 	Exec(args []string) error // Typically the actual work function. Most commands will only implement this.
 	PreExec(args []string) error
@@ -384,3 +385,6 @@ func (d *Default) ContainsGroup(groupID string) bool {
 	}
 	return false
 }
+
+// ContainsGroup return if groupID exists in the list of command groups.
+func (d *Default) Init() {}

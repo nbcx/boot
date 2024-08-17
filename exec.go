@@ -92,6 +92,8 @@ func ExecuteC(c Commander) (cmd Commander, err error) {
 		cmd.SetContext(c.Context())
 	}
 
+	Flags(cmd).Scan(cmd)
+	cmd.Init()
 	err = execute(cmd, flags)
 	if err != nil {
 		// Always show help if requested, even if SilenceErrors is in

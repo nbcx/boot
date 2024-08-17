@@ -48,14 +48,19 @@ var templateFuncs = template.FuncMap{
 	"HasHelpSubCommands":         HasHelpSubCommands,
 	"CommandPathPadding":         CommandPathPadding,
 	"LocalFlagUsages":            LocalFlagUsages,
-	"InheritedFlags":             InheritedFlags,
-	"NamePadding":                NamePadding,
-	"HasExample":                 HasExample,
-	"UsagePadding":               UsagePadding,
+	// "InheritedFlags":             InheritedFlags,
+	"NamePadding":         NamePadding,
+	"HasExample":          HasExample,
+	"UsagePadding":        UsagePadding,
+	"InheritedFlagUsages": InheritedFlagUsages,
 }
 
 func LocalFlagUsages(c Commander) string {
 	return LocalFlags(c).FlagUsages()
+}
+
+func InheritedFlagUsages(c Commander) string {
+	return InheritedFlags(c).FlagUsages()
 }
 
 var initializers []func()

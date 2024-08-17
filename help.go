@@ -89,7 +89,7 @@ Flags:
 {{. | LocalFlagUsages | trimTrailingWhitespaces}}{{end}}{{if . | HasAvailableInheritedFlags}}
 
 Global Flags:
-{{. | InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if . | HasHelpSubCommands}}
+{{. | InheritedFlagUsages | trimTrailingWhitespaces}}{{end}}{{if . | HasHelpSubCommands}}
 
 Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   {{rpad (. | CommandPath) (. | CommandPathPadding)}} {{.GetShort}}{{end}}{{end}}{{end}}{{if . | HasAvailableSubCommands}}

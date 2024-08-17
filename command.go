@@ -17,7 +17,7 @@
 package boot
 
 import (
-	flag "github.com/nbcx/flag"
+	"github.com/nbcx/flag"
 )
 
 const (
