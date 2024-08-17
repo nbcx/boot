@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	flag "github.com/spf13/pflag"
+	flag "github.com/nbcx/flag"
 )
 
 // Execute uses the args (os.Args[1:] by default)

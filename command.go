@@ -17,7 +17,7 @@
 package boot
 
 import (
-	flag "github.com/spf13/pflag"
+	flag "github.com/nbcx/flag"
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 	"context"
 	"sort"
 
-	flag "github.com/spf13/pflag"
+	flag "github.com/nbcx/flag"
 )
 
 type Commander interface {

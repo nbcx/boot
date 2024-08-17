@@ -27,7 +27,7 @@ import (
 
 	"github.com/cpuguy83/go-md2man/v2/md2man"
 	"github.com/nbcx/boot"
-	"github.com/spf13/pflag"
+	"github.com/nbcx/flag"
 )
 
 // GenManTree will generate a man page for this command and all descendants
@@ -156,8 +156,8 @@ func manPreamble(buf io.StringWriter, header *GenManHeader, cmd boot.Commander, 
 	boot.WriteStringAndCheck(buf, description+"\n\n")
 }
 
-func manPrintFlags(buf io.StringWriter, flags *pflag.FlagSet) {
-	flags.VisitAll(func(flag *pflag.Flag) {
+func manPrintFlags(buf io.StringWriter, flags *flag.FlagSet) {
+	flags.VisitAll(func(flag *flag.Flag) {
 		if len(flag.Deprecated) > 0 || flag.Hidden {
 			return
 		}
