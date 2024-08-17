@@ -21,7 +21,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/spf13/pflag"
+	"github.com/nbcx/flag"
 )
 
 const (
@@ -34,7 +34,7 @@ const (
 )
 
 // Global map of flag completion functions. Make sure to use flagCompletionMutex before you try to read and write from it.
-var flagCompletionFunctions = map[*pflag.Flag]func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective){}
+var flagCompletionFunctions = map[*flag.Flag]func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective){}
 
 // lock for reading and writing from flagCompletionFunctions
 var flagCompletionMutex = &sync.RWMutex{}
@@ -253,7 +253,7 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 	// This is important because if we are completing a flag value, we need to also
 	// remove the flag name argument from the list of finalArgs or else the parsing
 	// could fail due to an invalid value (incomplete) for the flag.
-	flag, finalArgs, toComplete, flagErr := checkIfFlagCompletion(finalCmd, finalArgs, toComplete)
+	fg, finalArgs, toComplete, flagErr := checkIfFlagCompletion(finalCmd, finalArgs, toComplete)
 
 	// Check if interspersed is false or -- was set on a previous arg.
 	// This works by counting the arguments. Normally -- is not counted as arg but
@@ -293,9 +293,9 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 		finalArgs = Flags(finalCmd).Args()
 	}
 
-	if flag != nil && flagCompletion {
+	if fg != nil && flagCompletion {
 		// Check if we are completing a flag value subject to annotations
-		if validExts, present := flag.Annotations[BashCompFilenameExt]; present {
+		if validExts, present := fg.Annotations[BashCompFilenameExt]; present {
 			if len(validExts) != 0 {
 				// File completion filtered by extensions
 				return finalCmd, validExts, ShellCompDirectiveFilterFileExt, nil
@@ -307,7 +307,7 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 			// Even though it is a mistake on the program's side, let's be nice when we can.
 		}
 
-		if subDir, present := flag.Annotations[BashCompSubdirsInDir]; present {
+		if subDir, present := fg.Annotations[BashCompSubdirsInDir]; present {
 			if len(subDir) == 1 {
 				// Directory completion from within a directory
 				return finalCmd, subDir, ShellCompDirectiveFilterDirs, nil
@@ -329,35 +329,35 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 	// When doing completion of a flag name, as soon as an argument starts with
 	// a '-' we know it is a flag.  We cannot use isFlagArg() here as it requires
 	// the flag name to be complete
-	if flag == nil && len(toComplete) > 0 && toComplete[0] == '-' && !strings.Contains(toComplete, "=") && flagCompletion {
+	if fg == nil && len(toComplete) > 0 && toComplete[0] == '-' && !strings.Contains(toComplete, "=") && flagCompletion {
 		// First check for required flags
 		completions = completeRequireFlags(finalCmd, toComplete)
 
 		// If we have not found any required flags, only then can we show regular flags
 		if len(completions) == 0 {
-			doCompleteFlags := func(flag *pflag.Flag) {
-				if !flag.Changed ||
-					strings.Contains(flag.Value.Type(), "Slice") ||
-					strings.Contains(flag.Value.Type(), "Array") {
+			doCompleteFlags := func(fg *flag.Flag) {
+				if !fg.Changed ||
+					strings.Contains(fg.Value.Type(), "Slice") ||
+					strings.Contains(fg.Value.Type(), "Array") {
 					// If the flag is not already present, or if it can be specified multiple times (Array or Slice)
 					// we suggest it as a completion
-					completions = append(completions, getFlagNameCompletions(flag, toComplete)...)
+					completions = append(completions, getFlagNameCompletions(fg, toComplete)...)
 				}
 			}
 
 			// We cannot use finalCmd.Flags() because we may not have called ParsedFlags() for commands
 			// that have set DisableFlagParsing; it is ParseFlags() that merges the inherited and
 			// non-inherited flags.
-			InheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
-				doCompleteFlags(flag)
+			InheritedFlags(finalCmd).VisitAll(func(fg *flag.Flag) {
+				doCompleteFlags(fg)
 			})
 			// Try to complete non-inherited flags even if DisableFlagParsing==true.
 			// This allows programs to tell Cobra about flags for completion even
 			// if the actual parsing of flags is not done by Cobra.
 			// For instance, Helm uses this to provide flag name completion for
 			// some of its plugins.
-			NonInheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
-				doCompleteFlags(flag)
+			NonInheritedFlags(finalCmd).VisitAll(func(fg *flag.Flag) {
+				doCompleteFlags(fg)
 			})
 		}
 
@@ -377,14 +377,14 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 		}
 	} else {
 		directive = ShellCompDirectiveDefault
-		if flag == nil {
+		if fg == nil {
 			foundLocalNonPersistentFlag := false
 			// If TraverseChildren is true on the root command we don't check for
 			// local flags because we can use a local flag on a parent command
 			if !Base(finalCmd).GetTraverseChildren() {
 				// Check if there are any local, non-persistent flags on the command-line
 				localNonPersistentFlags := LocalNonPersistentFlags(finalCmd)
-				NonInheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
+				NonInheritedFlags(finalCmd).VisitAll(func(flag *flag.Flag) {
 					if localNonPersistentFlags.Lookup(flag.Name) != nil && flag.Changed {
 						foundLocalNonPersistentFlag = true
 					}
@@ -445,9 +445,9 @@ func getCompletions(c Commander, args []string) (Commander, []string, ShellCompD
 
 	// Find the completion function for the flag or command
 	var completionFn func(cmd Commander, args []string, toComplete string) ([]string, ShellCompDirective)
-	if flag != nil && flagCompletion {
+	if fg != nil && flagCompletion {
 		flagCompletionMutex.RLock()
-		completionFn = flagCompletionFunctions[flag]
+		completionFn = flagCompletionFunctions[fg]
 		flagCompletionMutex.RUnlock()
 	} else {
 		completionFn = finalCmd.GetValidArgsFunction()
@@ -475,7 +475,7 @@ func helpOrVersionFlagPresent(cmd Commander) bool {
 	return false
 }
 
-func getFlagNameCompletions(flag *pflag.Flag, toComplete string) []string {
+func getFlagNameCompletions(flag *flag.Flag, toComplete string) []string {
 	if nonCompletableFlag(flag) {
 		return []string{}
 	}
@@ -511,7 +511,7 @@ func getFlagNameCompletions(flag *pflag.Flag, toComplete string) []string {
 func completeRequireFlags(finalCmd Commander, toComplete string) []string {
 	var completions []string
 
-	doCompleteRequiredFlags := func(flag *pflag.Flag) {
+	doCompleteRequiredFlags := func(flag *flag.Flag) {
 		if _, present := flag.Annotations[BashCompOneRequiredFlag]; present {
 			if !flag.Changed {
 				// If the flag is not already present, we suggest it as a completion
@@ -523,17 +523,17 @@ func completeRequireFlags(finalCmd Commander, toComplete string) []string {
 	// We cannot use finalCmd.Flags() because we may not have called ParsedFlags() for commands
 	// that have set DisableFlagParsing; it is ParseFlags() that merges the inherited and
 	// non-inherited flags.
-	InheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
+	InheritedFlags(finalCmd).VisitAll(func(flag *flag.Flag) {
 		doCompleteRequiredFlags(flag)
 	})
-	NonInheritedFlags(finalCmd).VisitAll(func(flag *pflag.Flag) {
+	NonInheritedFlags(finalCmd).VisitAll(func(flag *flag.Flag) {
 		doCompleteRequiredFlags(flag)
 	})
 
 	return completions
 }
 
-func checkIfFlagCompletion(finalCmd Commander, args []string, lastArg string) (*pflag.Flag, []string, string, error) {
+func checkIfFlagCompletion(finalCmd Commander, args []string, lastArg string) (*flag.Flag, []string, string, error) {
 	if finalCmd.GetDisableFlagParsing() {
 		// We only do flag completion if we are allowed to parse flags
 		// This is important for commands which have requested to do their own flag completion.
@@ -788,7 +788,7 @@ See each sub-command's help for details on how to use the generated script.
 	completionCmd.Add(bash, zsh, fish, powershell)
 }
 
-func findFlag(cmd Commander, name string) *pflag.Flag {
+func findFlag(cmd Commander, name string) *flag.Flag {
 	flagSet := Flags(cmd)
 	if len(name) == 1 {
 		// First convert the short flag into a long flag

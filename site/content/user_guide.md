@@ -435,7 +435,7 @@ by not providing a 'Run' for the 'rootCmd'.
 
 We have only defined one flag for a single command.
 
-More documentation about flags is available at https://github.com/spf13/pflag.
+More documentation about flags is available at https://github.com/nbcx/flag.
 
 ```go
 package main

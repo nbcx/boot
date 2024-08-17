@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/spf13/pflag"
+	"github.com/nbcx/flag"
 )
 
 func emptyRun(Commander, []string) error { return nil }
@@ -70,7 +70,7 @@ func executeCommandWithContextC(ctx context.Context, root *Command, args ...stri
 }
 
 func resetCommandLineFlagSet() {
-	pflag.CommandLine = pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }
 
 func checkStringContains(t *testing.T, got, expected string) {
@@ -1741,8 +1741,8 @@ func testPersistentHooks(t *testing.T, expectedHookRunOrder []string) {
 
 // Related to https://github.com/spf13/cobra/issues/521.
 func TestGlobalNormFuncPropagation(t *testing.T) {
-	normFunc := func(f *pflag.FlagSet, name string) pflag.NormalizedName {
-		return pflag.NormalizedName(name)
+	normFunc := func(f *flag.FlagSet, name string) flag.NormalizedName {
+		return flag.NormalizedName(name)
 	}
 
 	rootCmd := &Command{Use: "root", RunE: emptyRun}
@@ -1761,8 +1761,8 @@ func TestGlobalNormFuncPropagation(t *testing.T) {
 
 // Related to https://github.com/spf13/cobra/issues/521.
 func TestNormPassedOnLocal(t *testing.T) {
-	toUpper := func(f *pflag.FlagSet, name string) pflag.NormalizedName {
-		return pflag.NormalizedName(strings.ToUpper(name))
+	toUpper := func(f *flag.FlagSet, name string) flag.NormalizedName {
+		return flag.NormalizedName(strings.ToUpper(name))
 	}
 
 	c := &Command{}
@@ -1775,8 +1775,8 @@ func TestNormPassedOnLocal(t *testing.T) {
 
 // Related to https://github.com/spf13/cobra/issues/521.
 func TestNormPassedOnInherited(t *testing.T) {
-	toUpper := func(f *pflag.FlagSet, name string) pflag.NormalizedName {
-		return pflag.NormalizedName(strings.ToUpper(name))
+	toUpper := func(f *flag.FlagSet, name string) flag.NormalizedName {
+		return flag.NormalizedName(strings.ToUpper(name))
 	}
 
 	c := &Command{}
@@ -1803,11 +1803,11 @@ func TestNormPassedOnInherited(t *testing.T) {
 
 // Related to https://github.com/spf13/cobra/issues/521.
 func TestConsistentNormalizedName(t *testing.T) {
-	toUpper := func(f *pflag.FlagSet, name string) pflag.NormalizedName {
-		return pflag.NormalizedName(strings.ToUpper(name))
+	toUpper := func(f *flag.FlagSet, name string) flag.NormalizedName {
+		return flag.NormalizedName(strings.ToUpper(name))
 	}
-	n := func(f *pflag.FlagSet, name string) pflag.NormalizedName {
-		return pflag.NormalizedName(name)
+	n := func(f *flag.FlagSet, name string) flag.NormalizedName {
+		return flag.NormalizedName(name)
 	}
 
 	c := &Command{}
@@ -1822,7 +1822,7 @@ func TestConsistentNormalizedName(t *testing.T) {
 
 func TestFlagOnPflagCommandLine(t *testing.T) {
 	flagName := "flagOnCommandLine"
-	pflag.String(flagName, "", "about my flag")
+	flag.String(flagName, "", "about my flag")
 
 	c := &Command{Use: "c", RunE: emptyRun}
 	c.Add(&Command{Use: "child", RunE: emptyRun})
@@ -2233,7 +2233,7 @@ func TestSortedFlags(t *testing.T) {
 	}
 
 	i := 0
-	LocalFlags(c).VisitAll(func(f *pflag.Flag) {
+	LocalFlags(c).VisitAll(func(f *flag.Flag) {
 		if i == len(names) {
 			return
 		}
@@ -2251,7 +2251,7 @@ func TestSortedFlags(t *testing.T) {
 // of c.mergePersistentFlags.
 // Related to https://github.com/spf13/cobra/issues/443.
 func TestMergeCommandLineToFlags(t *testing.T) {
-	pflag.Bool("boolflag", false, "")
+	flag.Bool("boolflag", false, "")
 	c := &Command{Use: "c", RunE: emptyRun}
 	mergePersistentFlags(c)
 	if Flags(c).Lookup("boolflag") == nil {

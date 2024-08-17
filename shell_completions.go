@@ -15,7 +15,7 @@
 package boot
 
 import (
-	"github.com/spf13/pflag"
+	"github.com/nbcx/flag"
 )
 
 // MarkFlagRequired instructs the various shell completion implementations to
@@ -35,7 +35,7 @@ func MarkPersistentFlagRequired(c Commander, name string) error {
 // MarkFlagRequired instructs the various shell completion implementations to
 // prioritize the named flag when performing completion,
 // and causes your command to report an error if invoked without the flag.
-func markFlagRequired(flags *pflag.FlagSet, name string) error {
+func markFlagRequired(flags *flag.FlagSet, name string) error {
 	return flags.SetAnnotation(name, BashCompOneRequiredFlag, []string{"true"})
 }
 
@@ -64,7 +64,7 @@ func MarkPersistentFlagFilename(c Commander, name string, extensions ...string) 
 
 // MarkFlagFilename instructs the various shell completion implementations to
 // limit completions for the named flag to the specified file extensions.
-func MarkFlagFilename(flags *pflag.FlagSet, name string, extensions ...string) error {
+func MarkFlagFilename(flags *flag.FlagSet, name string, extensions ...string) error {
 	return flags.SetAnnotation(name, BashCompFilenameExt, extensions)
 }
 
@@ -74,7 +74,7 @@ func MarkFlagFilename(flags *pflag.FlagSet, name string, extensions ...string) e
 // This will only work for bash completion.
 // It is recommended to instead use c.RegisterFlagCompletionFunc(...) which allows
 // to register a Go function which will work across all shells.
-func MarkFlagCustom(flags *pflag.FlagSet, name string, f string) error {
+func MarkFlagCustom(flags *flag.FlagSet, name string, f string) error {
 	return flags.SetAnnotation(name, BashCompCustom, []string{f})
 }
 
@@ -93,6 +93,6 @@ func (c *Command) MarkPersistentFlagDirname(name string) error {
 
 // MarkFlagDirname instructs the various shell completion implementations to
 // limit completions for the named flag to directory names.
-func MarkFlagDirname(flags *pflag.FlagSet, name string) error {
+func MarkFlagDirname(flags *flag.FlagSet, name string) error {
 	return flags.SetAnnotation(name, BashCompSubdirsInDir, []string{})
 }

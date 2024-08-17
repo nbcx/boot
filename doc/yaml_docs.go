@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/nbcx/boot"
-	"github.com/spf13/pflag"
+	"github.com/nbcx/flag"
 	"gopkg.in/yaml.v3"
 )
 
@@ -146,10 +146,10 @@ func GenYamlCustom(cmd boot.Commander, w io.Writer, linkHandler func(string) str
 	return nil
 }
 
-func genFlagResult(flags *pflag.FlagSet) []cmdOption {
+func genFlagResult(flags *flag.FlagSet) []cmdOption {
 	var result []cmdOption
 
-	flags.VisitAll(func(flag *pflag.Flag) {
+	flags.VisitAll(func(flag *flag.Flag) {
 		// Todo, when we mark a shorthand is deprecated, but specify an empty message.
 		// The flag.ShorthandDeprecated is empty as the shorthand is deprecated.
 		// Using len(flag.ShorthandDeprecated) > 0 can't handle this, others are ok.

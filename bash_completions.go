@@ -22,7 +22,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/spf13/pflag"
+	"github.com/nbcx/flag"
 )
 
 // Annotations for Bash completion.
@@ -494,7 +494,7 @@ func writeFlagHandler(buf io.StringWriter, nameStr string, annotations map[strin
 
 const cbn = "\")\n"
 
-func writeShortFlag(buf io.StringWriter, flag *pflag.Flag, cmd Commander) {
+func writeShortFlag(buf io.StringWriter, flag *flag.Flag, cmd Commander) {
 	name := flag.Shorthand
 	format := "    "
 	if len(flag.NoOptDefVal) == 0 {
@@ -505,7 +505,7 @@ func writeShortFlag(buf io.StringWriter, flag *pflag.Flag, cmd Commander) {
 	writeFlagHandler(buf, "-"+name, flag.Annotations, cmd)
 }
 
-func writeFlag(buf io.StringWriter, flag *pflag.Flag, cmd Commander) {
+func writeFlag(buf io.StringWriter, flag *flag.Flag, cmd Commander) {
 	name := flag.Name
 	format := "    flags+=(\"--%s"
 	if len(flag.NoOptDefVal) == 0 {
@@ -520,7 +520,7 @@ func writeFlag(buf io.StringWriter, flag *pflag.Flag, cmd Commander) {
 	writeFlagHandler(buf, "--"+name, flag.Annotations, cmd)
 }
 
-func writeLocalNonPersistentFlag(buf io.StringWriter, flag *pflag.Flag) {
+func writeLocalNonPersistentFlag(buf io.StringWriter, flag *flag.Flag) {
 	name := flag.Name
 	format := "    local_nonpersistent_flags+=(\"--%[1]s" + cbn
 	if len(flag.NoOptDefVal) == 0 {
@@ -563,7 +563,7 @@ func writeFlags(buf io.StringWriter, cmd Commander) {
 	}
 
 	localNonPersistentFlags := LocalNonPersistentFlags(cmd)
-	NonInheritedFlags(cmd).VisitAll(func(flag *pflag.Flag) {
+	NonInheritedFlags(cmd).VisitAll(func(flag *flag.Flag) {
 		if nonCompletableFlag(flag) {
 			return
 		}
@@ -577,7 +577,7 @@ func writeFlags(buf io.StringWriter, cmd Commander) {
 			writeLocalNonPersistentFlag(buf, flag)
 		}
 	})
-	InheritedFlags(cmd).VisitAll(func(flag *pflag.Flag) {
+	InheritedFlags(cmd).VisitAll(func(flag *flag.Flag) {
 		if nonCompletableFlag(flag) {
 			return
 		}
@@ -593,7 +593,7 @@ func writeFlags(buf io.StringWriter, cmd Commander) {
 func writeRequiredFlag(buf io.StringWriter, cmd Commander) {
 	WriteStringAndCheck(buf, "    must_have_one_flag=()\n")
 	flags := NonInheritedFlags(cmd)
-	flags.VisitAll(func(flag *pflag.Flag) {
+	flags.VisitAll(func(flag *flag.Flag) {
 		if nonCompletableFlag(flag) {
 			return
 		}
@@ -693,7 +693,7 @@ func (c *Command) GenBashCompletion(w io.Writer) error {
 	return err
 }
 
-func nonCompletableFlag(flag *pflag.Flag) bool {
+func nonCompletableFlag(flag *flag.Flag) bool {
 	return flag.Hidden || len(flag.Deprecated) > 0
 }
 
