@@ -241,7 +241,7 @@ func TestExecuteContextC(t *testing.T) {
 }
 
 func TestExecute_NoContext(t *testing.T) {
-	run := func(cmd Commander, args []string) {
+	run := func(cmd Commander, _ []string) {
 		if cmd.Context() != context.Background() {
 			t.Errorf("Command %s must have background context", cmd.GetUse())
 		}
