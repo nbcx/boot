@@ -345,3 +345,9 @@ func (c *Command) Add(v ...Commander) {
 func (c *Command) Execute() error {
 	return Execute(c)
 }
+
+func Root(use string, commands ...Commander) *Command {
+	c := &Command{Use: use}
+	c.Add(commands...)
+	return c
+}
