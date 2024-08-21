@@ -24,7 +24,7 @@ type Commander interface {
 	// GetPersistentPreRunE() func(cmd Commander, args []string) error
 	Init()
 	PersistentPreExec(args []string) error
-	Exec(args []string) error // Typically the actual work function. Most commands will only implement this.
+	Exec(args ...string) error // Typically the actual work function. Most commands will only implement this.
 	PreExec(args []string) error
 	PostExec(args []string) error
 	PersistentPostExec(args []string) error

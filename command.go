@@ -304,7 +304,7 @@ func (c *Command) PreExec(args []string) error {
 	return nil
 }
 
-func (c *Command) Exec(args []string) error {
+func (c *Command) Exec(args ...string) error {
 	if c.RunE != nil {
 		return c.RunE(c, args)
 	}

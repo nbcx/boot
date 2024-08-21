@@ -216,7 +216,7 @@ func execute(c Commander, a []string) (err error) {
 		return err
 	}
 
-	if err := c.Exec(argWoFlags); err != nil {
+	if err := c.Exec(argWoFlags...); err != nil {
 		return err
 	}
 
