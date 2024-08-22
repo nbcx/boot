@@ -351,3 +351,18 @@ func Root(use string, commands ...Commander) *Command {
 	c.Add(commands...)
 	return c
 }
+
+func First(root Commander, commands ...Commander) Commander {
+	Bind(root, commands...)
+	return root
+}
+
+var funcC = &Command{}
+
+func Func(use string, exec func(args ...string) error) Commander {
+	c := &Command{Use: use, RunE: func(cmd Commander, args []string) error {
+		return exec()
+	}}
+	Bind(funcC, c)
+	return c
+}
