@@ -286,7 +286,7 @@ func (d *Default) GetDisableSuggestions() bool    { return false }
 // func (d *Default) GetUse() string                                  { return "" } // todo: 这个考虑不默认实现
 func (d *Default) GetAnnotations() map[string]string        { return nil }
 func (d *Default) GetCommandGroups() []*Group               { return nil }
-func (d *Default) GetCompletionOptions() *CompletionOptions { return nil }
+func (d *Default) GetCompletionOptions() *CompletionOptions { return &CompletionOptions{} }
 func (d *Default) GetSuggestionsMinimumDistance() int       { return 2 }
 func (d *Default) SetSuggestionsMinimumDistance(v int)      {}
 func (d *Default) GetCompletionCommandGroupID() string      { return d.completionCommandGroupID }
