@@ -2,8 +2,8 @@ github.com/cpuguy83/go-md2man/v2 v2.0.4 h1:wfIWP927BUkWJb2NmU/kNDYIBTh/ziUX91+lV
 github.com/cpuguy83/go-md2man/v2 v2.0.4/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
-github.com/nbcx/flag v0.0.0-20240818013416-34545e7546c7 h1:lq0AxqXJ6mNdRbcm0ItS9x6inudaOTwwODS6r62E+fM=
-github.com/nbcx/flag v0.0.0-20240818013416-34545e7546c7/go.mod h1:ZTZAKONEyFUr9THzK6EBOjg2GhY7I68cOkGb0kYJ1Tc=
+github.com/nbcx/flag v1.0.0 h1:PXmGqAA2HCXwzETskPGBdECTp9pv1KGsbbPqbmKI03E=
+github.com/nbcx/flag v1.0.0/go.mod h1:ds13IHfTBkIcJPe6c8Mu1lnII0mrT0KPsrOEy3TMWec=
 github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
