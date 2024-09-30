@@ -352,9 +352,9 @@ func Root(use string, commands ...Commander) *Command {
 	return c
 }
 
-func First(root Commander, commands ...Commander) Commander {
+func Run(root Commander, commands ...Commander) error {
 	Bind(root, commands...)
-	return root
+	return Execute(root)
 }
 
 var funcC = &Command{}
