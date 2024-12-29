@@ -111,7 +111,7 @@ func HelpTemplate(c Commander) string {
 	if str == "" {
 		str = c.GetShort()
 	}
-	str = trimRightSpace(str)
+	str = trimRightSpace(str) + "\n"
 	if c.Runnable() || HasSubCommands(c) {
 		str += UsageString(c)
 	}
