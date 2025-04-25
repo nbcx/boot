@@ -212,13 +212,12 @@ func execute(c Commander, a []string) (err error) {
 	if err := ValidateRequiredFlags(c); err != nil {
 		return err
 	}
+
 	if err := ValidateFlagGroups(c); err != nil {
 		return err
 	}
 
-	if err := c.Exec(argWoFlags...); err != nil {
-		return err
-	}
+	c.Exec(argWoFlags...)
 
 	if err := c.PostExec(argWoFlags); err != nil {
 		return err
